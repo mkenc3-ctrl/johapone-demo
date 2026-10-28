@@ -253,7 +253,7 @@ var USERS = {
 };
 var PAID = { consent: 1, vote: 1, assembly: 1, roster: 1, notify: 1 };
 // 메뉴: [키, 이름, 하위 탭] — 관련 기능은 한 메뉴 안의 탭으로 묶음
-var LAW = ['law', '⚖️ 법령·판례'], CHECK = ['check', '✅ 절차 체크리스트'], EDU = ['edu', '🎓 교육'];
+var LAW = ['law', '⚖️ 법령·판례'], CHECK = ['check', '✅ 절차 체크리스트'], EDU = ['edu', '🎓 교육'], PRO = ['pro', '🤝 전문가 연결'];
 // 중요도 순 (앞 4개는 휴대폰 하단 탭에 노출)
 var NAV = {
   // 조합원: 의결권 행사 → 동의 → 법정 공개자료 확인 → 내 정보 → 소통 → 참고자료
@@ -263,6 +263,7 @@ var NAV = {
     ['consent', '✍️ 전자동의서'],
     ['news', '📢 조합 소식', [['disclosure', '정보공개'], ['calendar', '일정'], ['bids', '입찰공고']]],
     ['mine', '👤 내 정보', [['me', '내 정보·증명서'], ['calc', '분담금 계산']]],
+    PRO,
     ['community', '💬 모임방·문의', [['cafe', '조합 모임방'], ['qna', '사무국 1:1 문의']]],
     LAW, CHECK, EDU
   ],
@@ -273,7 +274,7 @@ var NAV = {
     ['meeting', '🗳️ 총회·투표', [['assembly', '온라인총회'], ['vote', '전자투표']]],
     ['consent', '✍️ 전자동의서'],
     ['news', '📢 조합 소식', [['disclosure', '정보공개 등록'], ['calendar', '일정'], ['bids', '입찰공고'], ['notify', '알림톡 발송']]],
-    CHECK, LAW,
+    PRO, CHECK, LAW,
     ['community', '💬 모임방·문의', [['cafe', '조합 모임방'], ['qna', '1:1 문의 답변']]],
     EDU,
     ['admin', '⚙️ 서비스·권한']
@@ -339,13 +340,14 @@ function seed() {
     ],
     qna: [{ id: 1, uid: 'hong', name: '홍길동', title: '주소 변경 신고는 어떻게 하나요?', body: '이사를 해서 우편물 주소를 바꾸고 싶습니다.', at: '2026.10.26', answer: '내 정보 메뉴에서 주소 변경을 신청하시면 조합 사무국이 확인 후 반영합니다.' }],
     sms: [{ at: '2026.10.15 10:00', target: '전체 조합원', ch: '알림톡', msg: '[OO1구역] 정기총회 소집 공고가 등록되었습니다.', n: 24 }],
-    edu: {}, logs: [], view: {},
+    edu: {}, logs: [], view: {}, proReq: [],
     svc: { disclosure: 1, cafe: 1, calendar: 1, bids: 1, qna: 1, edu: 1, calc: 1, cert: 1, assembly: 1, consent: 1, vote: 1, roster: 1, notify: 0 }
   };
 }
 var K = 'johapone-demo-v3', S;
 try { S = JSON.parse(localStorage.getItem(K)); } catch (e) {}
 if (!S || S.v !== 3) S = seed();
+if (!S.proReq) S.proReq = []; // 이전에 저장된 데모 데이터 호환
 var ME = null; try { ME = sessionStorage.getItem('johapone-me'); } catch (e) {}
 var IMPORTED = null; // 엑셀로 불러온 명부는 메모리에만 보관
 function save() { try { localStorage.setItem(K, JSON.stringify(S)); } catch (e) {} }
@@ -819,6 +821,56 @@ V.admin = function () {
     '<div class="card"><h2>회원 권한</h2><table class="t"><thead><tr><th>회원</th><th class="c">글쓰기</th><th class="c">댓글</th></tr></thead><tbody>' + mem.map(function (m) { var p = S.perm[m[0]] || {}; return '<tr><td>' + m[1] + '</td><td class="c"><button class="dot' + (p.write ? ' on' : '') + '" data-act="perm" data-u="' + m[0] + '" data-k="write"></button></td><td class="c"><button class="dot' + (p.comment ? ' on' : '') + '" data-act="perm" data-u="' + m[0] + '" data-k="comment"></button></td></tr>'; }).join('') + '</tbody></table><p class="law">허가받은 조합원만 글을 쓸 수 있습니다. 비방·허위 게시 시 권한을 회수하세요.</p></div></div></div>';
 };
 
+/* --- 전문가 연결 (입점 광고형 소개 플랫폼) --- */
+var PRO_CATS = [
+  ['law', '⚖️', '변호사', '조합 소송·총회 무효·매도청구·현금청산'],
+  ['apr', '🏠', '감정평가사', '종전·종후자산 평가, 이의신청 검토'],
+  ['jud', '📜', '법무사', '조합설립·임원 등기, 소유권 이전'],
+  ['tax', '🧮', '세무사·회계사', '조합 세무, 회계감사(법 제112조)'],
+  ['agm', '🎤', '총회대행사', '총회 운영·서면결의서 접수·온라인 병행'],
+  ['pm', '🏗️', '정비사업전문관리업', '사업성 검토, 인가 신청 대행 (등록업체)'],
+  ['arc', '📐', '건축사·설계', '정비계획·건축 설계, 통합심의 대응']
+];
+var PROS = [
+  ['law', 'OO종합법률사무소', '경남 창원', '정비사업 조합 자문 15년, 총회결의 무효 소송 대응', ['조합 자문', '소송']],
+  ['law', '△△법무법인 도시정비팀', '부산', '매도청구·현금청산 소송, 관리처분 분쟁', ['매도청구', '현금청산']],
+  ['apr', 'OO감정평가법인', '경남 전역', '종전자산 평가, 조합원 이의신청 검토 의견', ['종전자산', '이의신청']],
+  ['apr', '△△감정평가사사무소', '창원·김해', '소규모 정비사업 평가 전문', ['소규모정비']],
+  ['jud', 'OO법무사사무소', '창원 성산구', '조합설립 인가 서류·임원 변경 등기', ['조합설립', '등기']],
+  ['tax', 'OO세무회계', '경남', '조합 법인세·부가세, 분기 회계자료 정리', ['세무', '회계']],
+  ['tax', '△△회계법인', '부산·경남', '조합 회계감사, 결산 보고서', ['회계감사']],
+  ['agm', 'OO총회운영', '경남 전역', '총회장 운영, 서면결의서 접수·집계, 조합ONE 온라인총회 병행', ['총회운영', '온라인병행']],
+  ['agm', '△△이벤트컨설팅', '부산·창원', '대규모 총회 현장 운영, 본인확인 데스크', ['현장운영']],
+  ['pm', 'OO도시정비(주)', '경남', '추진위·조합설립 단계 사업관리 (시·도 등록업체)', ['사업관리', '인가대행']],
+  ['arc', 'OO건축사사무소', '창원', '정비계획 수립, 건축심의·통합심의 대응', ['정비계획', '설계']]
+];
+var pcat = 'all', ptab = '전문가 찾기';
+V.pro = function () {
+  var r = role();
+  var tabs = r === 'admin' ? ['전문가 찾기', '요청 내역 (' + S.proReq.length + ')', '입점 안내'] : ['전문가 찾기', '내 요청 (' + S.proReq.filter(function (q) { return q.uid === ME; }).length + ')', '입점 안내'];
+  var head = ph('전문가 연결', '조합 업무에 필요한 전문가를 한 곳에서 찾고 상담을 요청합니다. 상담 요청은 무료입니다.') +
+    '<div class="tabs">' + tabs.map(function (t) { return '<button class="' + (t.indexOf(ptab) === 0 ? 'on' : '') + '" data-act="ptab" data-v="' + t.replace(/ \(.*/, '') + '">' + t + '</button>'; }).join('') + '</div>';
+  if (ptab === '입점 안내') return head +
+    '<div class="grid g2"><div class="card"><h2>전문가·업체 입점 안내</h2><ul style="margin:0;padding-left:20px;line-height:1.9"><li>재건축·재개발 조합과 조합원에게 직접 노출</li><li>지역·분야별 검색, 상담 요청 알림</li><li><b>정액 입점료(광고형)</b> — 사건·계약 건별 수수료 없음</li><li>자격증·등록증 확인 후 게시</li></ul><button class="btn pri" style="margin-top:16px" data-act="proJoin">입점 신청</button></div>' +
+    '<div class="card"><h2>운영 원칙</h2><ul style="margin:0;padding-left:20px;line-height:1.9;font-size:15px"><li>조합ONE은 <b>광고 게시</b>만 하며 사건을 알선하지 않습니다 (변호사법 제34조 등 전문자격 법령 준수).</li><li>상담·계약은 조합(조합원)과 전문가가 직접 진행합니다.</li><li>협력업체 선정은 조합의 계약업무 처리기준(경쟁입찰 등)을 따라야 합니다.</li><li>정비사업전문관리업은 시·도 등록업체만 게시합니다 (법 제102조).</li></ul></div></div>';
+  if (ptab !== '전문가 찾기') {
+    var list = r === 'admin' ? S.proReq : S.proReq.filter(function (q) { return q.uid === ME; });
+    return head + '<div class="card" style="padding:0"><div class="tw" style="border-top:0"><table class="t"><thead><tr><th>요청일</th><th>전문가</th><th>분야</th><th>요청자</th><th>내용</th><th class="c">상태</th></tr></thead><tbody>' +
+      (list.map(function (q) { return '<tr><td>' + q.at + '</td><td>' + esc(q.pro) + '</td><td>' + esc(q.cat) + '</td><td>' + esc(q.name) + '</td><td>' + esc(q.msg) + '</td><td class="c"><span class="tag acc">연락 대기</span></td></tr>'; }).join('') || '<tr><td colspan="6" class="empty">요청 내역이 없습니다.</td></tr>') + '</tbody></table></div></div>';
+  }
+  var cats = '<div class="grid g4" style="gap:10px;margin-bottom:18px">' + [['all', '🔎', '전체', '모든 분야']].concat(PRO_CATS).map(function (c) {
+    var n = c[0] === 'all' ? PROS.length : PROS.filter(function (p) { return p[0] === c[0]; }).length;
+    return '<button data-act="pcat" data-v="' + c[0] + '" style="text-align:left;border:2px solid ' + (pcat === c[0] ? 'var(--pri)' : 'var(--line)') + ';background:' + (pcat === c[0] ? 'var(--pri-s)' : '#fff') + ';border-radius:10px;padding:12px 14px;display:flex;gap:10px;align-items:center"><span style="font-size:24px">' + c[1] + '</span><span><b style="display:block">' + c[2] + ' <span style="color:var(--muted);font-weight:400;font-size:13px">' + n + '</span></b><span style="font-size:12.5px;color:var(--muted)">' + c[3] + '</span></span></button>';
+  }).join('') + '</div>';
+  var catName = {}; PRO_CATS.forEach(function (c) { catName[c[0]] = c[1] + ' ' + c[2]; });
+  var cards = PROS.map(function (p, i) { return [p, i]; }).filter(function (x) { return pcat === 'all' || x[0][0] === pcat; }).map(function (x) {
+    var p = x[0];
+    return '<div class="card" style="display:flex;flex-direction:column;gap:8px"><span class="tag gray" style="align-self:flex-start">' + catName[p[0]] + '</span><b style="font-size:18px">' + esc(p[1]) + ' <span class="tag">예시</span></b><span style="font-size:14px;color:var(--muted)">📍 ' + p[2] + '</span><p style="margin:0;font-size:15px;flex:1">' + esc(p[3]) + '</p><div style="display:flex;gap:4px;flex-wrap:wrap">' + p[4].map(function (t) { return '<span class="tag gray">#' + t + '</span>'; }).join('') + '</div>' +
+      (r === 'gov' ? '' : '<button class="btn pri" data-act="proAsk" data-i="' + x[1] + '">상담 요청</button>') + '</div>';
+  }).join('');
+  return head + cats + '<div class="grid g3">' + cards + '</div><p class="law" style="margin-top:14px">게시 업체는 모두 예시입니다. 조합ONE은 입점 광고만 게시하며 사건·계약을 알선하지 않습니다.</p>';
+};
+
 /* --- 법령·판례 / 절차 체크리스트 (기존 도구를 앱 안에 그대로 띄움) --- */
 function embed(src, title, sub) { return ph(title, sub, '<a class="btn sm" href="' + src + '" target="_blank" rel="noopener">새 창으로 크게 보기 ↗</a>') + '<iframe class="embed" src="' + src + '" title="' + title + '"></iframe>'; }
 V.law = function () { return embed('index.html', '법령·판례 검색', '도시정비법·시행령·시행규칙 조문과 관련 판례를 검색합니다. 조문 사이 참조도 바로 따라갈 수 있습니다.'); };
@@ -890,6 +942,19 @@ function stopTimer() { if (timer) clearInterval(timer); timer = null; }
 var ACT = {
   close: closeModal,
   menu: function () { document.body.classList.toggle('menu-open'); },
+  pcat: function (t) { pcat = t.dataset.v; render(); },
+  ptab: function (t) { ptab = t.dataset.v; render(); },
+  proAsk: function (t) {
+    var p = PROS[+t.dataset.i];
+    modal('상담 요청 — ' + esc(p[1]), '<form class="f" data-form="proReq" data-i="' + t.dataset.i + '"><p class="note" style="margin:0">요청하면 전문가가 등록된 연락처로 직접 연락합니다. 상담 요청은 무료입니다.</p>' +
+      '<label>요청 내용<textarea name="m" rows="5" required placeholder="예) 총회 결의 무효 소송 관련 자문을 받고 싶습니다."></textarea></label>' +
+      '<label>희망 연락 방법<select name="c"><option>전화</option><option>문자</option><option>방문 상담</option></select></label>' +
+      '<label style="flex-direction:row;align-items:center;gap:8px"><input type="checkbox" name="ok" required style="width:18px;height:18px">상담을 위해 이름·연락처를 해당 전문가에게 제공하는 데 동의합니다.</label>' +
+      '<div style="display:flex;justify-content:flex-end;gap:8px"><button type="button" class="btn" data-act="close">취소</button><button class="btn pri">요청 보내기</button></div></form>');
+  },
+  proJoin: function () {
+    modal('전문가·업체 입점 신청', '<form class="f" data-form="proJoin"><div class="row"><label>분야<select name="c">' + PRO_CATS.map(function (c) { return '<option>' + c[2] + '</option>'; }).join('') + '</select></label><label>지역<input name="r" required placeholder="예) 경남 창원"></label></div><label>업체·사무소명<input name="n" required></label><label>주요 업무<textarea name="d" rows="3" required></textarea></label><label>자격·등록 증빙<input type="file" style="padding-top:8px"></label><button class="btn pri">신청</button></form>');
+  },
   login: function (t) { ME = t.dataset.u; try { sessionStorage.setItem('johapone-me', ME); } catch (e) {} location.hash = '#home'; inRoom = false; render(); },
   logout: function () { ME = null; try { sessionStorage.removeItem('johapone-me'); } catch (e) {} inRoom = false; render(); },
   reset: function () { S = seed(); save(); IMPORTED = null; imp = null; toast('데모 데이터를 초기화했습니다.'); },
@@ -982,6 +1047,8 @@ document.addEventListener('click', function (e) {
   a(t, e);
 });
 var FORMS = {
+  proReq: function (f) { var p = PROS[+f.dataset.i], cn = PRO_CATS.filter(function (c) { return c[0] === p[0]; })[0][2]; S.proReq.unshift({ at: today(), uid: ME, name: U().name, pro: p[1], cat: cn, msg: f.m.value + ' (' + f.c.value + ')' }); save(); closeModal(); render(); toast(p[1] + '에 상담 요청을 보냈습니다 (시안).'); },
+  proJoin: function (f) { closeModal(); toast(f.n.value + ' 입점 신청이 접수되었습니다 (시안). 자격 확인 후 연락드립니다.'); },
   post: function (f) { var fn = f.file.files[0]; var id = Date.now(); S.posts.push({ id: id, cat: f.cat.value, title: f.title.value, body: f.body.value, file: fn ? fn.name : '', at: today(), views: 0, reads: [] }); if (f.push.checked) S.sms.unshift({ at: now(), target: '전체 조합원', ch: '알림톡', msg: '[OO1구역] 정보공개: ' + f.title.value, n: roster().length }); save(); closeModal(); render(); toast('등록되었습니다.' + (f.push.checked ? ' 조합원 ' + roster().length + '명에게 알림톡을 보냈습니다.' : '')); },
   cafe: function (f) { var id = Math.max.apply(null, S.cafe.map(function (c) { return c.id; }).concat(0)) + 1; S.cafe.push({ id: id, board: f.board.value, notice: f.board.value === '공지사항', title: f.title.value, body: f.body.value, author: U().name, aid: ME, at: today(), views: 0, likes: 0, comments: [] }); save(); location.hash = '#cafe/post/' + id; toast('글이 등록되었습니다.'); },
   comment: function (f) { var c = S.cafe.filter(function (x) { return x.id === +f.dataset.id; })[0]; c.comments.push({ author: U().name, body: f.b.value, at: now() }); save(); render(); },
