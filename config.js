@@ -6,7 +6,7 @@
 //   supabaseUrl     = Project URL
 //   supabaseAnonKey = anon public key (공개용 키. service_role 키는 절대 넣지 말 것)
 window.JOHAPONE_CONFIG = {
-  supabaseUrl: '',
-  supabaseAnonKey: '',
+  supabaseUrl: 'https://dpytffriiodsvpwxfbiv.supabase.co',
+  supabaseAnonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRweXRmZnJpaW9kc3Zwd3hmYml2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMxODE5OTMsImV4cCI6MjEwODc1Nzk5M30.HIAQvaBN3jgdHanSaFv-BoZerFcJRYKRPwj4Xbnw3o0',
   tenant: 'demo-oo1'
 };

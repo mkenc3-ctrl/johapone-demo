@@ -99,19 +99,27 @@
     return client.from('records').select('coll,id,data').eq('tenant_id', SYNC.tenant).then(function (r) {
       if (r.error) { setStatus('error', r.error.message); return; }
       SYNC.on = true;
-      if (!r.data.length) { SYNC.snap = {}; return SYNC.push().then(function () { setStatus('live'); }); } // 첫 실행: 예시 데이터 올림
-      SYNC.apply(r.data); setStatus('live'); safeRender();
+      var first = !r.data.length;
+      if (first) SYNC.snap = {}; // 첫 실행: 예시 데이터를 서버에 올림
+      else { SYNC.apply(r.data); safeRender(); }
+      subscribe(client);
+      return (first ? SYNC.push() : Promise.resolve()).then(function () { setStatus('live'); });
+    });
+  };
+
+  function subscribe(client) {
       client.channel('records-' + SYNC.tenant)
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'records', filter: 'tenant_id=eq.' + SYNC.tenant }, function (p) {
+        // 서버 보안 규칙(RLS)이 데모 조합 데이터만 내려보내지만, 한 번 더 조합 ID 확인
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'records' }, function (p) {
           var row = p.new && p.new.coll ? p.new : p.old, c = row.coll; if (!COLLS[c]) return;
+          if (row.tenant_id && row.tenant_id !== SYNC.tenant) return;
           var m = COLLS[c].get();
           if (p.eventType === 'DELETE') delete m[row.id]; else m[row.id] = p.new.data;
           COLLS[c].set(m); SYNC.snap[c] = SYNC.snap[c] || {};
           if (p.eventType === 'DELETE') delete SYNC.snap[c][row.id]; else SYNC.snap[c][row.id] = JSON.stringify(p.new.data);
           safeRender();
-        }).subscribe();
-    });
-  };
+        }).subscribe(function (st) { SYNC.rt = st; });
+  }
 
   // 설정이 있으면 Supabase 클라이언트를 불러와 연결
   if (CFG.supabaseUrl && CFG.supabaseAnonKey) {
