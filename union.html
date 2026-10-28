@@ -822,16 +822,39 @@ V.admin = function () {
 };
 
 /* --- 전문가 연결 (입점 광고형 소개 플랫폼) --- */
+// [키, 아이콘, 분야, 설명, 그룹]
 var PRO_CATS = [
-  ['law', '⚖️', '변호사', '조합 소송·총회 무효·매도청구·현금청산'],
-  ['apr', '🏠', '감정평가사', '종전·종후자산 평가, 이의신청 검토'],
-  ['jud', '📜', '법무사', '조합설립·임원 등기, 소유권 이전'],
-  ['tax', '🧮', '세무사·회계사', '조합 세무, 회계감사(법 제112조)'],
-  ['agm', '🎤', '총회대행사', '총회 운영·서면결의서 접수·온라인 병행'],
-  ['pm', '🏗️', '정비사업전문관리업', '사업성 검토, 인가 신청 대행 (등록업체)'],
-  ['arc', '📐', '건축사·설계', '정비계획·건축 설계, 통합심의 대응']
+  ['law', '⚖️', '변호사', '조합 소송·총회 무효·매도청구·현금청산', '법률·세무'],
+  ['jud', '📜', '법무사', '조합설립·임원 등기, 소유권 이전', '법률·세무'],
+  ['tax', '🧮', '세무사·회계사', '조합 세무, 회계감사(법 제112조)', '법률·세무'],
+  ['upl', '🗺️', '도시계획', '정비계획 수립·변경, 정비구역 지정', '계획·설계·심의'],
+  ['arc', '📐', '건축사·설계', '건축 설계, 건축심의·통합심의 대응', '계획·설계·심의'],
+  ['lsc', '🌳', '경관', '경관계획·경관심의 도서 작성', '계획·설계·심의'],
+  ['trf', '🚦', '교통영향평가', '교통영향평가서 작성·심의 대응', '계획·설계·심의'],
+  ['env', '🌿', '환경영향평가', '환경영향평가·일조·소음·대기 분석', '계획·설계·심의'],
+  ['edu', '🏫', '교육환경평가', '학교 주변 교육환경 보호 평가', '계획·설계·심의'],
+  ['dis', '🌧️', '재해영향평가', '재해영향성 검토·우수 유출 저감', '계획·설계·심의'],
+  ['apr', '🏠', '감정평가사', '종전·종후자산 평가, 이의신청 검토', '평가·조사'],
+  ['saf', '🔍', '안전진단', '재건축 안전진단·구조 안전성 평가', '평가·조사'],
+  ['sur', '📏', '측량', '지적측량·현황측량·경계 확인', '평가·조사'],
+  ['her', '🏺', '문화재 조사', '지표조사·발굴조사 대응', '평가·조사'],
+  ['pm', '🏗️', '정비사업전문관리업', '사업성 검토, 인가 신청 대행 (등록업체)', '사업관리·현장'],
+  ['agm', '🎤', '총회대행사', '총회 운영·서면결의서 접수·온라인 병행', '사업관리·현장'],
+  ['mov', '🚚', '이주관리', '이주 일정·이주비·명도 지원', '사업관리·현장'],
+  ['dem', '🧱', '석면조사·철거', '석면 조사·해체 공사 감리 대응', '사업관리·현장']
 ];
 var PROS = [
+  ['upl', 'OO도시계획엔지니어링', '경남', '정비계획 수립·변경, 정비구역 지정 도서', ['정비계획', '구역지정']],
+  ['lsc', 'OO경관디자인', '창원', '경관계획 수립, 경관심의 도서 작성', ['경관심의']],
+  ['trf', 'OO교통기술사사무소', '부산·경남', '교통영향평가서 작성, 심의 보완 대응', ['교통영향평가']],
+  ['env', 'OO환경컨설팅', '경남', '환경영향평가, 일조·소음 분석', ['환경영향평가', '일조']],
+  ['edu', 'OO교육환경연구소', '경남', '교육환경평가서 작성, 교육청 협의', ['교육환경']],
+  ['dis', 'OO방재기술', '부산·경남', '재해영향평가, 저류시설 계획', ['재해영향']],
+  ['saf', 'OO구조안전진단', '경남', '재건축 안전진단, 구조 안전성 평가', ['안전진단']],
+  ['sur', 'OO지적측량', '창원', '지적·현황측량, 경계 분쟁 대응', ['측량']],
+  ['her', 'OO문화유산연구원', '경남', '문화재 지표조사·시굴조사', ['지표조사']],
+  ['mov', 'OO이주관리', '경남 전역', '이주 일정 관리, 이주비 대출 안내, 명도 지원', ['이주', '명도']],
+  ['dem', 'OO석면환경', '부산·경남', '석면 조사, 해체 공사 감리 대응', ['석면', '철거']],
   ['law', 'OO종합법률사무소', '경남 창원', '정비사업 조합 자문 15년, 총회결의 무효 소송 대응', ['조합 자문', '소송']],
   ['law', '△△법무법인 도시정비팀', '부산', '매도청구·현금청산 소송, 관리처분 분쟁', ['매도청구', '현금청산']],
   ['apr', 'OO감정평가법인', '경남 전역', '종전자산 평가, 조합원 이의신청 검토 의견', ['종전자산', '이의신청']],
@@ -858,10 +881,16 @@ V.pro = function () {
     return head + '<div class="card" style="padding:0"><div class="tw" style="border-top:0"><table class="t"><thead><tr><th>요청일</th><th>전문가</th><th>분야</th><th>요청자</th><th>내용</th><th class="c">상태</th></tr></thead><tbody>' +
       (list.map(function (q) { return '<tr><td>' + q.at + '</td><td>' + esc(q.pro) + '</td><td>' + esc(q.cat) + '</td><td>' + esc(q.name) + '</td><td>' + esc(q.msg) + '</td><td class="c"><span class="tag acc">연락 대기</span></td></tr>'; }).join('') || '<tr><td colspan="6" class="empty">요청 내역이 없습니다.</td></tr>') + '</tbody></table></div></div>';
   }
-  var cats = '<div class="grid g4" style="gap:10px;margin-bottom:18px">' + [['all', '🔎', '전체', '모든 분야']].concat(PRO_CATS).map(function (c) {
+  function catBtn(c) {
     var n = c[0] === 'all' ? PROS.length : PROS.filter(function (p) { return p[0] === c[0]; }).length;
-    return '<button data-act="pcat" data-v="' + c[0] + '" style="text-align:left;border:2px solid ' + (pcat === c[0] ? 'var(--pri)' : 'var(--line)') + ';background:' + (pcat === c[0] ? 'var(--pri-s)' : '#fff') + ';border-radius:10px;padding:12px 14px;display:flex;gap:10px;align-items:center"><span style="font-size:24px">' + c[1] + '</span><span><b style="display:block">' + c[2] + ' <span style="color:var(--muted);font-weight:400;font-size:13px">' + n + '</span></b><span style="font-size:12.5px;color:var(--muted)">' + c[3] + '</span></span></button>';
-  }).join('') + '</div>';
+    return '<button data-act="pcat" data-v="' + c[0] + '" style="text-align:left;border:2px solid ' + (pcat === c[0] ? 'var(--pri)' : 'var(--line)') + ';background:' + (pcat === c[0] ? 'var(--pri-s)' : '#fff') + ';border-radius:10px;padding:10px 12px;display:flex;gap:10px;align-items:center"><span style="font-size:22px">' + c[1] + '</span><span><b style="display:block;font-size:15px">' + c[2] + ' <span style="color:var(--muted);font-weight:400;font-size:13px">' + n + '</span></b><span style="font-size:12.5px;color:var(--muted)">' + c[3] + '</span></span></button>';
+  }
+  var groups = []; PRO_CATS.forEach(function (c) { if (groups.indexOf(c[4]) < 0) groups.push(c[4]); });
+  var cats = '<div style="margin-bottom:12px">' + catBtn(['all', '🔎', '전체 보기', PRO_CATS.length + '개 분야 · ' + PROS.length + '곳']) + '</div>' +
+    groups.map(function (g) {
+      return '<p style="margin:14px 0 6px;font-size:14px;font-weight:700;color:var(--ink2)">' + g + '</p><div class="grid g4" style="gap:8px">' +
+        PRO_CATS.filter(function (c) { return c[4] === g; }).map(catBtn).join('') + '</div>';
+    }).join('') + '<div style="height:20px"></div>';
   var catName = {}; PRO_CATS.forEach(function (c) { catName[c[0]] = c[1] + ' ' + c[2]; });
   var cards = PROS.map(function (p, i) { return [p, i]; }).filter(function (x) { return pcat === 'all' || x[0][0] === pcat; }).map(function (x) {
     var p = x[0];
