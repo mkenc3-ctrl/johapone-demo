@@ -209,6 +209,7 @@ dialog::backdrop{background:rgba(30,33,36,.55)}
 .drop.over{border-color:var(--pri);background:var(--pri-s)}
 .save-calc td input{width:110px;height:34px;text-align:right}
 @media print{body.printing *{visibility:hidden}body.printing .ledger,body.printing .ledger *,body.printing .cert,body.printing .cert *{visibility:visible}body.printing .ledger,body.printing .cert{position:absolute;left:0;top:0;width:100%;border:0}}
+.embed{display:block;width:100%;height:calc(100vh - 230px);min-height:520px;border:1px solid var(--line);border-radius:10px;background:#fff}
 .bnav,.scrim{display:none}
 @media (max-width:900px){
   /* 휴대폰: 앱처럼 하단 탭 + 전체메뉴 서랍 */
@@ -227,6 +228,7 @@ dialog::backdrop{background:rgba(30,33,36,.55)}
   .bnav .e{font-size:21px;line-height:1}
   .bnav .on{color:var(--pri);font-weight:700}
   #toast{bottom:calc(80px + env(safe-area-inset-bottom))}
+  .embed{height:calc(100vh - 250px);min-height:420px}
   .btn{height:46px}
   .org{display:none}
   .cafe{grid-template-columns:1fr}
@@ -251,7 +253,7 @@ var USERS = {
 };
 var PAID = { consent: 1, vote: 1, assembly: 1, roster: 1, notify: 1 };
 // 메뉴: [키, 이름, 하위 탭] — 관련 기능은 한 메뉴 안의 탭으로 묶음
-var LEARN = ['learn', '교육·자료', [['edu', '교육'], ['@index.html', '법령·판례 ↗'], ['@rebuild.html', '절차 체크리스트·서식 ↗']]];
+var LAW = ['law', '⚖️ 법령·판례'], CHECK = ['check', '✅ 절차 체크리스트'], EDU = ['edu', '🎓 교육'];
 var NAV = {
   member: [
     ['home', '🏠 홈'],
@@ -260,7 +262,7 @@ var NAV = {
     ['consent', '✍️ 전자동의서'],
     ['community', '💬 모임방·문의', [['cafe', '조합 모임방'], ['qna', '사무국 1:1 문의']]],
     ['mine', '👤 내 정보', [['me', '내 정보·증명서'], ['calc', '분담금 계산']]],
-    LEARN
+    LAW, CHECK, EDU
   ],
   admin: [
     ['home', '📊 대시보드'],
@@ -269,13 +271,14 @@ var NAV = {
     ['roster', '📋 조합명부관리'],
     ['consent', '✍️ 전자동의서'],
     ['community', '💬 모임방·문의', [['cafe', '조합 모임방'], ['qna', '1:1 문의 답변']]],
-    LEARN,
+    LAW, CHECK, EDU,
     ['admin', '⚙️ 서비스·권한']
   ],
   gov: [
     ['home', '🏛️ 관할 조합 현황'],
     ['check', '🔍 점검', [['gdisc', '정보공개 이행'], ['gedu', '임원 교육 이수'], ['gvote', '총회·의결 결과'], ['bids', '입찰공고']]],
     ['view', '📂 조합 자료 열람', [['disclosure', '정보공개'], ['roster', '조합명부'], ['consent', '동의 현황']]],
+    LAW, CHECK,
     ['server', '🖥️ 서버 이용 현황']
   ]
 };
@@ -810,6 +813,11 @@ V.admin = function () {
     '<div class="grid" style="align-content:start;gap:16px"><div class="card"><h2>모임방 권한 신청 <span class="tag acc">' + S.permReq.length + '건</span></h2>' + (S.permReq.length ? '<ul class="list">' + S.permReq.map(function (q, i) { return '<li><span class="tt"><b>' + esc(q.name) + '</b> · 글쓰기 권한 · ' + q.at.slice(5) + '</span><button class="btn sm pri" data-act="permOk" data-i="' + i + '">승인</button><button class="btn sm" data-act="permNo" data-i="' + i + '">거절</button></li>'; }).join('') + '</ul>' : '<p class="empty" style="padding:16px">대기 중인 신청이 없습니다.</p>') + '</div>' +
     '<div class="card"><h2>회원 권한</h2><table class="t"><thead><tr><th>회원</th><th class="c">글쓰기</th><th class="c">댓글</th></tr></thead><tbody>' + mem.map(function (m) { var p = S.perm[m[0]] || {}; return '<tr><td>' + m[1] + '</td><td class="c"><button class="dot' + (p.write ? ' on' : '') + '" data-act="perm" data-u="' + m[0] + '" data-k="write"></button></td><td class="c"><button class="dot' + (p.comment ? ' on' : '') + '" data-act="perm" data-u="' + m[0] + '" data-k="comment"></button></td></tr>'; }).join('') + '</tbody></table><p class="law">허가받은 조합원만 글을 쓸 수 있습니다. 비방·허위 게시 시 권한을 회수하세요.</p></div></div></div>';
 };
+
+/* --- 법령·판례 / 절차 체크리스트 (기존 도구를 앱 안에 그대로 띄움) --- */
+function embed(src, title, sub) { return ph(title, sub, '<a class="btn sm" href="' + src + '" target="_blank" rel="noopener">새 창으로 크게 보기 ↗</a>') + '<iframe class="embed" src="' + src + '" title="' + title + '"></iframe>'; }
+V.law = function () { return embed('index.html', '법령·판례 검색', '도시정비법·시행령·시행규칙 조문과 관련 판례를 검색합니다. 조문 사이 참조도 바로 따라갈 수 있습니다.'); };
+V.check = function () { return embed('rebuild.html', '조합 절차 체크리스트·서식', '재건축 단계별로 해야 할 일과 필요한 서식을 확인하고 체크합니다.'); };
 
 /* --- 시·구 담당자 --- */
 var GOV_UNIONS = [
