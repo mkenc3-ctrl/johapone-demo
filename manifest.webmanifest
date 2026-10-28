@@ -1,0 +1,16 @@
+{
+  "name": "조합ONE — 재건축·재개발 통합정보시스템",
+  "short_name": "조합ONE",
+  "description": "조합원·조합·시청·구청이 한 시스템에서 만나는 재건축·재개발 원스톱 서비스 (내부 테스트용 시안)",
+  "lang": "ko",
+  "start_url": "union.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#FFFFFF",
+  "theme_color": "#0B5563",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}

@@ -1,0 +1,633 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>조합ONE — 재건축·재개발 통합정보시스템</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#0B5563">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<style>
+  /* 정보마카 창원 시안의 색·서체 체계를 그대로 사용 */
+  :root {
+    --ink: #1E2124; --ink2: #464C53; --muted: #5F6B75; --line: #D6DCE0; --line2: #E6EAED; --bd: #B1B8BE;
+    --pri: #0B5563; --pri-d: #08434E; --pri-s: #E6F1F3; --bg2: #F4F6F8;
+    --acc: #C2410C; --acc-d: #8A2E07; --acc-s: #FDEEE6;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: #FFFFFF; color: var(--ink);
+    font: 17px/1.6 'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+    word-break: keep-all; font-variant-numeric: tabular-nums;
+  }
+  a { color: var(--pri); } a:hover { color: var(--pri-d); }
+  a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible { outline: 3px solid var(--acc); outline-offset: 2px; }
+  .in { max-width: 1280px; margin: 0 auto; padding: 0 24px; }
+  .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .skip { position: absolute; left: -9999px; top: 0; z-index: 10; background: var(--ink); color: #fff; padding: 12px 16px; font-weight: 700; }
+  .skip:focus { left: 16px; top: 8px; color: #fff; }
+  svg.i { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+
+  /* 시안 안내 띠 */
+  .notice { background: var(--acc-s); color: var(--acc-d); font-size: 14px; }
+  .notice .in { padding-top: 8px; padding-bottom: 8px; display: flex; gap: 8px; align-items: center; }
+
+  /* 헤더 */
+  header { background: #fff; border-bottom: 1px solid var(--line); position: relative; }
+  .hd { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 24px; padding: 14px 0; }
+  .logo { display: flex; gap: 12px; align-items: center; text-decoration: none; color: var(--ink); min-height: 48px; }
+  .logo b { display: block; font-size: 24px; letter-spacing: -0.03em; line-height: 1.15; }
+  .logo small { display: block; font-size: 13px; color: var(--ink2); line-height: 1.3; }
+  .hd-r { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
+  .util { display: flex; flex-wrap: wrap; gap: 0 18px; font-size: 14px; }
+  .util a { color: var(--ink2); text-decoration: none; min-height: 32px; display: inline-flex; align-items: center; }
+  .util a:hover { color: var(--ink); text-decoration: underline; }
+  .util a.join { color: var(--acc); font-weight: 700; }
+  .hd-btns { display: flex; gap: 8px; }
+  .ob { height: 44px; padding: 0 14px; display: inline-flex; gap: 8px; align-items: center; justify-content: center; border: 1px solid var(--bd); border-radius: 6px; background: #fff; color: var(--ink); font: inherit; font-size: 15px; font-weight: 500; cursor: pointer; text-decoration: none; }
+  .ob:hover { background: var(--pri-s); }
+  .gnb ul { margin: 0; padding: 0; list-style: none; display: flex; flex-wrap: wrap; gap: 0 40px; font-size: 18px; font-weight: 700; }
+  .gnb a { color: var(--ink); text-decoration: none; display: inline-flex; align-items: center; min-height: 56px; }
+  .gnb a:hover { color: var(--pri); }
+  #allmenu { border-top: 1px solid var(--line); background: #fff; box-shadow: 0 12px 24px rgba(30,33,36,.12); position: absolute; left: 0; right: 0; z-index: 20; }
+  #allmenu[hidden] { display: none; }
+  .mega { padding: 28px 24px 32px; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(180px, 100%), 1fr)); gap: 24px; }
+  .mega p { margin: 0 0 4px; font-weight: 700; color: var(--pri); padding-bottom: 8px; border-bottom: 2px solid var(--pri); }
+  .mega a { color: var(--ink); text-decoration: none; font-size: 16px; min-height: 36px; display: flex; align-items: center; gap: 6px; }
+  .mega a:hover { color: var(--pri); }
+
+  /* 유료 배지 */
+  .pay { display: inline-block; font-size: 12px; font-weight: 700; line-height: 1.6; color: var(--acc-d); background: var(--acc-s); border-radius: 4px; padding: 0 6px; }
+
+  /* 히어로 */
+  .hero { background-color: #EEF5F6; background-image: linear-gradient(rgba(11,85,99,.06) 1px, transparent 1px), linear-gradient(90deg, rgba(11,85,99,.06) 1px, transparent 1px); background-size: 32px 32px; border-bottom: 1px solid var(--line); }
+  .hero .in { padding-top: 56px; padding-bottom: 64px; display: flex; flex-wrap: wrap; gap: 40px; align-items: center; }
+  .hero-l { flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column; gap: 20px; }
+  .eyebrow { margin: 0; font-size: 16px; font-weight: 700; color: var(--pri); }
+  .hero h1 { margin: 0; font-size: clamp(30px, 4.2vw, 46px); line-height: 1.3; letter-spacing: -0.03em; text-wrap: balance; }
+  .hero-l > p.lead { margin: 0; color: var(--ink2); max-width: 600px; }
+  .sbox { background: #fff; border: 1px solid var(--bd); border-radius: 8px; padding: 16px; display: flex; flex-wrap: wrap; gap: 8px; max-width: 720px; box-shadow: 0 2px 8px rgba(30,33,36,.06); }
+  .sbox select, .sbox input { height: 52px; padding: 0 12px; border: 1px solid var(--bd); border-radius: 6px; font: inherit; font-size: 16px; color: var(--ink); background: #fff; min-width: 0; }
+  .sbox input { flex: 3 1 220px; }
+  .pb { height: 52px; padding: 0 24px; display: inline-flex; align-items: center; gap: 8px; background: var(--pri); color: #fff; border: 0; border-radius: 6px; font: inherit; font-weight: 700; font-size: 16px; cursor: pointer; text-decoration: none; }
+  .pb:hover { background: var(--pri-d); color: #fff; }
+  .tags { display: flex; flex-wrap: wrap; gap: 6px 8px; align-items: center; font-size: 15px; }
+  .tags span { color: var(--ink2); margin-right: 4px; }
+  .tags a { color: var(--ink); background: #fff; border: 1px solid var(--line); border-radius: 999px; padding: 0 14px; min-height: 36px; display: inline-flex; align-items: center; text-decoration: none; }
+  .tags a:hover { border-color: var(--pri); }
+
+  .mycard { flex: 1 1 360px; min-width: 0; background: #fff; border: 1px solid var(--line); border-radius: 8px; padding: 28px; display: flex; flex-direction: column; gap: 20px; box-shadow: 0 2px 8px rgba(30,33,36,.06); }
+  .mycard .t { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 4px 12px; }
+  .mycard h2 { margin: 0; font-size: 19px; }
+  .mycard .t span { font-size: 14px; color: var(--muted); }
+  .big { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+  .big div { display: flex; flex-direction: column; gap: 2px; }
+  .big b { font-size: clamp(32px, 8vw, 42px); line-height: 1.1; color: var(--pri); }
+  .big b small { font-size: 18px; margin-left: 2px; }
+  .big span { font-size: 14px; color: var(--ink2); }
+  .more { font-size: 15px; font-weight: 700; display: inline-flex; align-items: center; gap: 4px; min-height: 44px; align-self: flex-start; text-decoration: none; }
+
+  /* 섹션 */
+  section.sec { padding-top: 48px; }
+  .sh { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 8px 16px; margin-bottom: 20px; }
+  .sh h2 { margin: 0; font-size: 24px; letter-spacing: -0.02em; }
+  .sh p { margin: 4px 0 0; font-size: 16px; color: var(--ink2); }
+  .seg { display: flex; border: 1px solid var(--bd); border-radius: 6px; overflow: hidden; }
+  .seg button { min-height: 40px; padding: 0 16px; border: 0; border-right: 1px solid var(--bd); background: #fff; font: inherit; font-size: 15px; color: var(--ink2); cursor: pointer; }
+  .seg button:last-child { border-right: 0; }
+  .seg button[aria-pressed="true"] { background: var(--pri); color: #fff; font-weight: 700; }
+
+  /* 서비스 타일 */
+  .ql { margin: 0; padding: 0; list-style: none; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(200px, 100%), 1fr)); gap: 12px; }
+  .ql a { position: relative; height: 100%; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 10px; padding: 24px 12px 20px; border: 1px solid var(--line); border-radius: 8px; text-decoration: none; color: var(--ink); font-size: 17px; font-weight: 700; }
+  .ql a:hover { border-color: var(--pri); background: #F8FBFB; }
+  .ql .ic { width: 56px; height: 56px; border-radius: 50%; background: var(--pri-s); color: var(--pri); display: flex; align-items: center; justify-content: center; }
+  .ql a.paid .ic { background: var(--acc-s); color: var(--acc); }
+  .ql .d { font-size: 14px; font-weight: 400; color: var(--muted); line-height: 1.45; }
+  .ql .pay, .ql .live { position: absolute; top: 10px; right: 10px; }
+  .live { font-size: 12px; font-weight: 700; color: var(--pri); background: var(--pri-s); border-radius: 4px; padding: 0 6px; line-height: 1.6; }
+
+  /* 소식 + 도입 문의 */
+  .row2 { display: flex; flex-wrap: wrap; gap: 24px; }
+  .news { flex: 999 1 560px; min-width: 0; }
+  .tabbar { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 8px 16px; border-bottom: 2px solid var(--ink); }
+  .tabbar [role=tablist] { display: flex; flex-wrap: wrap; gap: 0 28px; }
+  .tab { min-height: 52px; padding: 0; border: 0; border-bottom: 4px solid transparent; margin-bottom: -2px; background: transparent; font: inherit; font-size: 20px; font-weight: 700; color: var(--muted); cursor: pointer; }
+  .tab:hover { color: var(--pri); }
+  .tab[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--pri); }
+  .tabbar > a { min-height: 44px; display: inline-flex; align-items: center; font-size: 15px; color: var(--ink2); text-decoration: none; }
+  .list { margin: 0; padding: 0; list-style: none; }
+  .list li { display: flex; flex-wrap: wrap; gap: 4px 20px; align-items: baseline; padding: 18px 4px; border-bottom: 1px solid var(--line2); }
+  .list li:hover { background: #F8FAFB; }
+  .list .tt { flex: 1 1 360px; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+  .list .tt a { color: var(--ink); text-decoration: none; font-size: 17px; font-weight: 500; }
+  .list .tt span { font-size: 15px; color: var(--muted); }
+  .list time { font-size: 15px; color: var(--muted); }
+  .bdg { display: inline-block; font-size: 13px; font-weight: 700; color: var(--pri); background: var(--pri-s); border-radius: 4px; padding: 0 8px; margin-right: 8px; vertical-align: 2px; }
+  .bdg.hot { color: var(--acc-d); background: var(--acc-s); }
+  aside.sched { flex: 1 1 320px; min-width: 0; background: var(--bg2); border-radius: 8px; padding: 28px; display: flex; flex-direction: column; gap: 16px; align-self: flex-start; }
+  aside.sched h2 { margin: 0; font-size: 20px; }
+
+  /* 배너 */
+  .banners { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(420px, 100%), 1fr)); gap: 16px; }
+  .bn { border-radius: 8px; padding: 32px; display: flex; justify-content: space-between; align-items: center; gap: 20px; text-decoration: none; }
+  .bn > span { display: flex; flex-direction: column; gap: 8px; }
+  .bn .k { font-size: 14px; font-weight: 700; }
+  .bn .h { font-size: 24px; font-weight: 700; letter-spacing: -0.02em; }
+  .bn .s { font-size: 16px; }
+  .bn.p { background: var(--pri); color: #fff; } .bn.p:hover { background: var(--pri-d); color: #fff; }
+  .bn.p .k { color: #CFE3E7; } .bn.p .s { color: var(--pri-s); }
+  .bn.o { background: var(--bg2); color: var(--ink); border: 1px solid var(--line); } .bn.o:hover { background: var(--pri-s); color: var(--ink); }
+  .bn.o .k { color: var(--acc-d); } .bn.o .s { color: var(--ink2); }
+
+  /* 요금 */
+  .plans { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr)); gap: 16px; }
+  .plan { border: 1px solid var(--line); border-radius: 8px; padding: 28px; display: flex; flex-direction: column; gap: 12px; }
+  .plan.best { border: 2px solid var(--acc); }
+  .plan h3 { margin: 0; font-size: 20px; display: flex; gap: 8px; align-items: center; }
+  .plan .pr { font-size: 30px; font-weight: 700; color: var(--pri); line-height: 1.2; }
+  .plan.best .pr { color: var(--acc); }
+  .plan .pr small { font-size: 15px; font-weight: 400; color: var(--muted); }
+  .plan ul { margin: 0; padding: 0 0 0 20px; font-size: 16px; flex: 1; }
+  .plan li { padding: 3px 0; }
+  .plan .pb, .plan .ob { height: 48px; justify-content: center; }
+  .plan.best .pb { background: var(--acc); } .plan.best .pb:hover { background: var(--acc-d); }
+  .fn { margin: 12px 0 0; font-size: 14px; color: var(--muted); }
+
+  footer { margin-top: 72px; background: var(--bg2); border-top: 1px solid var(--line); color: var(--ink2); font-size: 15px; }
+  footer nav { padding: 20px 0; border-bottom: 1px solid var(--line); display: flex; flex-wrap: wrap; gap: 0 24px; }
+  footer nav a { color: var(--ink); text-decoration: none; min-height: 44px; display: inline-flex; align-items: center; }
+  footer nav a:first-child { color: var(--pri); font-weight: 700; }
+  footer .fi { padding: 28px 0 40px; display: flex; flex-wrap: wrap; gap: 20px 48px; justify-content: space-between; }
+  footer .fi b { font-size: 18px; color: var(--ink); }
+
+  #toast { position: fixed; left: 50%; bottom: 32px; transform: translate(-50%, 12px); opacity: 0; transition: opacity .2s, transform .2s; background: var(--ink); color: #fff; padding: 12px 20px; border-radius: 8px; font-size: 15px; z-index: 50; pointer-events: none; }
+  #toast.on { opacity: 1; transform: translate(-50%, 0); }
+
+  /* 이용 현황 미니 지표 */
+  .mini { margin: 0; display: grid; grid-template-columns: repeat(3, 1fr); border-top: 1px solid var(--line); padding-top: 16px; text-align: center; }
+  .mini div { display: flex; flex-direction: column-reverse; border-right: 1px solid var(--line2); }
+  .mini div:last-child { border-right: 0; }
+  .mini dt { font-size: 13px; color: var(--muted); }
+  .mini dd { margin: 0; font-size: 20px; font-weight: 700; }
+
+  /* 신뢰 포인트 */
+  .feat { margin: 0; padding: 0; list-style: none; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr)); gap: 12px; }
+  .feat li { border: 1px solid var(--line); border-radius: 8px; padding: 24px; display: flex; flex-direction: column; gap: 8px; }
+  .feat .ic { font-size: 28px; line-height: 1; }
+  .feat b { font-size: 18px; }
+  .feat li > span:last-child { font-size: 15px; color: var(--ink2); }
+
+  /* 도입 절차 */
+  .proc { margin: 0; padding: 0; list-style: none; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(190px, 100%), 1fr)); gap: 12px; counter-reset: p; }
+  .proc li { background: var(--bg2); border-radius: 8px; padding: 20px; display: flex; flex-direction: column; gap: 4px; border-top: 4px solid var(--pri); }
+  .proc li::before { counter-increment: p; content: "STEP " counter(p); font-size: 13px; font-weight: 700; color: var(--acc); }
+  .proc b { font-size: 18px; }
+  .proc span { font-size: 15px; color: var(--ink2); }
+
+  /* 도입 문의 폼 */
+  .inq { display: flex; flex-direction: column; gap: 10px; }
+  .inq label { display: flex; flex-direction: column; gap: 4px; font-size: 14px; font-weight: 500; color: var(--ink2); }
+  .inq input, .inq select { height: 46px; padding: 0 12px; border: 1px solid var(--bd); border-radius: 6px; font: inherit; font-size: 16px; color: var(--ink); background: #fff; }
+
+  /* 요금 구간표 */
+  .tier { width: 100%; border-collapse: collapse; font-size: 15px; }
+  .tier th, .tier td { padding: 8px 4px; border-bottom: 1px solid var(--line2); text-align: left; }
+  .tier th { font-weight: 500; color: var(--ink2); }
+  .tier td { text-align: right; font-weight: 700; }
+
+  /* 홍보 팝업 (첫 방문) */
+  #pop { border: 0; padding: 0; border-radius: 12px; width: min(560px, calc(100% - 24px)); max-height: calc(100vh - 24px); overflow: auto; color: var(--ink); box-shadow: 0 24px 60px rgba(30,33,36,.35); }
+  #pop::backdrop { background: rgba(30,33,36,.55); }
+  .pop-h { background: var(--acc-s); padding: 26px 28px 22px; border-bottom: 1px solid #F4D3C1; }
+  .pop-h .k { display: inline-block; font-size: 14px; font-weight: 700; color: #fff; background: var(--acc); border-radius: 4px; padding: 1px 10px; }
+  .pop-h h2 { margin: 12px 0 4px; font-size: 24px; line-height: 1.4; letter-spacing: -0.02em; }
+  .pop-h h2 b { display: block; font-size: 40px; color: var(--acc-d); letter-spacing: -0.03em; }
+  .pop-h p { margin: 0; font-size: 14px; color: var(--ink2); }
+  .pop-b { padding: 22px 28px 6px; }
+  .cmp { display: grid; gap: 10px; }
+  .cmp .row { display: grid; grid-template-columns: 92px 1fr; gap: 10px; align-items: center; font-size: 15px; font-weight: 700; }
+  .cmp .tr { height: 36px; background: var(--line2); border-radius: 6px; position: relative; overflow: hidden; }
+  .cmp .tr i { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 6px; }
+  .cmp .tr span { position: absolute; right: 12px; top: 0; line-height: 36px; font-weight: 700; }
+  .cmp .off i { background: var(--ink2); width: 100%; } .cmp .off span { color: #fff; }
+  .cmp .on i { background: var(--acc); width: 3%; } .cmp .on span { color: var(--acc-d); }
+  .pop-sec { margin: 20px 0 0; font-size: 16px; font-weight: 700; }
+  .pop-list { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 6px; }
+  .pop-list li { display: grid; grid-template-columns: 28px 1fr auto; gap: 8px; align-items: center; font-size: 16px; padding: 10px 12px; background: var(--bg2); border-radius: 8px; }
+  .pop-list li span:nth-child(2) { color: var(--ink2); }
+  .pop-list li b { color: var(--pri); }
+  .pop-one { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 8px; text-align: center; }
+  .pop-one div { border: 1px solid var(--line); border-radius: 8px; padding: 10px 6px; font-size: 14px; }
+  .pop-one b { display: block; font-size: 16px; color: var(--ink); }
+  .pop-a { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 18px 28px 20px; }
+  .pop-a a { height: 50px; justify-content: center; font-size: 16px; }
+  .pop-a .pb.acc { background: var(--acc); } .pop-a .pb.acc:hover { background: var(--acc-d); }
+  .pop-f { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px 20px; border-top: 1px solid var(--line); background: var(--bg2); font-size: 15px; }
+  .pop-f label { display: flex; gap: 8px; align-items: center; cursor: pointer; color: var(--ink); font-weight: 500; }
+  .pop-f input { width: 20px; height: 20px; accent-color: var(--acc); }
+  .pop-f button { border: 1px solid var(--bd); background: #fff; border-radius: 6px; height: 38px; padding: 0 16px; font: inherit; font-size: 15px; font-weight: 700; cursor: pointer; color: var(--ink); }
+
+  @media (max-width: 767px) {
+    .gnb, .util { display: none !important; }
+    .in { padding: 0 16px; }
+    .hero .in { padding-top: 36px; padding-bottom: 40px; }
+    .bn { padding: 24px; }
+    .pop-h, .pop-b, .pop-a { padding-left: 20px; padding-right: 20px; }
+    .pop-h h2 b { font-size: 32px; }
+  }
+</style>
+</head>
+<body>
+<a class="skip" href="#main">본문 바로가기</a>
+
+<div class="notice"><div class="in">
+  <svg class="i" width="16" height="16" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="12.5"/><line x1="12" y1="16" x2="12" y2="16"/></svg>
+  <p style="margin:0"><strong>내부 회의용 시안</strong> · 화면의 조합명·수치·단가는 모두 예시입니다.</p>
+</div></div>
+
+<header>
+  <div class="in">
+    <div class="hd">
+      <a class="logo" href="platform.html">
+        <svg width="40" height="40" viewBox="0 0 40 40" aria-hidden="true"><rect x="1.5" y="1.5" width="37" height="37" rx="6" fill="none" stroke="#0B5563" stroke-width="3"/><line x1="20" y1="2" x2="20" y2="38" stroke="#0B5563" stroke-width="3"/><line x1="2" y1="20" x2="38" y2="20" stroke="#0B5563" stroke-width="3"/><path d="M21.5 3H32.5A5 5 0 0 1 37 8V18.5H21.5Z" fill="#C2410C"/></svg>
+        <span><b>조합<em style="font-style:normal;color:#C2410C">ONE</em></b><small>재건축·재개발 통합정보시스템</small></span>
+      </a>
+      <div class="hd-r">
+        <nav class="util" aria-label="이용자 메뉴">
+          <a href="union.html">우리 조합 입장</a>
+          <a href="union.html">조합 관리자</a>
+          <a href="union.html">시·구 담당자</a>
+          <a href="#inquiry" class="join">도입 문의</a>
+          <a href="#" id="popOpen">비용 절감 안내</a>
+        </nav>
+        <div class="hd-btns">
+          <a href="index.html" class="ob" aria-label="법령·판례 검색" style="width:44px;padding:0"><svg class="i" width="20" height="20" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><line x1="16.5" y1="16.5" x2="21" y2="21"/></svg></a>
+          <button type="button" class="ob" id="menuBtn" aria-expanded="false" aria-controls="allmenu"><svg class="i" width="20" height="20" viewBox="0 0 24 24"><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/></svg><span>전체메뉴</span></button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <nav class="gnb in" aria-label="주 메뉴">
+    <ul>
+      <li><a href="#services">서비스 소개</a></li>
+      <li><a href="#why">보안·신뢰</a></li>
+      <li><a href="#process">도입 절차</a></li>
+      <li><a href="#pricing">요금 안내</a></li>
+      <li><a href="index.html">법령·판례</a></li>
+      <li><a href="#news">고객지원</a></li>
+    </ul>
+  </nav>
+  <div id="allmenu" hidden><div class="in mega" id="mega"></div></div>
+</header>
+
+<main id="main">
+
+<section class="hero" aria-labelledby="hero-title">
+  <div class="in">
+    <div class="hero-l">
+      <p class="eyebrow">재건축·재개발 원스톱 통합정보시스템</p>
+      <h1 id="hero-title">종이·우편·인력으로 쓰던 조합 비용,<br>조합ONE 하나로 확 줄이세요</h1>
+      <p class="lead">등기우편, 책자 인쇄, 서면결의서 징구 인력, 총회장 대관까지. 오프라인으로 쓰던 비용을 전자동의·전자투표·온라인총회로 대체합니다. 조합원·조합·시청·구청이 한 시스템에서 만나는 원스톱 서비스입니다.</p>
+      <form class="sbox" id="enter" role="search" aria-label="우리 조합 찾기" action="union.html">
+        <label for="s-q" class="sr">조합 이름</label>
+        <input id="s-q" type="search" placeholder="우리 조합 이름으로 입장 (예: OO아파트 재건축)">
+        <button class="pb" type="submit"><svg class="i" width="18" height="18" viewBox="0 0 24 24" style="stroke-width:2.4"><circle cx="11" cy="11" r="7"/><line x1="16.5" y1="16.5" x2="21" y2="21"/></svg>조합 입장</button>
+      </form>
+      <div class="tags">
+        <span>누구나 무료</span>
+        <a href="index.html"># 법령·판례 검색</a>
+        <a href="rebuild.html"># 사업 절차 체크리스트</a>
+        <a href="#inquiry" style="border-color:var(--acc);color:var(--acc-d);font-weight:700">우리 조합 도입 문의 ›</a>
+      </div>
+    </div>
+
+    <div class="mycard">
+      <div class="t"><h2>조합ONE 이용 현황</h2><span>예시 수치</span></div>
+      <div class="big">
+        <div><b>42<small>개</small></b><span>도입 조합</span></div>
+        <div><b>38,500<small>명</small></b><span>관리 조합원</span></div>
+      </div>
+      <dl class="mini">
+        <div><dt>전자동의</dt><dd>12.4만 건</dd></div>
+        <div><dt>전자투표</dt><dd>186회</dd></div>
+        <div><dt>온라인총회</dt><dd>97회</dd></div>
+      </dl>
+      <a href="#process" class="more">도입 절차 보기 <svg class="i" width="16" height="16" viewBox="0 0 24 24" style="stroke-width:2.2"><polyline points="9 6 15 12 9 18"/></svg></a>
+    </div>
+  </div>
+</section>
+
+<section class="sec in" id="services" aria-labelledby="ql-title">
+  <div class="sh">
+    <div>
+      <h2 id="ql-title">주요 서비스</h2>
+      <p>조합 업무 전 과정을 한 곳에서. 필요한 카테고리만 골라 쓰고, <span class="pay">유료</span> 카테고리도 이용한 만큼만 냅니다. 카드를 누르면 시안 화면으로 이동합니다.</p>
+    </div>
+    <div class="seg" role="group" aria-label="서비스 구분">
+      <button type="button" aria-pressed="true" data-f="all">전체</button>
+      <button type="button" aria-pressed="false" data-f="free">무료</button>
+      <button type="button" aria-pressed="false" data-f="paid">유료</button>
+    </div>
+  </div>
+  <ul class="ql" id="ql"></ul>
+</section>
+
+<section class="sec in" id="why" aria-labelledby="why-title">
+  <div class="sh"><div>
+    <h2 id="why-title">조합이 믿고 맡길 수 있는 이유</h2>
+    <p>조합원 개인정보를 다루는 시스템이기에, 법적 요건을 설계 단계부터 반영했습니다.</p>
+  </div></div>
+  <ul class="feat">
+    <li><span class="ic">🔒</span><b>조합별 데이터 완전 분리</b><span>조합마다 독립된 전용 공간·전용 주소. 다른 조합과 데이터가 섞이지 않습니다.</span></li>
+    <li><span class="ic">🛡️</span><b>개인정보 안전조치</b><span>주민번호·신분증 암호화, 화면 마스킹, 접속기록 2년 보관, 다운로드 사유 기록.</span></li>
+    <li><span class="ic">📑</span><b>위탁계약 표준안 제공</b><span>조합은 개인정보처리자, 조합ONE은 수탁자. 개인정보보호법 제26조 위탁계약을 함께 체결합니다.</span></li>
+    <li><span class="ic">⚖️</span><b>도시정비법 기반 설계</b><span>본인확인(법 제45조), 정보공개(제124조), 청산 시까지 보관(제125조)을 기능으로 반영.</span></li>
+  </ul>
+</section>
+
+<section class="sec in" id="process" aria-labelledby="proc-title">
+  <div class="sh"><div>
+    <h2 id="proc-title">도입 절차</h2>
+    <p>상담부터 조합원 초대까지 평균 2주.</p>
+  </div></div>
+  <ol class="proc">
+    <li><b>도입 상담</b><span>조합 규모·사업 단계 확인, 필요한 기능 선택</span></li>
+    <li><b>계약 체결</b><span>서비스 이용계약 + 개인정보 처리 위탁계약</span></li>
+    <li><b>전용 공간 개설</b><span>조합 전용 주소 발급, 임원·사무국 계정 생성</span></li>
+    <li><b>명부 이관</b><span>기존 엑셀 명부·서류 일괄 등록 지원</span></li>
+    <li><b>조합원 초대</b><span>문자·카카오 알림톡으로 가입 안내</span></li>
+  </ol>
+</section>
+
+<section class="sec in" id="news" aria-labelledby="news-title">
+  <div class="row2">
+    <div class="news">
+      <div class="tabbar">
+        <h2 id="news-title" class="sr">고객지원 소식</h2>
+        <div role="tablist" aria-label="고객지원 소식" id="tabs"></div>
+        <a href="#">더보기 +</a>
+      </div>
+      <div role="tabpanel" id="news-panel"><ul class="list" id="newsList"></ul></div>
+    </div>
+
+    <aside class="sched" id="inquiry" aria-labelledby="inq-title">
+      <h2 id="inq-title">도입 문의</h2>
+      <p style="margin:0;font-size:15px;color:var(--ink2)">담당자가 1영업일 안에 연락드립니다.</p>
+      <form class="inq" id="inqForm">
+        <label>조합명<input required placeholder="OO아파트 재건축정비사업조합"></label>
+        <label>구분<select><option>조합 (조합장·사무국)</option><option>추진위원회</option><option>시청·구청 담당자</option><option>정비사업전문관리업자</option></select></label>
+        <label>조합원 수<select><option>300명 이하</option><option>301~1,000명</option><option>1,001명 이상</option></select></label>
+        <label>연락처<input required type="tel" placeholder="010-0000-0000"></label>
+        <button class="pb" type="submit" style="justify-content:center">상담 신청</button>
+      </form>
+    </aside>
+  </div>
+</section>
+
+<section class="sec in" aria-label="바로가기 배너">
+  <div class="banners">
+    <a href="union.html#consent" class="bn p">
+      <span><span class="k">유료 · 조합원 본인인증 기반</span><span class="h">전자동의서 받기</span><span class="s">종이 동의서 없이 휴대폰으로 서명받고, 동의율을 실시간으로 집계합니다.</span></span>
+      <svg class="i" width="40" height="40" viewBox="0 0 24 24" style="stroke-width:1.8"><circle cx="12" cy="12" r="9"/><polyline points="10 8 14 12 10 16"/></svg>
+    </a>
+    <a href="union.html#assembly" class="bn o">
+      <span><span class="k">유료 · 총회 1회당</span><span class="h">온라인총회·전자투표</span><span class="s">총회장 대관과 서면결의서 징구 인력 없이, 실시간 중계와 전자투표로 진행합니다.</span></span>
+      <svg class="i" width="40" height="40" viewBox="0 0 24 24" style="stroke-width:1.8;color:var(--pri)"><circle cx="12" cy="12" r="9"/><polyline points="10 8 14 12 10 16"/></svg>
+    </a>
+  </div>
+</section>
+
+<section class="sec in" id="pricing" aria-labelledby="pr-title">
+  <div class="sh">
+    <div>
+      <h2 id="pr-title">요금 안내</h2>
+      <p>월 구독 없음. 시청·구청은 서버 이용료, 조합은 쓴 카테고리만.</p>
+    </div>
+  </div>
+  <div class="plans">
+    <div class="plan">
+      <h3>시청·구청</h3>
+      <div class="pr">서버 이용료 <small>/ 연간 계약</small></div>
+      <ul>
+        <li>관할 조합 수·저장 용량 기준</li>
+        <li><b>담당 공무원 전용 관리자 계정</b> (인증서·기관 IP 로그인)</li>
+        <li>관할 조합 정보공개 이행 점검</li>
+        <li>임원 법정교육 이수 현황</li>
+        <li>총회·의결 결과 열람</li>
+      </ul>
+      <a href="union.html" class="ob">담당자 화면 보기</a>
+    </div>
+    <div class="plan best">
+      <h3>조합 · 유료 카테고리 <span class="pay">이용한 만큼</span></h3>
+      <table class="tier">
+        <tr><th>전자동의서</th><td>동의서 징구 1회당</td></tr>
+        <tr><th>총회·투표</th><td>총회 1회당</td></tr>
+        <tr><th>조합명부관리</th><td>연간 이용</td></tr>
+        <tr><th>문자·알림톡</th><td>발송 건당 실비</td></tr>
+      </table>
+      <ul>
+        <li>총회·투표 = 온라인총회 + 전자투표 (서면·전자 구분 집계)</li>
+        <li>조합명부관리 = 명부 작성 + 엑셀 가져오기 + 신분증·서면결의서 연번순·이름순 + 연번부여 + 건축물대장 서식</li>
+      </ul>
+      <a href="#inquiry" class="pb">도입 상담 신청</a>
+    </div>
+    <div class="plan">
+      <h3>조합 · 무료 카테고리</h3>
+      <div class="pr">0원</div>
+      <ul>
+        <li>조합 소식 (정보공개·일정·입찰공고)</li>
+        <li>모임방·문의</li>
+        <li>내 정보 (증명서·분담금 계산)</li>
+        <li>교육·자료 (법령·판례·체크리스트)</li>
+      </ul>
+      <a href="union.html" class="ob">조합 화면 보기</a>
+    </div>
+  </div>
+  <p class="fn">※ 금액은 초안 단계로 확정 전입니다.</p>
+</section>
+
+</main>
+
+<footer>
+  <div class="in">
+    <nav aria-label="정책 링크">
+      <a href="#">개인정보처리방침</a><a href="#">이용약관</a><a href="#">전자서명 이용약관</a><a href="#">위치·본인인증 안내</a><a href="#">웹 접근성 안내</a>
+    </nav>
+    <div class="fi">
+      <div style="display:flex;flex-direction:column;gap:6px">
+        <b>조합ONE · 재건축·재개발 통합정보시스템</b>
+        <span>여러 조합이 각자의 전용 공간에서 이용하는 조합 운영 서비스</span>
+        <span>고객센터 (평일 09:00~18:00)</span>
+      </div>
+      <p style="margin:0;align-self:flex-end;font-size:14px;color:var(--muted)">내부 회의용 디자인 시안</p>
+    </div>
+  </div>
+</footer>
+
+<!-- 첫 방문 홍보 팝업 -->
+<dialog id="pop" aria-labelledby="pop-title">
+  <div class="pop-h">
+    <span class="k">조합원 1,000명 · 총회 1회 기준</span>
+    <h2 id="pop-title">총회 한 번에<b id="popSave">약 6,236만원</b>아낄 수 있습니다</h2>
+    <p>오프라인 총회 비용을 조합ONE으로 바꿨을 때 (예시 단가)</p>
+  </div>
+  <div class="pop-b">
+    <div class="cmp">
+      <div class="row"><span>오프라인</span><div class="tr off"><i></i><span id="popOff"></span></div></div>
+      <div class="row"><span>조합ONE</span><div class="tr on"><i></i><span id="popOn"></span></div></div>
+    </div>
+    <p class="pop-sec">이렇게 바뀝니다</p>
+    <ul class="pop-list">
+      <li><span>✉️</span><span>등기우편 발송</span><b>→ 알림톡</b></li>
+      <li><span>🧾</span><span>서면결의서 징구 인력</span><b>→ 전자투표</b></li>
+      <li><span>✍️</span><span>동의서 방문 회수</span><b>→ 전자동의서</b></li>
+      <li><span>🏟️</span><span>총회장 대관</span><b>→ 온라인총회</b></li>
+    </ul>
+    <p class="pop-sec">원스톱 · 한 시스템에서</p>
+    <div class="pop-one">
+      <div><b>조합원</b>휴대폰으로 동의·투표</div>
+      <div><b>조합 사무국</b>명부·집계 자동화</div>
+      <div><b>시·구청</b>관할 조합 점검</div>
+    </div>
+  </div>
+  <div class="pop-a">
+    <a class="ob" href="union.html" id="popDemo">데모 체험하기</a>
+    <a class="pb acc" href="#inquiry" id="popCta">도입 상담 신청</a>
+  </div>
+  <div class="pop-f">
+    <label><input type="checkbox" id="popHide"> 오늘 하루 보지 않기</label>
+    <button type="button" id="popClose">닫기</button>
+  </div>
+</dialog>
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script>
+  // 아이콘 (24x24 stroke)
+  var IC = {
+    doc: '<path d="M5 3h9l5 5v13H5z"/><path d="M14 3v5h5"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="13" y2="17"/>',
+    sign: '<path d="M4 20h16"/><path d="M14.5 4.5l5 5L9 20H4v-5z"/>',
+    vote: '<path d="M4 13h16v8H4z"/><path d="M8 13V4h8v9"/><path d="M10 8.5l1.5 1.5 3-3"/>',
+    people: '<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7"/><path d="M18 14.5a6.5 6.5 0 0 1 3.5 5.5"/>',
+    law: '<line x1="12" y1="3" x2="12" y2="21"/><line x1="5" y1="7" x2="19" y2="7"/><path d="M5 7l-3 7a3 3 0 0 0 6 0z"/><path d="M19 7l-3 7a3 3 0 0 0 6 0z"/><line x1="8" y1="21" x2="16" y2="21"/>',
+    num: '<line x1="4" y1="9" x2="20" y2="9"/><line x1="4" y1="15" x2="20" y2="15"/><line x1="10" y1="3" x2="8" y2="21"/><line x1="16" y1="3" x2="14" y2="21"/>',
+    chat: '<path d="M4 5h16v11H9l-5 4z"/><line x1="8" y1="9" x2="16" y2="9"/><line x1="8" y1="12.5" x2="13" y2="12.5"/>',
+    edu: '<path d="M2 9l10-5 10 5-10 5z"/><path d="M6 11v5c3 2.5 9 2.5 12 0v-5"/>'
+  };
+
+  // 8개 통합 카테고리 → 조합 전용 공간(union.html) 시안 화면으로 연결
+  var SV = [
+    { g: '소통', t: '조합 소식', ic: 'doc', d: '정보공개 · 일정 · 입찰공고 · 알림톡', part: true, href: 'union.html#disclosure',
+      sub: ['정보공개 (공지·계약·회의록)', '조합 일정', '입찰공고', '알림톡 발송 (유료)'] },
+    { g: '소통', t: '모임방·문의', ic: 'chat', d: '네이버 카페형 모임방 · 사무국 1:1 문의', href: 'union.html#cafe',
+      sub: ['조합 모임방 (허가 회원 글쓰기)', '사무국 1:1 문의'] },
+    { g: '전자행정', t: '전자동의서', ic: 'sign', d: '조합설립 찬반 · 본인인증 전자서명', paid: true, href: 'union.html#consent' },
+    { g: '전자행정', t: '총회·투표', ic: 'vote', d: '온라인총회 입장 · 전자투표 · 구분 집계', paid: true, href: 'union.html#assembly',
+      sub: ['온라인총회', '전자투표'] },
+    { g: '명부', t: '조합명부관리', ic: 'people', d: '명부 작성 · 엑셀 · 연번부여 · 건축물대장', paid: true, href: 'union.html#roster',
+      sub: ['명부 작성 · 엑셀 가져오기', '신분증·서면결의서 연번순·이름순', '연번부여', '건축물대장 서식'] },
+    { g: '명부', t: '내 정보', ic: 'num', d: '전자증명서 발급 · 분담금 계산', href: 'union.html#me',
+      sub: ['조합원 확인서 발급', '분담금 계산'] },
+    { g: '교육·자료', t: '교육·자료', ic: 'edu', d: '임원·조합원 교육 · 법령·판례 · 체크리스트', href: 'union.html#edu',
+      sub: ['임원·조합원 교육', '법령 및 판례검색', '절차 체크리스트·서식'] },
+    { g: '지자체', t: '시·구 담당자', ic: 'law', d: '관할 조합 점검 · 자료 열람', href: 'union.html' }
+  ];
+
+  function svg(k, s) { return '<svg class="i" width="' + s + '" height="' + s + '" viewBox="0 0 24 24" style="stroke-width:1.8">' + IC[k] + '</svg>'; }
+
+  // 서비스 타일
+  var ql = document.getElementById('ql');
+  function renderQL(f) {
+    ql.innerHTML = SV.map(function (s) {
+      if (f === 'free' && s.paid) return '';
+      if (f === 'paid' && !s.paid && !s.part) return '';
+      var badge = s.paid ? '<span class="pay">유료</span>' : s.part ? '<span class="pay" style="background:#EEF1F3;color:#464C53">일부 유료</span>' : '<span class="live">무료</span>';
+      return '<li><a href="' + s.href + '"' + (s.paid ? ' class="paid"' : '') + '>' + badge +
+        '<span class="ic">' + svg(s.ic, 28) + '</span>' + s.t + '<span class="d">' + s.d + '</span></a></li>';
+    }).join('');
+  }
+  document.querySelectorAll('.seg button').forEach(function (b) {
+    b.addEventListener('click', function () {
+      document.querySelectorAll('.seg button').forEach(function (x) { x.setAttribute('aria-pressed', x === b); });
+      renderQL(b.dataset.f);
+    });
+  });
+  renderQL('all');
+
+  // 전체메뉴
+  var groups = [];
+  SV.forEach(function (s) { if (groups.indexOf(s.g) < 0) groups.push(s.g); });
+  document.getElementById('mega').innerHTML = groups.map(function (g) {
+    return '<div><p>' + g + '</p>' + SV.map(function (s) {
+      return s.g !== g ? '' : '<a href="' + s.href + '">' + s.t + (s.paid ? ' <span class="pay">유료</span>' : '') + '</a>' +
+        (s.sub ? s.sub.map(function (x) { return '<a href="' + s.href + '" style="font-size:14px;color:var(--ink2);min-height:28px;padding-left:12px">· ' + x + '</a>'; }).join('') : '');
+    }).join('') + '</div>';
+  }).join('');
+  var menuBtn = document.getElementById('menuBtn'), allmenu = document.getElementById('allmenu');
+  menuBtn.addEventListener('click', function () {
+    var open = allmenu.hidden;
+    allmenu.hidden = !open;
+    menuBtn.setAttribute('aria-expanded', open);
+    menuBtn.lastChild.textContent = open ? '메뉴 닫기' : '전체메뉴';
+  });
+
+  var toastEl = document.getElementById('toast'), tt;
+  function toast(m) { toastEl.textContent = m; toastEl.classList.add('on'); clearTimeout(tt); tt = setTimeout(function () { toastEl.classList.remove('on'); }, 2200); }
+
+  // 우리 조합 입장 / 도입 문의 (시안: 실제 전송 없음)
+  document.getElementById('enter').addEventListener('submit', function (e) { e.preventDefault(); location.href = 'union.html'; });
+  document.getElementById('inqForm').addEventListener('submit', function (e) { e.preventDefault(); toast('시안 화면입니다. 실제로 전송되지 않습니다.'); });
+
+  // 고객지원 소식 (예시 데이터)
+  var NEWS = {
+    '서비스 공지': [
+      { b: '업데이트', hot: true, t: '전자투표 결과 구분 집계 기능 추가', d: '서면·전자 의결 결과를 각각 구분해 확인 (법 제45조 제6항 대응)', dt: '2026.10.27' },
+      { b: '보안', t: '관리자 계정 2단계 인증 의무화 안내', d: '11월 1일부터 모든 조합 관리자 계정에 적용', dt: '2026.10.20' },
+      { b: '점검', t: '정기 서버 점검 안내', d: '11월 2일(일) 02:00~04:00', dt: '2026.10.15' }
+    ],
+    '법령 개정': [
+      { b: '도시정비법', t: '전자적 방법 의결권 행사 관련 개정 정리', d: '전자적 방법 우선 이용 노력 의무 등', dt: '2026.10.18' },
+      { b: '판례', t: '서면결의서 본인확인 관련 최근 판례 요약', d: '법령·판례 검색에서 원문 확인', dt: '2026.10.09' }
+    ],
+    '도입 사례': [
+      { b: '재건축', t: 'OO아파트 재건축조합 — 동의서 징구 기간 단축', d: '1,200명 조합, 전자동의서 도입 사례 (예시)', dt: '2026.10.12' },
+      { b: '재개발', t: 'OO구역 재개발조합 — 온라인총회로 직접출석 요건 충족', d: '예시 사례', dt: '2026.09.30' }
+    ]
+  };
+  var tabsEl = document.getElementById('tabs'), listEl = document.getElementById('newsList');
+  function pick(name) {
+    tabsEl.innerHTML = Object.keys(NEWS).map(function (k) {
+      return '<button type="button" role="tab" class="tab" aria-selected="' + (k === name) + '" aria-controls="news-panel">' + k + '</button>';
+    }).join('');
+    listEl.innerHTML = NEWS[name].map(function (n) {
+      return '<li><span class="tt"><a href="#"><span class="bdg' + (n.hot ? ' hot' : '') + '">' + n.b + '</span>' + n.t + '</a><span>' + n.d + '</span></span><time>' + n.dt + '</time></li>';
+    }).join('');
+  }
+  tabsEl.addEventListener('click', function (e) { var b = e.target.closest('.tab'); if (b) pick(b.textContent); });
+  pick('서비스 공지');
+
+  // 홍보 팝업: 첫 방문 시 표시, "오늘 하루 보지 않기"
+  // 예시 단가(1인당): 등기우편 2회 6,000 · 인쇄 5,000 · 징구 인력 30,000 · 동의서 회수 15,000 · 명부 3,000 + 대관 400만원
+  var n = 1000, off = n * 59000 + 4000000, on = n * 640;
+  function man(v) { return Math.round(v / 1e4).toLocaleString('ko-KR') + '만원'; }
+  document.getElementById('popSave').textContent = '약 ' + man(off - on);
+  document.getElementById('popOff').textContent = man(off);
+  document.getElementById('popOn').textContent = man(on);
+  var POP_KEY = 'johapone-pop-hide', pop = document.getElementById('pop');
+  function todayStr() { var d = new Date(); return d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate(); }
+  function closePop() {
+    if (document.getElementById('popHide').checked) { try { localStorage.setItem(POP_KEY, todayStr()); } catch (e) {} }
+    if (pop.open) pop.close();
+  }
+  ['popClose', 'popDemo', 'popCta'].forEach(function (id) { document.getElementById(id).addEventListener('click', closePop); });
+  pop.addEventListener('cancel', function (e) { e.preventDefault(); closePop(); });
+  document.getElementById('popOpen').addEventListener('click', function (e) { e.preventDefault(); pop.showModal(); });
+  var hidden = null; try { hidden = localStorage.getItem(POP_KEY); } catch (e) {}
+  if (hidden !== todayStr()) setTimeout(function () { pop.showModal(); }, 400);
+</script>
+</body>
+</html>

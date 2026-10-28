@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>조합ONE 테스트 앱 설치 안내</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#0B5563">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+:root{--ink:#1E2124;--ink2:#464C53;--muted:#5F6B75;--line:#D6DCE0;--pri:#0B5563;--pri-s:#E6F1F3;--bg2:#F4F6F8;--acc:#C2410C;--acc-s:#FDEEE6;--acc-d:#8A2E07}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg2);color:var(--ink);font:17px/1.65 'Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic',sans-serif;word-break:keep-all}
+.wrap{max-width:880px;margin:0 auto;padding:28px 16px 60px}
+.hd{display:flex;gap:14px;align-items:center;margin-bottom:20px}
+.hd img{width:56px;height:56px;border-radius:14px}
+.hd h1{margin:0;font-size:26px;letter-spacing:-.02em}
+.hd p{margin:2px 0 0;color:var(--ink2);font-size:15px}
+.card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:24px;margin-bottom:16px}
+.card h2{margin:0 0 12px;font-size:20px}
+.top{display:grid;grid-template-columns:auto 1fr;gap:24px;align-items:center}
+#qr{background:#fff;padding:10px;border:1px solid var(--line);border-radius:8px;width:200px;height:200px}
+#qr img,#qr canvas{width:180px!important;height:180px!important}
+.url{font-weight:700;color:var(--pri);word-break:break-all}
+.btn{display:inline-flex;align-items:center;justify-content:center;height:52px;padding:0 24px;border-radius:8px;background:var(--acc);color:#fff;font-weight:700;text-decoration:none;font-size:17px;border:0}
+.btn.ln{background:#fff;color:var(--ink);border:1px solid #B1B8BE}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+ol{margin:0;padding-left:22px}
+ol li{padding:4px 0}
+.k{display:inline-block;background:var(--bg2);border:1px solid var(--line);border-radius:4px;padding:0 6px;font-weight:700;font-size:15px}
+.warn{background:var(--acc-s);color:var(--acc-d);border-radius:10px;padding:16px 18px;font-size:15px}
+.warn b{display:block;font-size:16px;margin-bottom:4px}
+table{width:100%;border-collapse:collapse;font-size:15px}
+td,th{border-bottom:1px solid var(--line);padding:9px 6px;text-align:left}
+th{background:var(--bg2)}
+@media (max-width:700px){.top,.g2{grid-template-columns:1fr}#qr{margin:0 auto}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hd"><img src="icons/icon-192.png" alt=""><div><h1>조합ONE 테스트 앱 설치 안내</h1><p>내부 테스트용 시안 · 앱스토어 설치 없이 휴대폰 홈 화면에 추가해 사용합니다</p></div></div>
+
+  <div class="card top">
+    <div id="qr" aria-label="앱 주소 QR코드"></div>
+    <div>
+      <h2>① 휴대폰으로 열기</h2>
+      <p style="margin:0 0 8px">휴대폰 카메라로 QR코드를 찍거나, 카톡으로 받은 링크를 누르세요.</p>
+      <p class="url" id="url"></p>
+      <a class="btn" id="go" href="union.html">지금 열기</a>
+    </div>
+  </div>
+
+  <div class="g2">
+    <div class="card">
+      <h2>🤖 갤럭시 (안드로이드)</h2>
+      <ol>
+        <li>링크를 <b>크롬</b> 또는 <b>삼성 인터넷</b>으로 엽니다<br><small style="color:var(--muted)">카톡 안에서 열렸다면 오른쪽 위 <span class="k">⋮</span> → <span class="k">다른 브라우저로 열기</span></small></li>
+        <li>오른쪽 위 <span class="k">⋮</span> 또는 아래 <span class="k">≡</span> 메뉴</li>
+        <li><span class="k">홈 화면에 추가</span> 또는 <span class="k">앱 설치</span></li>
+        <li>바탕화면의 <b>조합ONE</b> 아이콘으로 실행</li>
+      </ol>
+    </div>
+    <div class="card">
+      <h2>🍎 아이폰</h2>
+      <ol>
+        <li>링크를 <b>사파리</b>로 엽니다<br><small style="color:var(--muted)">카톡 안에서 열렸다면 오른쪽 아래 <span class="k">⋯</span> → <span class="k">Safari로 열기</span></small></li>
+        <li>아래 가운데 <span class="k">공유 ⬆</span> 버튼</li>
+        <li><span class="k">홈 화면에 추가</span> → <span class="k">추가</span></li>
+        <li>바탕화면의 <b>조합ONE</b> 아이콘으로 실행</li>
+      </ol>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>② 테스트 계정 (로그인 화면에서 선택)</h2>
+    <table>
+      <tr><th>계정</th><th>테스트할 것</th></tr>
+      <tr><td>홍길동 (조합원·글쓰기 허가)</td><td>전자동의서 서명 제출, 전자투표, 온라인총회 입장, 모임방 글쓰기</td></tr>
+      <tr><td>홍순자 (조합원·일반)</td><td>모임방 글쓰기 권한 신청, 정보공개 확인</td></tr>
+      <tr><td>박정수 (조합장)</td><td>동의·투표 집계, 정보공개 등록, 명부관리, 권한 승인</td></tr>
+      <tr><td>김주무관 (구청 담당자)</td><td>관할 조합 점검, 자료 열람</td></tr>
+    </table>
+  </div>
+
+  <div class="warn">
+    <b>⚠️ 꼭 지켜주세요</b>
+    실제 조합원 명부·신분증·연락처 등 개인정보는 절대 입력하거나 엑셀로 올리지 마세요. 이 시안은 테스트용이며, 입력한 내용은 각자 휴대폰에만 저장되어 다른 사람에게 보이지 않습니다.
+  </div>
+
+  <p style="text-align:center;margin-top:20px"><a class="btn ln" href="platform.html">서비스 소개 페이지 보기</a></p>
+</div>
+<script>
+  var app = new URL('union.html', location.href).href;
+  document.getElementById('url').textContent = app;
+  document.getElementById('go').href = app;
+  if (window.QRCode) new QRCode(document.getElementById('qr'), { text: app, width: 180, height: 180, colorDark: '#1E2124', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.M });
+  else document.getElementById('qr').textContent = 'QR을 불러오지 못했습니다. 위 주소를 사용하세요.';
+</script>
+</body>
+</html>
