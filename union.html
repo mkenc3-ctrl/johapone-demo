@@ -350,7 +350,7 @@ if (!S || S.v !== 3) S = seed();
 if (!S.proReq) S.proReq = []; // 이전에 저장된 데모 데이터 호환
 var ME = null; try { ME = sessionStorage.getItem('johapone-me'); } catch (e) {}
 var IMPORTED = null; // 엑셀로 불러온 명부는 메모리에만 보관
-function save() { try { localStorage.setItem(K, JSON.stringify(S)); } catch (e) {} }
+function save() { try { localStorage.setItem(K, JSON.stringify(S)); } catch (e) {} if (window.SYNC) SYNC.schedule(); }
 function roster() { return IMPORTED || S.roster; }
 function U() { return USERS[ME]; }
 function role() { return U() ? U().role : null; }
@@ -951,7 +951,7 @@ function render() {
   }).join('');
   var gtabs = grp && grp[2] ? '<nav class="gtabs" aria-label="' + grp[1] + '">' + grp[2].map(function (t) { var ext = t[0][0] === '@'; return '<a href="' + (ext ? t[0].slice(1) : '#' + t[0]) + '"' + (ext ? ' target="_blank"' : '') + ' class="' + (t[0] === r ? 'on' : '') + '">' + t[1] + tagP(t[0]) + '</a>'; }).join('') + '</nav>' : '';
   var u = U();
-  app.innerHTML = '<header class="top"><a class="logo" href="#home">' + LOGO + '<b>조합<em>ONE</em></b></a><span class="org">' + (rl === 'gov' ? 'OO구청 관할 조합 관리' : UNION) + '</span><span class="sp"></span>' +
+  app.innerHTML = '<header class="top"><a class="logo" href="#home">' + LOGO + '<b>조합<em>ONE</em></b></a><span class="org">' + (rl === 'gov' ? 'OO구청 관할 조합 관리' : UNION) + '</span><span class="sp"></span>' + (window.SYNC ? SYNC.tag() : '<span id="syncTag" class="tag gray">로컬 데모</span>') +
     '<div class="who"><span class="av ' + rl + '">' + esc(u.name[0]) + '</span><span><b>' + esc(u.name) + '</b><small>' + esc(u.title) + (rl === 'member' ? (perm('write') ? ' · 글쓰기 회원' : ' · 일반 회원') : '') + '</small></span><button class="btn sm" data-act="logout">로그아웃</button></div></header>' +
     '<div class="shell"><nav class="side" aria-label="메뉴"><div class="mhd" style="display:none;justify-content:space-between;align-items:center;padding:0 6px 14px;margin-bottom:8px;border-bottom:1px solid var(--line)"><span><b>' + esc(u.name) + '</b> <span style="color:var(--muted);font-size:13px">' + esc(u.title) + '</span></span><button class="btn sm" data-act="logout">로그아웃</button></div>' + nav + '</nav><div class="scrim" data-act="menu"></div><main class="main" id="main">' + gtabs + V[r](args) + '</main></div>' +
     '<nav class="bnav" aria-label="하단 메뉴">' + items.slice(0, 4).map(function (it) {
@@ -1109,5 +1109,7 @@ if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.
   window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js').catch(function () {}); });
 }
 </script>
+<script src="config.js"></script>
+<script src="sync.js"></script>
 </body>
 </html>
