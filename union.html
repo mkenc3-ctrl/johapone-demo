@@ -288,9 +288,11 @@ dialog::backdrop{background:rgba(30,33,36,.55)}
   .cafe{grid-template-columns:minmax(0,1fr)}
   .cafe-cover h2{font-size:21px;padding:18px 18px 14px}
   .room{grid-template-columns:minmax(0,1fr)}
-  .mgrid{grid-template-columns:minmax(0,1fr);gap:10px}
-  .mtile{flex-direction:row;text-align:left;gap:14px;padding:16px 14px}
-  .mtile .me{width:50px;height:50px;font-size:24px}
+  .mgrid{grid-template-columns:repeat(auto-fill,minmax(128px,1fr));gap:8px} /* 좁은 화면도 정사각형 카드 (휴대폰 2열) */
+  .mcard{padding:16px}
+  .mtile{padding:20px 8px 16px;gap:8px;aspect-ratio:1/1;justify-content:center}
+  .mtile .me{width:52px;height:52px;font-size:25px}
+  .mtile small{font-size:13px}
   .who small{display:none}
 }
 </style>
