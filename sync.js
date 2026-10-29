@@ -112,10 +112,16 @@
     var c = SYNC.client;
     return Promise.all([
       c.from('tenants').select('*').order('created_at'),
-      c.from('records').select('tenant_id,coll,id,data').in('coll', ['roster', 'posts', 'ballots', 'consents'])
+      c.from('records').select('tenant_id,coll,id,data').in('coll', ['roster', 'posts', 'ballots', 'consents', 'bids', 'edu', 'meta'])
     ]).then(function (res) {
       if (res[0].error || res[1].error) { setStatus('error', (res[0].error || res[1].error).message); SYNC.gov = []; return; }
       var by = {}; SYNC.govPosts = [];
+      // 조합별 원자료 (점검 화면용): bids 배열, edu·ballots·meta 객체
+      var T = SYNC.govT = {};
+      res[1].data.forEach(function (r) {
+        var t = T[r.tenant_id] = T[r.tenant_id] || { bids: [], edu: {}, ballots: {}, meta: {} };
+        if (r.coll === 'bids') t.bids.push(r.data); else if (r.coll === 'edu') t.edu[r.id] = r.data; else if (r.coll === 'ballots') t.ballots[r.id] = r.data; else if (r.coll === 'meta') t.meta[r.id] = r.data;
+      });
       res[1].data.forEach(function (r) { if (r.coll === 'posts') SYNC.govPosts.push({ tenant_id: r.tenant_id, p: r.data }); });
       res[1].data.forEach(function (r) { var o = by[r.tenant_id] = by[r.tenant_id] || { roster: 0, posts: 0, ballots: 0, agree: 0, last: '' }; if (r.coll === 'roster') o.roster++; if (r.coll === 'ballots') o.ballots++; if (r.coll === 'consents' && r.data.agree) o.agree++; if (r.coll === 'posts') { o.posts++; if (String(r.data.at) > o.last) o.last = String(r.data.at); } });
       var mine = SYNC.auth && SYNC.auth.profile && SYNC.auth.profile.approved && SYNC.auth.profile.role === 'gov' ? SYNC.auth.profile.gov : null; // 실제 담당자는 관할만
