@@ -24,8 +24,8 @@ body{margin:0;background:var(--bg2);color:var(--ink);font:17px/1.65 'Noto Sans K
 .card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:24px;margin-bottom:16px}
 .card h2{margin:0 0 12px;font-size:20px}
 .top{display:grid;grid-template-columns:auto 1fr;gap:24px;align-items:center}
-#qr{background:#fff;padding:10px;border:1px solid var(--line);border-radius:8px;width:200px;height:200px}
-#qr img,#qr canvas{width:180px!important;height:180px!important}
+#qr,#qr2{background:#fff;padding:10px;border:1px solid var(--line);border-radius:8px;width:200px;height:200px}
+#qr img,#qr canvas,#qr2 img,#qr2 canvas{width:180px!important;height:180px!important}
 .url{font-weight:700;color:var(--pri);word-break:break-all}
 .btn{display:inline-flex;align-items:center;justify-content:center;height:52px;padding:0 24px;border-radius:8px;background:var(--acc);color:#fff;font-weight:700;text-decoration:none;font-size:17px;border:0}
 .btn.ln{background:#fff;color:var(--ink);border:1px solid #B1B8BE}
@@ -38,7 +38,7 @@ ol li{padding:4px 0}
 table{width:100%;border-collapse:collapse;font-size:15px}
 td,th{border-bottom:1px solid var(--line);padding:9px 6px;text-align:left}
 th{background:var(--bg2)}
-@media (max-width:700px){.top,.g2{grid-template-columns:1fr}#qr{margin:0 auto}}
+@media (max-width:700px){.top,.g2{grid-template-columns:1fr}#qr,#qr2{margin:0 auto}}
 </style>
 </head>
 <body>
@@ -89,7 +89,18 @@ th{background:var(--bg2)}
 
   <div class="warn">
     <b>⚠️ 꼭 지켜주세요</b>
-    실제 조합원 명부·신분증·연락처 등 개인정보는 절대 입력하거나 엑셀로 올리지 마세요. 이 시안은 테스트용이며, 입력한 내용은 각자 휴대폰에만 저장되어 다른 사람에게 보이지 않습니다.
+    실제 조합원 명부·신분증·연락처 등 개인정보는 절대 입력하거나 올리지 마세요. 이 시안은 테스트용이며, 입력한 투표·글·첨부파일은 공유 테스트 서버에 저장되어 <strong style="text-decoration:underline">다른 테스트 참가자에게도 보입니다</strong>. (엑셀로 불러온 명부만 예외로 그 기기 안에서만 처리됩니다.)
+  </div>
+
+  <div class="card top">
+    <div id="qr2" class="qrbox" aria-label="시연 시나리오 QR코드"></div>
+    <div>
+      <h2>③ 영업 시연 시나리오</h2>
+      <p style="margin:0 0 8px">시·구 담당자 → 조합장 → 조합원 순서로 약 10분 시연합니다. PC에서는 설명과 실제 화면이 나란히 보이고, 휴대폰에서는 단계별 「이 화면 열기」로 진행합니다.</p>
+      <p style="margin:0 0 8px;font-size:14px;color:var(--muted)">시연 전용 조합(OO3구역)을 사용하므로 테스트 데이터와 섞이지 않습니다. 시연 직전에 「🔄 시연 전 데이터 초기화」를 한 번 누르세요.</p>
+      <p class="url" id="url2"></p>
+      <a class="btn" id="go2" href="demo.html">시연 열기</a>
+    </div>
   </div>
 
   <p style="text-align:center;margin-top:20px"><a class="btn ln" href="platform.html">서비스 소개 페이지 보기</a></p>
@@ -98,8 +109,13 @@ th{background:var(--bg2)}
   var app = new URL('union.html', location.href).href;
   document.getElementById('url').textContent = app;
   document.getElementById('go').href = app;
-  if (window.QRCode) new QRCode(document.getElementById('qr'), { text: app, width: 180, height: 180, colorDark: '#1E2124', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.M });
-  else document.getElementById('qr').textContent = 'QR을 불러오지 못했습니다. 위 주소를 사용하세요.';
+  var demo = new URL('demo.html', location.href).href;
+  document.getElementById('url2').textContent = demo;
+  document.getElementById('go2').href = demo;
+  [['qr', app], ['qr2', demo]].forEach(function (q) {
+    if (window.QRCode) new QRCode(document.getElementById(q[0]), { text: q[1], width: 180, height: 180, colorDark: '#1E2124', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.M });
+    else document.getElementById(q[0]).textContent = 'QR을 불러오지 못했습니다. 위 주소를 사용하세요.';
+  });
 </script>
 </body>
 </html>

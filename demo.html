@@ -64,6 +64,8 @@ iframe{width:100%;height:100%;border:1px solid var(--line);border-radius:12px;ba
       <h1>조합ONE 시연 시나리오</h1>
       <p>시·구청 담당자 → 조합장 → 조합원 순서로 약 10분. 단계를 누르면 오른쪽에 해당 화면이 열립니다.</p>
       <div class="prog"><i id="prog"></i></div>
+      <button class="btn" id="reset" style="margin-top:12px;width:100%;height:40px;font-size:14px">🔄 시연 전 데이터 초기화</button>
+      <p id="resetMsg" style="margin:6px 0 0;font-size:12.5px;color:var(--muted)">시연 직전에 한 번 누르면 항상 같은 화면으로 시작합니다.</p>
     </div>
     <div class="steps" id="steps"></div>
     <div class="foot"><button class="btn" id="prev">‹ 이전</button><button class="btn pri" id="next">다음 ›</button></div>
@@ -75,7 +77,7 @@ iframe{width:100%;height:100%;border:1px solid var(--line);border-radius:12px;ba
 </div>
 <script>
   // 시연 단계: [대상, 계정, 화면(hash), 제목, 설명 문단, 강조점, 근거]
-  var U = 'demo-oo1';
+  var U = 'demo-sales'; // 영업 시연 전용 데모 조합 (테스트용 demo-oo1과 분리)
   var WHO = { gov: ['w-gov', '시·구 담당자'], admin: ['w-admin', '조합장'], hong: ['w-hong', '조합원'], end: ['w-end', '정리'] };
   var STEPS = [
     ['gov', 'gov', '#home', '관할 조합을 한 화면에서', '조합ONE을 쓰는 관할 조합의 현황이 실시간으로 모입니다.', ['정보공개 지연·임원 교육 미이수·입찰 보완 필요 건수를 조합별로 표시', '담당자는 열람만 가능 (수정·삭제 불가)'], '법 제111조(자료의 제출)·제113조(감독) 업무 지원'],
@@ -133,6 +135,21 @@ iframe{width:100%;height:100%;border:1px solid var(--line);border-radius:12px;ba
     [].forEach.call(this.children, function (x) { x.classList.toggle('on', x === b); });
     document.getElementById('frame').classList.toggle('phone', dev === 'phone');
   });
+  // 시연 전용 조합을 처음 상태로: 조합장 계정으로 열어 서버 연결을 기다린 뒤 초기화 → 서버 반영 확인
+  document.getElementById('reset').onclick = function () {
+    if (!confirm('시연 전용 조합(OO3구역)의 투표·동의·게시글을 모두 처음 상태로 되돌립니다. 진행할까요?')) return;
+    var b = this, msg = document.getElementById('resetMsg'), f = document.createElement('iframe'), t0 = Date.now();
+    b.disabled = true; msg.textContent = '초기화 중… (서버 연결)';
+    f.style.display = 'none'; f.src = 'union.html?u=' + U + '&as=admin#home'; document.body.appendChild(f);
+    var done = function (ok, t) { b.disabled = false; msg.textContent = t; f.remove(); if (ok) { var fr = document.getElementById('app'); fr.dataset.src = ''; draw(); } };
+    var iv = setInterval(function () {
+      var w = f.contentWindow, s = w && w.SYNC;
+      if (Date.now() - t0 > 20000) { clearInterval(iv); return done(false, '서버에 연결하지 못했습니다. 인터넷 연결을 확인하세요.'); }
+      if (!s || s.status !== 'live' || !w.ACT) return;
+      clearInterval(iv); msg.textContent = '초기화 중… (서버 반영)';
+      w.ACT.reset(); w.SYNC.push().then(function () { var d = w.SYNC.diff(); done(!d.up.length && !d.del.length, '초기화 완료 · ' + new Date().toLocaleTimeString('ko-KR')); });
+    }, 300);
+  };
   draw();
 </script>
 </body>
