@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>조합ONE 자료 모음</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+:root{--ink:#1E2124;--ink2:#464C53;--muted:#5F6B75;--line:#D6DCE0;--bd:#B1B8BE;--pri:#0B5563;--pri-s:#E6F1F3;--bg2:#F4F6F8;--acc:#C2410C;--acc-s:#FDEEE6;--acc-d:#8A2E07;--gov:#3B4A8A;--gov-s:#ECEEF7;--mem:#1F7A4D;--mem-s:#E5F3EA}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg2);color:var(--ink);font:17px/1.6 'Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic',sans-serif;word-break:keep-all}
+.wrap{max-width:980px;margin:0 auto;padding:24px 16px 60px}
+.hd{display:flex;gap:16px;align-items:center;justify-content:space-between;flex-wrap:wrap;background:var(--pri);color:#fff;border-radius:14px;padding:22px 24px;margin-bottom:18px}
+.hd h1{margin:0;font-size:27px}
+.hd p{margin:4px 0 0;opacity:.88;font-size:15.5px}
+.hd .qr{background:#fff;border-radius:10px;padding:8px;width:128px;height:128px;flex:none}
+.hd .qr img,.hd .qr canvas{width:112px!important;height:112px!important}
+.bar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:22px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:46px;padding:0 18px;border-radius:9px;border:1px solid var(--bd);background:#fff;color:var(--ink);font:inherit;font-size:16px;font-weight:700;text-decoration:none;cursor:pointer;white-space:nowrap}
+.btn.pri{background:var(--pri);border-color:var(--pri);color:#fff}
+.btn.acc{background:var(--acc);border-color:var(--acc);color:#fff}
+.btn.sm{min-height:38px;padding:0 12px;font-size:14.5px;font-weight:500}
+h2{font-size:21px;margin:28px 0 10px;display:flex;align-items:center;gap:8px}
+h2 small{font-size:14px;color:var(--muted);font-weight:400}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:16px 18px;display:flex;flex-direction:column;gap:8px}
+.card b{font-size:18px}
+.card p{margin:0;color:var(--ink2);font-size:15.5px;flex:1}
+.card .acts{display:flex;gap:8px;flex-wrap:wrap}
+.tag{display:inline-block;font-size:12.5px;font-weight:700;border-radius:5px;padding:1px 8px;margin-right:6px;vertical-align:2px}
+.t-gov{background:var(--gov-s);color:var(--gov)}.t-adm{background:var(--acc-s);color:var(--acc-d)}.t-mem{background:var(--mem-s);color:var(--mem)}.t-doc{background:var(--pri-s);color:var(--pri)}
+.acc-list{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.acc-list a{display:flex;flex-direction:column;gap:2px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px;text-decoration:none;color:var(--ink)}
+.acc-list a b{font-size:17px}
+.acc-list a span{font-size:14px;color:var(--muted)}
+.warn{background:var(--acc-s);color:var(--acc-d);border-radius:12px;padding:16px 18px;font-size:15.5px;margin-top:26px}
+.warn b{display:block;margin-bottom:4px;font-size:17px}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:12px 18px;border-radius:10px;font-size:15px;opacity:0;transition:opacity .2s;pointer-events:none}
+.toast.on{opacity:1}
+@media (max-width:760px){.grid{grid-template-columns:minmax(0,1fr)}.acc-list{grid-template-columns:repeat(2,minmax(0,1fr))}.hd .qr{display:none}.hd h1{font-size:23px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hd">
+    <div>
+      <h1>조합ONE 자료 모음</h1>
+      <p>내부 공유용 · 앱 · 시연 · 안내 자료를 종류별로 모았습니다. 이 페이지 주소 하나만 보내면 됩니다.</p>
+    </div>
+    <div class="qr" id="qr" aria-label="이 페이지 QR코드"></div>
+  </div>
+  <div class="bar">
+    <button class="btn acc" id="copyAll">📋 카톡 공지 문구 복사</button>
+    <button class="btn" data-copy="share.html">🔗 이 페이지 주소 복사</button>
+  </div>
+
+  <h2>📱 앱 써보기</h2>
+  <div class="grid">
+    <div class="card"><b>조합ONE 앱</b><p>조합원·조합장·공무원 화면을 직접 눌러 봅니다. 로그인 화면에서 테스트 계정을 고르세요.</p><div class="acts"><a class="btn pri" href="union.html">열기</a><button class="btn sm" data-copy="union.html">주소 복사</button></div></div>
+    <div class="card"><b>휴대폰에 설치하는 법</b><p>앱스토어 없이 홈 화면에 아이콘으로 추가합니다. 갤럭시·아이폰 안내와 QR이 있습니다.</p><div class="acts"><a class="btn pri" href="install.html">열기</a><button class="btn sm" data-copy="install.html">주소 복사</button></div></div>
+  </div>
+
+  <h2>👤 테스트 계정 바로 입장 <small>누르면 해당 계정으로 바로 들어갑니다</small></h2>
+  <div class="acc-list">
+    <a href="union.html?u=demo-oo1&amp;as=hong#home"><b><span class="tag t-mem">조합원</span>홍길동</b><span>글쓰기 허가 회원 · 투표·동의</span></a>
+    <a href="union.html?u=demo-oo1&amp;as=soon#home"><b><span class="tag t-mem">조합원</span>홍순자</b><span>일반 회원 · 권한 신청</span></a>
+    <a href="union.html?u=demo-oo1&amp;as=admin#home"><b><span class="tag t-adm">조합장</span>박정수</b><span>명부·총회·정보공개 관리</span></a>
+    <a href="union.html?u=demo-oo1&amp;as=gov#home"><b><span class="tag t-gov">공무원</span>김주무관</b><span>관할 조합 점검·열람</span></a>
+  </div>
+
+  <h2>🎬 영업 시연</h2>
+  <div class="grid">
+    <div class="card"><b>시연 시나리오 (화면)</b><p>공무원 → 조합장 → 조합원 순서 12단계, 약 10분. PC에서는 설명과 실제 화면이 나란히 보입니다. 시연 직전 「🔄 시연 전 데이터 초기화」를 누르세요.</p><div class="acts"><a class="btn pri" href="demo.html">열기</a><button class="btn sm" data-copy="demo.html">주소 복사</button></div></div>
+    <div class="card"><b><span class="tag t-doc">PDF</span>시연 시나리오 대본</b><p>15쪽 · 단계별 화면 캡처와 설명. 인터넷이 안 되는 회의실용이며 휴대폰에서도 열립니다.</p><div class="acts"><a class="btn pri" href="docs/johapone-demo-scenario.pdf" target="_blank" rel="noopener">PDF 보기</a><a class="btn sm" href="docs/johapone-demo-scenario.pptx" download="조합ONE_시연시나리오.pptx">PPT 받기</a><button class="btn sm" data-copy="docs/johapone-demo-scenario.pdf">주소 복사</button></div></div>
+  </div>
+
+  <h2>🌐 소개·영업 자료</h2>
+  <div class="grid">
+    <div class="card"><b>서비스 소개 홈페이지</b><p>비용 절감 안내 팝업, 카테고리 소개, 요금 구조. 조합·지자체에 처음 보여줄 페이지입니다.</p><div class="acts"><a class="btn pri" href="platform.html">열기</a><button class="btn sm" data-copy="platform.html">주소 복사</button></div></div>
+    <div class="card"><b>맞춤 비용 절감 리포트</b><p>조합원 수·총회 횟수를 넣으면 절감액을 계산해 A4 리포트(PDF 저장)로 만듭니다.</p><div class="acts"><a class="btn pri" href="report.html">열기</a><button class="btn sm" data-copy="report.html">주소 복사</button></div></div>
+  </div>
+
+  <h2>📚 업무 도구</h2>
+  <div class="grid">
+    <div class="card"><b>사용 가이드</b><p>메뉴별 사용 방법을 쉬운 말로 정리했습니다. 앱 각 화면의 「❓ 사용 방법」과 같은 내용입니다.</p><div class="acts"><a class="btn pri" href="union.html?u=demo-oo1&amp;as=hong#guide">조합원용</a><a class="btn" href="union.html?u=demo-oo1&amp;as=admin#guide">조합장용</a><a class="btn" href="union.html?u=demo-oo1&amp;as=gov#guide">공무원용</a></div></div>
+    <div class="card"><b>서식함</b><p>공식 서식(한글·PDF), 엑셀 관리 양식, 조합ONE 서식을 검색해 내려받습니다.</p><div class="acts"><a class="btn pri" href="forms.html">열기</a><button class="btn sm" data-copy="forms.html">주소 복사</button></div></div>
+    <div class="card"><b>정관 개정 패키지</b><p>전자의결·온라인총회 도입을 위한 신·구 조문 대비표, 안건 서식, 소집통지 문구.</p><div class="acts"><a class="btn pri" href="bylaws.html">열기</a><button class="btn sm" data-copy="bylaws.html">주소 복사</button></div></div>
+    <div class="card"><b>법령·판례 검색 · 절차 체크리스트</b><p>도시정비법 조문·판례 검색과 사업 단계별 체크리스트.</p><div class="acts"><a class="btn pri" href="index.html">법령·판례</a><a class="btn" href="rebuild.html">체크리스트</a></div></div>
+  </div>
+
+  <div class="warn">
+    <b>⚠️ 테스트할 때 꼭 지켜주세요</b>
+    실제 조합원 명부·신분증·연락처 등 개인정보는 입력하거나 올리지 마세요. 투표·글·첨부파일은 공유 테스트 서버에 저장되어 다른 참가자에게도 보입니다. 영업 시연은 시연 전용 조합(OO3구역)을 쓰므로 테스트와 섞이지 않습니다.
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+<script>
+  function abs(p) { return new URL(p, location.href).href; }
+  function toast(m) { var t = document.getElementById('toast'); t.textContent = m; t.classList.add('on'); clearTimeout(t._h); t._h = setTimeout(function () { t.classList.remove('on'); }, 1800); }
+  function copy(text, msg) {
+    var done = function () { toast(msg || '복사했습니다.'); };
+    if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(text).then(done, fallback); else fallback();
+    function fallback() { var a = document.createElement('textarea'); a.value = text; document.body.appendChild(a); a.select(); try { document.execCommand('copy'); done(); } catch (e) { prompt('아래 내용을 복사하세요', text); } a.remove(); }
+  }
+  document.addEventListener('click', function (e) { var b = e.target.closest('[data-copy]'); if (b) copy(abs(b.dataset.copy), '주소를 복사했습니다.'); });
+  // 카톡 공지용 한 번에 복사
+  document.getElementById('copyAll').onclick = function () {
+    copy(['[조합ONE 내부 테스트 자료 공유]', '',
+      '■ 자료 모음 (아래 전부 여기 있음)', abs('share.html'), '',
+      '■ 앱 써보기', abs('union.html'),
+      '■ 휴대폰 설치 방법', abs('install.html'), '',
+      '■ 영업 시연 시나리오', abs('demo.html'),
+      '■ 시연 대본 PDF', abs('docs/johapone-demo-scenario.pdf'), '',
+      '■ 서비스 소개 홈페이지', abs('platform.html'),
+      '■ 맞춤 절감 리포트', abs('report.html'), '',
+      '※ 실제 개인정보는 입력하지 마세요. 입력 내용은 테스트 참가자끼리 공유됩니다.'].join('\n'), '카톡에 붙여넣을 문구를 복사했습니다.');
+  };
+  if (window.QRCode) new QRCode(document.getElementById('qr'), { text: abs('share.html'), width: 112, height: 112, colorDark: '#1E2124', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.M });
+</script>
+</body>
+</html>
