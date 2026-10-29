@@ -281,7 +281,7 @@ var NAV = {
   admin: [
     ['home', '📊 대시보드'],
     ['roster', '📋 조합명부관리'],
-    ['meeting', '🗳️ 총회·투표', [['assembly', '온라인총회'], ['vote', '전자투표']]],
+    ['meeting', '🗳️ 총회·투표', [['assembly', '온라인총회'], ['vote', '전자투표'], ['meetset', '총회 설정·소집통지']]],
     ['consent', '✍️ 전자동의서'],
     ['news', '📢 조합 소식', [['disclosure', '정보공개 등록'], ['calendar', '일정'], ['bids', '입찰공고'], ['notify', '알림톡 발송']]],
     PRO, CHECK, ['forms', '🗂️ 서식함'], ['bylaws', '📜 정관 개정'], LAW,
@@ -324,7 +324,7 @@ function seed() {
     v: 3, roster: R, consents: con,
     perm: { hong: { write: true, comment: true }, soon: { write: false, comment: true } }, permReq: [],
     posts: [
-      { id: 1, cat: '공지', title: '2026년 정기총회 개최 안내 (온라인 병행)', body: '일시: 2026년 11월 9일(토) 14:00\n장소: 조합 사무실 및 조합ONE 온라인총회\n\n전자투표는 11월 8일(금) 18:00까지 진행됩니다. 온라인총회 접속 시 본인확인 후 입장할 수 있습니다.', file: '정기총회_소집공고.pdf', at: '2026.10.15', views: 412, reads: ['hong'] },
+      { id: 1, cat: '공지', title: '2026년 정기총회 개최 안내 (온라인 병행)', body: '일시: 2026년 11월 9일(월) 14:00\n장소: 조합 사무실 및 조합ONE 온라인총회\n\n전자투표는 11월 8일(일) 18:00까지 진행됩니다. 온라인총회 접속 시 본인확인 후 입장할 수 있습니다.', file: '정기총회_소집공고.pdf', at: '2026.10.15', views: 412, reads: ['hong'] },
       { id: 2, cat: '계약', title: '정비사업전문관리업자 용역계약서', body: '도시정비법 제124조제1항에 따라 용역계약서를 공개합니다.\n계약금액, 계약기간, 업무범위는 첨부 파일을 확인하세요.', file: '정비업체_용역계약서.pdf', at: '2026.10.24', views: 198, reads: [] },
       { id: 3, cat: '회의록', title: '제5차 대의원회 회의록', body: '안건: 사업시행계획(안) 상정, 협력업체 선정 기준 의결\n참석: 대의원 42명 중 35명', file: '제5차_대의원회_회의록.pdf', at: '2026.10.27', views: 87, reads: [] },
       { id: 4, cat: '회계', title: '2026년 3분기 자금 운용 내역', body: '분기별 자금 운용 내역을 공개합니다.', file: '3분기_자금운용.xlsx', at: '2026.10.20', views: 143, reads: ['hong'] },
@@ -467,10 +467,10 @@ V.home = function () {
   if (r === 'member') {
     var mine = myRow(), c = mine && S.consents[mine.no], voted = S.vote.ballots[U().name];
     var acts = '';
-    if (S.vote.open && !voted) acts += action('#vote', '🗳️', '정기총회 전자투표가 진행 중입니다', '11월 8일(금) 18:00 마감 · 안건 3건', '투표하기');
+    if (S.vote.open && !voted) acts += action('#vote', '🗳️', esc(meet().title) + ' 전자투표가 진행 중입니다', dtKo(meet().vTo) + ' 마감 · 안건 ' + agendas().length + '건', '투표하기');
     if (!c) acts += action('#consent', '✍️', '조합설립 동의서를 아직 제출하지 않았습니다', '휴대폰으로 1분이면 제출할 수 있습니다', '제출하기');
     if (unread) acts += action('#disclosure', '📢', '확인하지 않은 정보공개 자료 ' + unread + '건', '조합 공지·계약·회의록을 확인하세요', '확인하기');
-    acts += action('#assembly', '🎥', '11월 9일(토) 14:00 정기총회', '집에서 온라인으로 참석할 수 있습니다', '입장 안내');
+    acts += action('#assembly', '🎥', dtKo(meet().held) + ' ' + esc(meet().title), '집에서 온라인으로 참석할 수 있습니다', '입장 안내');
     return ph(esc(U().name) + '님, 안녕하세요', UNION + ' 조합원 전용 공간입니다.') +
       '<div class="grid" style="gap:10px;margin-bottom:20px">' + acts + '</div>' +
       '<div class="grid g2"><div class="card"><h2>정보공개 <a href="#disclosure">더보기 ›</a></h2><ul class="list">' + dis + '</ul></div>' +
@@ -626,30 +626,43 @@ function initSig() {
 }
 
 /* --- 전자투표 --- */
-var AGENDAS = [
-  { t: '제1호 안건', h: '2025 회계연도 결산 승인의 건', d: '2025년 수입·지출 결산서 및 감사보고서 승인', o: ['찬성', '반대', '기권'] },
-  { t: '제2호 안건', h: '2027년 예산(안) 승인의 건', d: '운영비·용역비 등 2027년 예산 총액 32억원(예시)', o: ['찬성', '반대', '기권'] },
-  { t: '제3호 안건', h: '정비사업전문관리업자 선정의 건', d: '입찰 참여 3개 업체 중 1개 업체 선정', o: ['A업체', 'B업체', 'C업체'] }
-];
+// 총회 설정 (조합 관리자가 '총회 설정·소집통지'에서 변경). S.meet 이 없으면 기본 예시
+var DEFAULT_MEET = {
+  title: '2026년 정기총회', held: '2026-11-09T14:00', place: '조합 사무실 대회의실 + 온라인', vFrom: '2026-10-28T09:00', vTo: '2026-11-08T18:00',
+  agendas: [
+    { t: '제1호 안건', h: '2025 회계연도 결산 승인의 건', d: '2025년 수입·지출 결산서 및 감사보고서 승인', o: ['찬성', '반대', '기권'] },
+    { t: '제2호 안건', h: '2027년 예산(안) 승인의 건', d: '운영비·용역비 등 2027년 예산 총액 32억원(예시)', o: ['찬성', '반대', '기권'] },
+    { t: '제3호 안건', h: '정비사업전문관리업자 선정의 건', d: '입찰 참여 3개 업체 중 1개 업체 선정', o: ['A업체', 'B업체', 'C업체'] }
+  ]
+};
+function meet() { return S.meet || DEFAULT_MEET; }
+function agendas() { return meet().agendas; }
+var WK = '일월화수목금토';
+function dtKo(v) { if (!v) return '-'; var d = new Date(v); return isNaN(d) ? v : d.getFullYear() + '.' + pad(d.getMonth() + 1) + '.' + pad(d.getDate()) + '(' + WK[d.getDay()] + ') ' + pad(d.getHours()) + ':' + pad(d.getMinutes()); }
 var voter = null, vsel = [];
 function voteStats() {
-  var e = Object.keys(S.vote.ballots), paper = S.vote.paper, res = AGENDAS.map(function (a, i) { var c = paper[i].slice(); e.forEach(function (n) { c[S.vote.ballots[n].a[i]]++; }); return c; });
-  return { e: e.length, p: paper[0].reduce(function (s, x) { return s + x; }, 0), total: e.length, res: res };
+  var e = Object.keys(S.vote.ballots), paper = S.vote.paper || [];
+  var res = agendas().map(function (a, i) {
+    var c = a.o.map(function (_, j) { return ((paper[i] || [])[j]) || 0; });
+    e.forEach(function (n) { var k = S.vote.ballots[n].a[i]; if (k != null && c[k] != null) c[k]++; });
+    return c;
+  });
+  return { e: e.length, p: (paper[0] || []).reduce(function (s, x) { return s + x; }, 0), total: e.length, res: res };
 }
 V.vote = function () {
   var r = role(), vs = voteStats(), n = roster().length + 350;
-  var head = ph('전자투표' + paidTag('vote'), '2026년 정기총회 · 투표기간 10.28 ~ 11.08 18:00 <span class="tag ' + (S.vote.open ? 'ok' : 'gray') + '">' + (S.vote.open ? '진행 중' : '개표 완료') + '</span><br><span class="law">도시정비법 제45조 제6항·제9항, 시행령 제42조 제2항 — 서면 방법 병행, 서면·전자 결과 구분 관리, 본인확인, 개표 전 집계 비공개</span>',
+  var head = ph('전자투표' + paidTag('vote'), esc(meet().title) + ' · 전자의결 기간 ' + dtKo(meet().vFrom) + ' ~ ' + dtKo(meet().vTo) + ' <span class="tag ' + (S.vote.open ? 'ok' : 'gray') + '">' + (S.vote.open ? '진행 중' : '개표 완료') + '</span><br><span class="law">도시정비법 제45조 제6항·제9항, 시행령 제42조 제2항 — 서면 방법 병행, 서면·전자 결과 구분 관리, 본인확인, 개표 전 집계 비공개</span>',
     r === 'admin' ? '<span style="display:flex;gap:8px"><button class="btn" data-act="vreset">[데모] 초기화</button><button class="btn acc" data-act="vclose">' + (S.vote.open ? '투표 마감·개표' : '투표 재개') + '</button></span>' : '');
   // 시행령 제42조 제2항 제3호 가목: 총회에서 개표하기 전까지 전자의결 집계 결과를 알 수 없도록 함 → 진행 중에는 참여 인원만 공개
   var results = '<div class="card"><h2>개표 현황 <span class="tag gray">' + (S.vote.open ? '개표 전 비공개' : '개표 완료') + '</span></h2>' +
     '<p style="margin:0 0 12px;font-size:14px">참여: 전자투표 <b>' + vs.e + '</b>명 · 서면결의 <b>' + vs.p + '</b>명</p>' +
     (S.vote.open ? '<p class="note" style="margin:0">찬반 집계는 <b>투표 마감·개표 후</b> 공개됩니다. 조합장·시구 담당자도 개표 전에는 결과를 볼 수 없습니다.<br><span class="law">시행령 제42조 제2항 제3호 가목</span></p>' :
-      AGENDAS.map(function (a, i) {
-        var c = vs.res[i], tot = c[0] + c[1] + c[2], pp = S.vote.paper[i];
+      agendas().map(function (a, i) {
+        var c = vs.res[i], tot = c.reduce(function (s, x) { return s + x; }, 0), pp = (S.vote.paper || [])[i] || [];
         return '<div style="margin-bottom:16px"><b style="font-size:15px">' + a.t + ' ' + a.h + '</b>' + a.o.map(function (o, j) {
-          var el = c[j] - pp[j];
+          var el = c[j] - (pp[j] || 0);
           return '<div style="display:grid;grid-template-columns:70px 1fr 90px;gap:10px;align-items:center;font-size:14px;margin-top:6px"><span>' + o + '</span><div class="bar' + (j ? ' acc' : '') + '"><i style="width:' + pct(c[j], tot) + '%"></i></div><span class="r">' + c[j] + '표 (' + pct(c[j], tot) + '%)</span></div>' +
-            '<div style="font-size:12px;color:var(--muted);margin:2px 0 0 80px">서면 ' + pp[j] + ' · 전자 ' + el + '</div>';
+            '<div style="font-size:12px;color:var(--muted);margin:2px 0 0 80px">서면 ' + (pp[j] || 0) + ' · 전자 ' + el + '</div>';
         }).join('') + '</div>';
       }).join('') + '<p class="law" style="margin:0">서면·전자 결과 구분 관리 (법 제45조 제6항 제2호) · 전자의결 결과는 사업 완료·폐지 시까지 보관 (시행령 제42조 제2항 제3호 나목)</p>') + '</div>';
   if (r !== 'member' && r !== 'admin') return head + results;
@@ -659,33 +672,70 @@ V.vote = function () {
     box = '<div class="card"><h2>투표할 조합원 선택</h2><p style="margin:0 0 14px;color:var(--ink2);font-size:15px">' + (r === 'admin' ? '[데모] 조합원 계정으로 투표 화면을 체험합니다.' : '본인 명의로만 투표할 수 있습니다.') + '</p><div class="voter">' +
       ['홍길동', '홍순자'].map(function (nm) { var done = S.vote.ballots[nm], dis = done || (r === 'member' && nm !== U().name); return '<button data-act="pickVoter" data-v="' + nm + '"' + (dis ? ' disabled' : '') + '><span class="av">' + nm[0] + '</span><span><b style="font-size:18px">' + nm + '</b><br><span style="font-size:13px;color:var(--muted)">' + (done ? '투표 완료 · ' + done.at.slice(5) : nm === U().name || r === 'admin' ? '투표 가능' : '본인만 투표 가능') + '</span></span></button>'; }).join('') + '</div></div>';
   } else {
-    box = '<div class="card"><h2>' + voter + '님의 투표용지 <button class="btn sm" data-act="unvoter">취소</button></h2>' + AGENDAS.map(function (a, i) { return '<div class="agenda"><h3>' + a.t + ' · ' + a.h + '</h3><p>' + a.d + '</p><div class="opts">' + a.o.map(function (o, j) { return '<button class="' + (vsel[i] === j ? 'on' : '') + '" data-act="vopt" data-i="' + i + '" data-j="' + j + '">' + o + '</button>'; }).join('') + '</div></div>'; }).join('') +
-      '<div style="text-align:right"><button class="btn acc lg" data-act="vsubmit">투표 제출 (' + vsel.filter(function (x) { return x != null; }).length + '/' + AGENDAS.length + ')</button></div></div>';
+    box = '<div class="card"><h2>' + voter + '님의 투표용지 <button class="btn sm" data-act="unvoter">취소</button></h2>' + agendas().map(function (a, i) { return '<div class="agenda"><h3>' + a.t + ' · ' + a.h + '</h3><p>' + a.d + '</p><div class="opts">' + a.o.map(function (o, j) { return '<button class="' + (vsel[i] === j ? 'on' : '') + '" data-act="vopt" data-i="' + i + '" data-j="' + j + '">' + o + '</button>'; }).join('') + '</div></div>'; }).join('') +
+      '<div style="text-align:right"><button class="btn acc lg" data-act="vsubmit">투표 제출 (' + vsel.filter(function (x) { return x != null; }).length + '/' + agendas().length + ')</button></div></div>';
   }
   return head + '<div class="grid g2">' + box + results + '</div>';
 };
 
+/* --- 총회 설정·소집통지 (조합 관리자) --- */
+var MD = null; // 편집 중인 총회 설정 (저장 전)
+var OPT_PRESET = { yn: ['찬성', '반대', '기권'] };
+function meetNotice(m) {
+  return '[' + UNION + '] ' + m.title + ' 소집 통지\n\n' +
+    '■ 일시: ' + dtKo(m.held) + '\n■ 장소: ' + m.place + '\n\n■ 안건\n' + m.agendas.map(function (a) { return '  ' + a.t + ' ' + a.h; }).join('\n') + '\n\n' +
+    '■ 의결권 행사 방법: 현장 출석, 서면결의서 제출, 전자의결(휴대폰) 중 선택\n' +
+    '■ 전자의결 방법: 조합ONE 앱 접속 → 휴대폰 본인인증 → 안건별 선택 → 제출\n' +
+    '■ 전자의결 기간: ' + dtKo(m.vFrom) + ' ~ ' + dtKo(m.vTo) + '\n' +
+    '■ 집계: 전자의결 결과는 총회 개표 전까지 공개되지 않으며, 서면·전자·현장 결과를 구분하여 집계합니다.\n' +
+    '■ 온라인총회: 총회 당일 앱에서 「입장하기」로 참석할 수 있습니다(본인확인·접속기록 보관).';
+}
+V.meetset = function () {
+  if (!MD) MD = JSON.parse(JSON.stringify(meet()));
+  var ballots = Object.keys(S.vote.ballots).length;
+  var rows = MD.agendas.map(function (a, i) {
+    var preset = a.o.join(',') === OPT_PRESET.yn.join(',');
+    return '<div class="agenda"><div class="row" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><b style="flex:none">제' + (i + 1) + '호</b>' +
+      '<input data-md="h" data-i="' + i + '" value="' + esc(a.h) + '" placeholder="안건명 (예: 2027년 예산(안) 승인의 건)" style="flex:1 1 260px">' +
+      '<button class="btn sm" data-act="mdDel" data-i="' + i + '"' + (MD.agendas.length < 2 ? ' disabled' : '') + '>삭제</button></div>' +
+      '<input data-md="d" data-i="' + i + '" value="' + esc(a.d) + '" placeholder="설명" style="width:100%;margin-top:8px">' +
+      '<div style="display:flex;gap:8px;align-items:center;margin-top:8px;flex-wrap:wrap;font-size:14px"><span>선택지</span>' +
+      '<select data-md="kind" data-i="' + i + '"><option value="yn"' + (preset ? ' selected' : '') + '>찬성 · 반대 · 기권</option><option value="custom"' + (preset ? '' : ' selected') + '>직접 입력 (업체·후보 선택 등)</option></select>' +
+      (preset ? '' : '<input data-md="o" data-i="' + i + '" value="' + esc(a.o.join(', ')) + '" placeholder="쉼표로 구분 (예: A업체, B업체, C업체)" style="flex:1 1 220px">') + '</div></div>';
+  }).join('');
+  return ph('총회 설정·소집통지', '총회 일시·장소·전자의결 기간·안건을 정하고, 소집통지문을 만들어 알림톡으로 보냅니다.<br><span class="law">시행령 제42조 제2항 제1호 — 소집통지 시 전자의결 방법·기간 통지 / 법 제44조의2 — 온라인총회는 총회 의결로 병행</span>') +
+    '<div class="grid g2"><div class="card"><h2>총회 정보</h2><form class="f" onsubmit="return false">' +
+    '<label>총회명<input data-md="title" value="' + esc(MD.title) + '"></label>' +
+    '<div class="row"><label>총회 일시<input type="datetime-local" data-md="held" value="' + esc(MD.held) + '"></label><label>장소<input data-md="place" value="' + esc(MD.place) + '"></label></div>' +
+    '<div class="row"><label>전자의결 시작<input type="datetime-local" data-md="vFrom" value="' + esc(MD.vFrom) + '"></label><label>전자의결 마감<input type="datetime-local" data-md="vTo" value="' + esc(MD.vTo) + '"></label></div></form>' +
+    '<h2 style="margin-top:18px">안건 <button class="btn sm" data-act="mdAdd">+ 안건 추가</button></h2>' + rows +
+    (ballots ? '<p class="note acc">이미 전자투표 ' + ballots + '건이 있습니다. 안건을 바꿔 저장하면 기존 전자투표와 서면 집계가 초기화됩니다.</p>' : '') +
+    '<div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px"><button class="btn" data-act="mdReset">되돌리기</button><button class="btn pri" data-act="mdSave">저장</button></div></div>' +
+    '<div class="card"><h2>소집통지문 미리보기</h2><div class="doc" id="mdNotice" style="white-space:pre-line;max-height:none">' + esc(meetNotice(MD)) + '</div>' +
+    '<div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px"><button class="btn" data-act="mdCopy">문구 복사</button><button class="btn acc" data-act="mdSend">전체 조합원에게 알림톡 발송</button></div>' +
+    '<p class="law">저장한 내용이 전자투표·온라인총회 화면과 조합 일정에 바로 반영됩니다.</p></div></div>';
+};
+
 /* --- 온라인총회 --- */
 var inRoom = false, timer = null, t0 = 0;
-var ASM = [
-  { h: '개회 및 성원 보고', d: '조합원 과반 출석으로 성원되었음을 보고합니다.' },
-  { h: '제1호 안건 — 2025 회계연도 결산 승인', d: '감사보고 후 질의응답을 진행합니다.' },
-  { h: '제2호 안건 — 2027년 예산(안) 승인', d: '총액 32억원(예시), 항목별 설명' },
-  { h: '제3호 안건 — 정비사업전문관리업자 선정', d: '3개 업체 발표 및 질의응답' },
-  { h: '개표 결과 발표 및 폐회', d: '서면결의·전자투표·현장투표 합산 결과를 발표합니다.' }
-];
+// 총회 진행 순서: 개회 → 설정된 안건 → 개표·폐회
+function asmList() {
+  return [{ h: '개회 및 성원 보고', d: '출석 현황(현장·온라인·서면·전자)을 보고하고 성원 여부를 확인합니다.' }]
+    .concat(agendas().map(function (a) { return { h: a.t + ' — ' + a.h, d: a.d }; }))
+    .concat([{ h: '개표 결과 발표 및 폐회', d: '서면결의·전자투표·현장투표를 구분 집계한 결과를 발표합니다.' }]);
+}
 V.assembly = function () {
   var r = role();
   if (!inRoom) return ph('온라인총회' + paidTag('assembly'),'집에서도 총회에 참석할 수 있습니다. 본인확인 후 입장하며 접속 기록이 보관됩니다.<br><span class="law">도시정비법 제44조의2 — 총회 의결로 현장 총회와 병행 개최, 본인확인·접속기록 보관 요건을 갖추면 온라인 참석도 직접 출석으로 봄</span>') +
-    '<div class="grid g2"><div class="card"><span class="tag acc" style="margin-bottom:8px">● 진행 중 · LIVE</span><h2 style="font-size:24px;display:block">2026년 정기총회</h2><dl class="doc" style="max-height:none;margin:0 0 16px"><table><tr><th>일시</th><td>2026.11.09(토) 14:00</td></tr><tr><th>장소</th><td>조합 사무실 대회의실 + 온라인</td></tr><tr><th>안건</th><td>결산 승인, 예산 승인, 정비업체 선정</td></tr><tr><th>참석 대상</th><td>조합원 ' + roster().length + '명</td></tr></table></dl>' +
+    '<div class="grid g2"><div class="card"><span class="tag acc" style="margin-bottom:8px">● 진행 중 · LIVE</span><h2 style="font-size:24px;display:block">' + esc(meet().title) + '</h2><dl class="doc" style="max-height:none;margin:0 0 16px"><table><tr><th>일시</th><td>' + dtKo(meet().held) + '</td></tr><tr><th>장소</th><td>' + esc(meet().place) + '</td></tr><tr><th>안건</th><td>' + agendas().map(function (a) { return esc(a.h); }).join('<br>') + '</td></tr><tr><th>참석 대상</th><td>조합원 ' + roster().length + '명</td></tr></table></dl>' +
     (r === 'gov' ? '<button class="btn pri lg" style="width:100%" data-act="enter">참관 모드로 입장</button>' :
       '<label style="display:flex;gap:8px;align-items:center;margin-bottom:12px;font-size:15px"><input type="checkbox" id="ack" style="width:20px;height:20px"> 본인(' + esc(U().name) + ')임을 확인하고 입장합니다.</label><button class="btn acc lg" style="width:100%" data-act="enter">입장하기</button>') + '</div>' +
     '<div class="card"><h2>참석 안내</h2><ul style="margin:0;padding-left:20px;line-height:2;font-size:15px"><li>PC·휴대폰 모두 참석할 수 있습니다.</li><li>입장 시각이 출석 기록으로 남습니다.</li><li>안건 질의는 화면 오른쪽 질문창을 이용하세요.</li><li>의결은 전자투표 메뉴에서 진행합니다.</li></ul><a class="btn" style="margin-top:14px" href="#vote">전자투표 바로가기</a></div></div>';
-  var a = ASM[S.asm.idx], online = 128 + Object.keys(S.asm.attend).length;
-  return '<div class="ph"><div><h1>2026년 정기총회</h1><p>' + esc(U().name) + '님 입장 · ' + (S.asm.attend[ME] || '') + '</p></div><button class="btn" data-act="leave">퇴장</button></div>' +
-    '<div class="room"><div><div class="stage"><span class="live"><i></i>LIVE</span><span class="tm" id="tm">00:00</span><div class="sl">안건 ' + (S.asm.idx + 1) + ' / ' + ASM.length + '</div><h2>' + a.h + '</h2><p>' + a.d + '</p><span class="who2">🎤 사회 박정수 조합장</span></div>' +
+  var a = asmList()[S.asm.idx], online = 128 + Object.keys(S.asm.attend).length;
+  return '<div class="ph"><div><h1>' + esc(meet().title) + '</h1><p>' + esc(U().name) + '님 입장 · ' + (S.asm.attend[ME] || '') + '</p></div><button class="btn" data-act="leave">퇴장</button></div>' +
+    '<div class="room"><div><div class="stage"><span class="live"><i></i>LIVE</span><span class="tm" id="tm">00:00</span><div class="sl">안건 ' + (S.asm.idx + 1) + ' / ' + asmList().length + '</div><h2>' + a.h + '</h2><p>' + a.d + '</p><span class="who2">🎤 사회 박정수 조합장</span></div>' +
     '<div class="ctrl"><button class="btn" data-act="hand">✋ 발언 신청</button><button class="btn" data-act="mute">🔇 마이크 꺼짐</button><a class="btn pri" href="#vote">🗳️ 투표하기</a>' + (r === 'admin' ? '<button class="btn acc" data-act="nextA">다음 안건 ▶</button>' : '') + '</div>' +
-    '<div class="card" style="margin-top:14px"><h2>안건 진행</h2><ol style="margin:0;padding-left:20px;line-height:2">' + ASM.map(function (x, i) { return '<li style="' + (i === S.asm.idx ? 'font-weight:700;color:var(--acc)' : i < S.asm.idx ? 'color:var(--muted);text-decoration:line-through' : '') + '">' + x.h + '</li>'; }).join('') + '</ol></div></div>' +
+    '<div class="card" style="margin-top:14px"><h2>안건 진행</h2><ol style="margin:0;padding-left:20px;line-height:2">' + asmList().map(function (x, i) { return '<li style="' + (i === S.asm.idx ? 'font-weight:700;color:var(--acc)' : i < S.asm.idx ? 'color:var(--muted);text-decoration:line-through' : '') + '">' + x.h + '</li>'; }).join('') + '</ol></div></div>' +
     '<div class="grid" style="align-content:start"><div class="card"><h2>성원 현황</h2><table class="t"><tr><td>현장 출석</td><td class="r">86명</td></tr><tr><td>온라인 출석</td><td class="r"><b id="onl">' + online + '</b>명</td></tr><tr><td>서면결의</td><td class="r">' + voteStats().p + '명</td></tr><tr><td><b>합계</b></td><td class="r"><b>' + (86 + online + voteStats().p) + '</b>명</td></tr></table><p style="margin:10px 0 0"><span class="tag ok">성원 충족</span> <span class="law">직접출석 20% 이상</span></p></div>' +
     '<div class="card"><h2>질문</h2><div class="chat" id="chat">' + S.asm.chat.map(function (c) { return '<div><b>' + esc(c.n) + '</b>' + esc(c.m) + '</div>'; }).join('') + '</div>' +
     (r === 'gov' ? '' : '<form data-form="chat" style="display:flex;gap:6px;margin-top:10px"><input name="m" required placeholder="질문 입력" style="flex:1"><button class="btn pri sm" style="height:42px">전송</button></form>') + '</div></div></div>';
@@ -1068,6 +1118,32 @@ function stopTimer() { if (timer) clearInterval(timer); timer = null; }
 var ACT = {
   close: closeModal,
   menu: function () { document.body.classList.toggle('menu-open'); },
+  mdAdd: function () { MD.agendas.push({ t: '', h: '', d: '', o: OPT_PRESET.yn.slice() }); render(); },
+  mdDel: function (t) { MD.agendas.splice(+t.dataset.i, 1); render(); },
+  mdReset: function () { MD = null; render(); },
+  mdCopy: function () { var t = meetNotice(MD || meet()); if (navigator.clipboard) navigator.clipboard.writeText(t).then(function () { toast('소집통지문을 복사했습니다.'); }); },
+  mdSend: function () {
+    var n = roster().length; if (!confirm('전체 조합원 ' + n + '명에게 소집통지 알림톡을 보냅니다. (시안: 실제 발송 없음)')) return;
+    S.sms.unshift({ at: now(), target: '전체 조합원', ch: '알림톡', msg: meetNotice(meet()).split('\n')[0], n: n }); save(); toast(n + '명에게 소집통지를 보냈습니다 (시안).');
+  },
+  mdSave: function () {
+    var m = MD, bad = m.agendas.filter(function (a) { return !a.h.trim() || a.o.length < 2; }).length;
+    if (!m.title.trim() || !m.held || !m.vFrom || !m.vTo) { toast('총회명·일시·전자의결 기간을 모두 입력하세요.'); return; }
+    if (m.vTo <= m.vFrom) { toast('전자의결 마감이 시작보다 늦어야 합니다.'); return; }
+    if (m.vTo > m.held) { toast('전자의결 마감은 총회 일시 이전이어야 합니다.'); return; }
+    if (bad) { toast('안건명과 선택지(2개 이상)를 모두 입력하세요.'); return; }
+    m.agendas.forEach(function (a, i) { a.t = '제' + (i + 1) + '호 안건'; });
+    var changed = JSON.stringify(m.agendas) !== JSON.stringify(agendas()), nb = Object.keys(S.vote.ballots).length;
+    if (changed && nb && !confirm('안건이 바뀌어 기존 전자투표 ' + nb + '건과 서면 집계가 초기화됩니다. 저장할까요?')) return;
+    S.meet = JSON.parse(JSON.stringify(m));
+    if (changed) { S.vote.ballots = {}; S.vote.paper = m.agendas.map(function (a) { return a.o.map(function () { return 0; }); }); S.asm.idx = 0; }
+    // 조합 일정에 총회·전자의결 마감 반영
+    S.events = S.events.filter(function (e) { return e.auto !== 'meet'; }).concat([
+      { d: m.held.slice(0, 10), t: m.title + ' (' + m.held.slice(11, 16) + ')', k: '총회', auto: 'meet', id: 'meet-held' },
+      { d: m.vTo.slice(0, 10), t: '전자의결 마감 (' + m.vTo.slice(11, 16) + ')', k: '투표', auto: 'meet', id: 'meet-vto' }
+    ]).sort(function (a, b) { return a.d < b.d ? -1 : 1; });
+    save(); MD = null; render(); toast('총회 설정을 저장했습니다.');
+  },
   newTenant: function () {
     modal('새 조합 개설', '<form class="f" data-form="newTenant"><p class="note" style="margin:0">조합마다 독립된 전용 공간과 주소가 만들어집니다. 처음에는 예시 데이터로 시작하며, 조합 관리자가 실제 자료로 바꿉니다.</p>' +
       '<label>조합명<input name="n" required maxlength="40" placeholder="예) OO아파트 재건축정비사업조합"></label>' +
@@ -1139,12 +1215,12 @@ var ACT = {
   pickVoter: function (t) { voter = t.dataset.v; vsel = []; toast(voter + '님 본인인증 완료'); render(); },
   unvoter: function () { voter = null; render(); },
   vopt: function (t) { vsel[+t.dataset.i] = +t.dataset.j; render(); },
-  vsubmit: function () { if (vsel.filter(function (x) { return x != null; }).length < AGENDAS.length) { toast('모든 안건에 투표해 주세요.'); return; } if (!confirm(voter + '님 명의로 투표를 제출합니다. 제출 후에는 변경할 수 없습니다.')) return; S.vote.ballots[voter] = { a: vsel.slice(), at: now(), method: '전자' }; save(); toast(voter + '님 투표가 완료되었습니다.'); voter = null; render(); },
+  vsubmit: function () { if (vsel.filter(function (x) { return x != null; }).length < agendas().length) { toast('모든 안건에 투표해 주세요.'); return; } if (!confirm(voter + '님 명의로 투표를 제출합니다. 제출 후에는 변경할 수 없습니다.')) return; S.vote.ballots[voter] = { a: vsel.slice(), at: now(), method: '전자' }; save(); toast(voter + '님 투표가 완료되었습니다.'); voter = null; render(); },
   vclose: function () { S.vote.open = !S.vote.open; save(); render(); },
   vreset: function () { S.vote.ballots = {}; S.vote.open = true; save(); render(); },
   enter: function () { var a = $('#ack'); if (a && !a.checked) { toast('본인 확인에 체크해 주세요.'); return; } inRoom = true; t0 = Date.now(); S.asm.attend[ME] = now() + ' 입장'; save(); render(); toast('총회에 입장했습니다. 출석이 기록되었습니다.'); },
   leave: function () { inRoom = false; S.asm.attend[ME] = (S.asm.attend[ME] || '') + ' · ' + now().slice(11) + ' 퇴장'; save(); render(); },
-  nextA: function () { S.asm.idx = (S.asm.idx + 1) % ASM.length; save(); render(); },
+  nextA: function () { S.asm.idx = (S.asm.idx + 1) % asmList().length; save(); render(); },
   hand: function () { S.asm.chat.push({ n: '안내', m: U().name + '님이 발언을 신청했습니다.' }); save(); render(); },
   mute: function () { toast('발언 순서가 되면 사회자가 마이크를 켜드립니다.'); },
   rtab: function (t) { rtab = t.dataset.v; render(); },
@@ -1242,11 +1318,21 @@ var FORMS = {
 };
 document.addEventListener('submit', function (e) { var f = e.target, k = f.dataset.form; if (!k || !FORMS[k]) return; e.preventDefault(); FORMS[k](f); });
 document.addEventListener('input', function (e) {
+  // 총회 설정 편집: 다시 그리지 않고 편집본(MD)과 소집통지 미리보기만 갱신
+  if (e.target.dataset && e.target.dataset.md && MD && e.target.dataset.md !== 'kind') {
+    var k = e.target.dataset.md, i = e.target.dataset.i, v = e.target.value;
+    if (i == null) MD[k] = v;
+    else if (k === 'o') MD.agendas[+i].o = v.split(',').map(function (s) { return s.trim(); }).filter(Boolean);
+    else MD.agendas[+i][k] = v;
+    var nEl = $('#mdNotice'); if (nEl) nEl.textContent = meetNotice(MD);
+    return;
+  }
   if (e.target.id === 'rq') { rq = e.target.value; var p = e.target.selectionStart; render(); var n = $('#rq'); n.focus(); n.setSelectionRange(p, p); }
   if (e.target.closest && e.target.closest('#calcF')) calcRun();
   if (e.target.dataset.sc) { SC[+e.target.dataset.sc][+e.target.dataset.k] = +e.target.value || 0; var y = window.scrollY; render(); window.scrollTo(0, y); var d = document.querySelector('details'); if (d) d.open = true; }
 });
 document.addEventListener('change', function (e) {
+  if (e.target.dataset && e.target.dataset.md === 'kind' && MD) { var a = MD.agendas[+e.target.dataset.i]; a.o = e.target.value === 'yn' ? OPT_PRESET.yn.slice() : ['A업체', 'B업체']; render(); return; }
   if (e.target.id === 'rfilter') { rfilter = e.target.value; render(); }
   if (e.target.dataset.link) { // 실제 조합원 ↔ 명부 연결 변경
     var uid = e.target.dataset.link, v = e.target.value;

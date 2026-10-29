@@ -43,8 +43,8 @@
     roster:  arr(P(function () { return S.roster; }, function (v) { S.roster = v; }), function (a, b) { return a.no - b.no; }),
     logs:    arr(P(function () { return S.logs; }, function (v) { S.logs = v; }), byAtDesc),
     meta: {
-      get: function () { return { vote: { open: S.vote.open, paper: S.vote.paper }, asm: { idx: S.asm.idx }, svc: S.svc }; },
-      set: function (m) { if (m.vote) { S.vote.open = m.vote.open; S.vote.paper = m.vote.paper; } if (m.asm) S.asm.idx = m.asm.idx; if (m.svc) S.svc = m.svc; }
+      get: function () { var m = { vote: { open: S.vote.open, paper: S.vote.paper }, asm: { idx: S.asm.idx }, svc: S.svc }; if (S.meet) m.meet = S.meet; return m; },
+      set: function (m) { if (m.vote) { S.vote.open = m.vote.open; S.vote.paper = m.vote.paper; } if (m.asm) S.asm.idx = m.asm.idx; if (m.svc) S.svc = m.svc; if (m.meet) S.meet = m.meet; }
     }
   };
   SYNC.COLLS = COLLS;
