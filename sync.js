@@ -107,6 +107,21 @@
     });
   };
 
+  // 첨부파일 (Storage 'files' 버킷, 비공개 · 경로 <tenant>/<coll>/<고유값>.<확장자>, 권한은 records와 같음)
+  var FILE_TYPES = { 'application/pdf': 'pdf', 'image/png': 'png', 'image/jpeg': 'jpg', 'image/webp': 'webp' };
+  SYNC.FILE_MAX = 5 * 1024 * 1024;
+  SYNC.fileOk = function (f) { return !f ? '' : !FILE_TYPES[f.type] ? 'PDF·사진(JPG·PNG·WEBP)만 올릴 수 있습니다.' : f.size > SYNC.FILE_MAX ? '5MB 이하 파일만 올릴 수 있습니다.' : ''; };
+  SYNC.upload = function (file, coll) {
+    var bad = SYNC.fileOk(file); if (bad) return Promise.reject(new Error(bad));
+    var path = SYNC.tenant + '/' + coll + '/' + uid() + '.' + FILE_TYPES[file.type]; // 한글 파일명은 경로에 쓰지 않음
+    return SYNC.client.storage.from('files').upload(path, file, { contentType: file.type }).then(function (r) {
+      if (r.error) throw r.error;
+      return { path: path, name: file.name, size: file.size, type: file.type };
+    });
+  };
+  SYNC.fileUrl = function (path) { return SYNC.client.storage.from('files').createSignedUrl(path, 300).then(function (r) { if (r.error) throw r.error; return r.data.signedUrl; }); };
+  SYNC.removeFile = function (path) { return path ? SYNC.client.storage.from('files').remove([path]) : Promise.resolve(); };
+
   // 시·구 담당자: 서버에 등록된 조합별 집계
   SYNC.loadGov = function () {
     var c = SYNC.client;

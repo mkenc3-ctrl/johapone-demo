@@ -380,6 +380,7 @@ function pct(a, b) { return b ? Math.round(a / b * 1000) / 10 : 0; }
 function modal(title, body, foot) {
   $('#mcont').innerHTML = '<div class="mh"><h2>' + title + '</h2><button data-act="close" aria-label="닫기">×</button></div><div class="mb">' + body + '</div>' + (foot ? '<div class="mf">' + foot + '</div>' : '');
   var d = $('#modal'); if (!d.open) d.showModal();
+  fillImages();
 }
 function closeModal() { var d = $('#modal'); if (d.open) d.close(); }
 function ph(t, p, right) { return '<div class="ph"><div><h1>' + t + '</h1>' + (p ? '<p>' + p + '</p>' : '') + '</div>' + (right || '') + '</div>'; }
@@ -561,7 +562,7 @@ function openPost(id) {
     : '<button class="btn" data-act="close">닫기</button>' + (draft && r === 'admin' ? '<button class="btn acc" data-act="pubPost" data-id="' + id + '">지금 공개</button>' : '');
   modal('<span class="tag gray">' + p.cat + '</span> ' + esc(p.title),
     '<p class="law" style="margin:0 0 14px">' + (r !== 'member' ? '작성·변경 ' + (p.w || p.at) + ' · 공개 기한 ' + dF(discDue(p)) + ' · ' + discTag(p) + '<br>' : '') + (draft ? '아직 공개하지 않은 자료입니다 (조합원에게 보이지 않음)' : '공개 ' + p.at + ' · 조회 ' + p.views) + '</p><div style="font-size:16px;line-height:1.8">' + nl(p.body) + '</div>' +
-    (p.file ? '<div style="margin-top:18px;padding:12px 14px;border:1px solid var(--line);border-radius:8px;display:flex;justify-content:space-between;align-items:center;gap:8px"><span>📎 ' + esc(p.file) + '</span><button class="btn sm" data-act="dl">내려받기</button></div>' : '') +
+    attachBox(p.att, p.file) +
     (r !== 'member' ? '<div style="margin-top:18px"><p style="margin:0 0 6px;font-size:14px">조합원 확인 현황 <b>' + p.reads.length + '</b> / ' + n + '명</p><div class="bar"><i style="width:' + pct(p.reads.length, n) + '%"></i></div></div>' : ''), foot);
 }
 
@@ -596,15 +597,37 @@ function cafePost(id) {
   return '<div class="card"><p style="margin:0;color:var(--cafe);font-size:14px;font-weight:700">' + c.board + ' ›</p><h2 style="font-size:22px;margin:6px 0 10px;display:block">' + esc(c.title) + '</h2>' +
     '<div style="display:flex;gap:10px;align-items:center;padding-bottom:14px;border-bottom:1px solid var(--line2);font-size:14px"><span class="av" style="width:32px;height:32px;font-size:13px">' + esc(c.author[0]) + '</span><span><b>' + esc(c.author) + '</b><span class="lv">' + (c.aid === 'admin' ? '매니저' : '조합원') + '</span><br><span style="color:var(--muted);font-size:13px">' + c.at + ' · 조회 ' + c.views + '</span></span></div>' +
     '<div style="padding:22px 0;font-size:16px;line-height:1.85;min-height:120px">' + nl(c.body) + '</div>' +
+    attachBox(c.att) +
     '<div style="display:flex;gap:8px;justify-content:center;padding-bottom:18px"><button class="btn" data-act="like" data-id="' + id + '">♡ 좋아요 ' + c.likes + '</button>' + (mine ? '<button class="btn" data-act="delCafe" data-id="' + id + '">삭제</button>' : '') + '<a class="btn" href="#cafe">목록</a></div>' +
     '<h3 style="font-size:16px;margin:0 0 4px">댓글 ' + c.comments.length + '</h3>' +
     c.comments.map(function (m) { return '<div class="cmt"><b>' + esc(m.author) + '</b><time>' + m.at + '</time><div>' + nl(m.body) + '</div></div>'; }).join('') +
     (canC ? '<form data-form="comment" data-id="' + id + '" style="display:flex;gap:8px;margin-top:10px"><input name="b" required placeholder="댓글을 남겨보세요" style="flex:1"><button class="btn pri">등록</button></form>' : '<p class="note" style="margin-top:10px">' + (role() === 'gov' ? '지자체 담당자는 열람만 할 수 있습니다.' : '댓글 권한이 없습니다.') + '</p>') + '</div>';
 }
+/* --- 첨부파일: 공유 서버 연결 시 실제 파일(비공개 저장소 · 5분짜리 임시 주소로 열람), 아니면 이름만 --- */
+function fileSize(n) { return n >= 1048576 ? (n / 1048576).toFixed(1) + 'MB' : Math.max(1, Math.round(n / 1024)) + 'KB'; }
+function attachBox(att, legacy) {
+  if (!att && !legacy) return '';
+  var name = att ? att.name : legacy, img = att && /^image\//.test(att.type);
+  return '<div style="margin-top:18px;padding:12px 14px;border:1px solid var(--line);border-radius:8px">' +
+    (img ? '<img data-img="' + esc(att.path) + '" alt="' + esc(name) + '" style="display:block;max-width:100%;max-height:420px;border-radius:6px;margin-bottom:10px;background:var(--bg2)">' : '') +
+    '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><span>📎 ' + esc(name) + (att ? ' <span class="law">' + fileSize(att.size) + '</span>' : '') + '</span><button class="btn sm" data-act="dl"' + (att ? ' data-path="' + esc(att.path) + '"' : '') + '>' + (att ? '열기' : '내려받기') + '</button></div></div>';
+}
+// 폼의 첨부파일을 올리고 {path,name,size,type} 또는 null 반환. 검사 실패 시 예외
+function uploadField(f, coll) {
+  var fn = f.file && f.file.files[0]; if (!fn) return Promise.resolve(null);
+  var bad = window.SYNC && SYNC.fileOk ? SYNC.fileOk(fn) : ''; if (bad) return Promise.reject(new Error(bad));
+  if (!(window.SYNC && SYNC.on)) return Promise.resolve({ name: fn.name, size: fn.size, type: fn.type, local: true }); // 서버 미연결: 이름만 기록
+  var b = f.querySelector('button.pri'); if (b) { b.disabled = true; b.textContent = '업로드 중…'; }
+  return SYNC.upload(fn, coll).catch(function (e) { if (b) { b.disabled = false; b.textContent = '등록'; } throw e; });
+}
+function fillImages() {
+  if (!(window.SYNC && SYNC.on)) return;
+  document.querySelectorAll('img[data-img]:not([src])').forEach(function (im) { SYNC.fileUrl(im.dataset.img).then(function (u) { im.src = u; }).catch(function () { im.remove(); }); });
+}
 function cafeWriteForm() {
   if (!perm('write')) return '<div class="card empty">글쓰기 권한이 없습니다. 매니저에게 권한을 신청하세요.</div>';
   return '<div class="card"><h2>카페 글쓰기</h2><form class="f" data-form="cafe"><div class="row"><label>게시판<select name="board">' + BOARDS.filter(function (x) { return x !== '공지사항' || role() === 'admin'; }).map(function (x) { return '<option>' + x + '</option>'; }).join('') + '</select></label></div>' +
-    '<label>제목<input name="title" required maxlength="80"></label><label>내용<textarea name="body" rows="10" required></textarea></label><div style="display:flex;gap:8px;justify-content:flex-end"><a class="btn" href="#cafe">취소</a><button class="btn pri" style="background:var(--cafe);border-color:var(--cafe)">등록</button></div></form></div>';
+    '<label>제목<input name="title" required maxlength="80"></label><label>내용<textarea name="body" rows="10" required></textarea></label><label>사진·PDF 첨부 (5MB 이하)<input type="file" name="file" accept="application/pdf,image/png,image/jpeg,image/webp" style="padding-top:8px"></label><div style="display:flex;gap:8px;justify-content:flex-end"><a class="btn" href="#cafe">취소</a><button class="btn pri" style="background:var(--cafe);border-color:var(--cafe)">등록</button></div></form></div>';
 }
 
 /* --- 전자동의서 --- */
@@ -1406,6 +1429,7 @@ function render() {
   if (r === 'calc') calcRun();
   if (r === 'assembly' && inRoom) startTimer(); else stopTimer();
   var ch = $('#chat'); if (ch) ch.scrollTop = ch.scrollHeight;
+  fillImages();
 }
 function startTimer() { stopTimer(); timer = setInterval(function () { var s = Math.floor((Date.now() - t0) / 1000), el = $('#tm'); if (el) el.textContent = pad(Math.floor(s / 60)) + ':' + pad(s % 60); if (s % 7 === 0) { var o = $('#onl'); if (o) o.textContent = +o.textContent + 1; } }, 1000); }
 function stopTimer() { if (timer) clearInterval(timer); timer = null; }
@@ -1493,10 +1517,15 @@ var ACT = {
     save(); closeModal(); render(); toast('공개했습니다.' + (discStatus(p)[0] === 'no' ? ' 15일 공개 기한을 넘겨 공개되었습니다.' : ''));
   },
   readPost: function (t) { var p = S.posts.filter(function (x) { return x.id === +t.dataset.id; })[0]; if (p.reads.indexOf(ME) < 0) p.reads.push(ME); save(); closeModal(); render(); toast('확인 처리되었습니다.'); },
-  dl: function () { toast('시안: 첨부파일 내려받기는 실제 파일 연동 후 동작합니다.'); },
+  dl: function (t) {
+    var p = t.dataset.path;
+    if (!p || !(window.SYNC && SYNC.on)) { toast('이 첨부는 파일 이름만 기록된 예시입니다. 공유 서버에 연결된 상태에서 올린 파일은 바로 열립니다.'); return; }
+    var w = window.open('', '_blank'); // 팝업 차단을 피하려고 먼저 창을 연 뒤 주소 지정
+    SYNC.fileUrl(p).then(function (u) { if (w) w.location = u; else location.href = u; }).catch(function (e) { if (w) w.close(); toast('파일을 열 수 없습니다: ' + e.message); });
+  },
   newPost: function () {
     var td = new Date(), iso = td.getFullYear() + '-' + pad(td.getMonth() + 1) + '-' + pad(td.getDate());
-    modal('정보공개 자료 등록', '<form class="f" data-form="post"><div class="row"><label>분류<select name="cat">' + DCATS.slice(1).map(function (c) { return '<option>' + c + '</option>'; }).join('') + '</select></label><label>첨부파일<input type="file" name="file" style="padding-top:8px"></label></div><label>제목<input name="title" required></label><label>내용<textarea name="body" rows="6" required></textarea></label>' +
+    modal('정보공개 자료 등록', '<form class="f" data-form="post"><div class="row"><label>분류<select name="cat">' + DCATS.slice(1).map(function (c) { return '<option>' + c + '</option>'; }).join('') + '</select></label><label>첨부파일 (PDF·사진, 5MB 이하)<input type="file" name="file" accept="application/pdf,image/png,image/jpeg,image/webp" style="padding-top:8px"></label></div><label>제목<input name="title" required></label><label>내용<textarea name="body" rows="6" required></textarea></label>' +
       '<div class="row"><label>작성·변경일 <span style="font-weight:400;color:var(--muted)">(공개 기한 = +15일)</span><input type="date" name="w" value="' + iso + '" max="' + iso + '" required></label>' +
       '<label>공개 방식<select name="mode"><option value="pub">바로 공개</option><option value="draft">공개 대기로 저장</option></select></label></div>' +
       '<label style="flex-direction:row;align-items:center;gap:8px"><input type="checkbox" name="push" checked style="width:18px;height:18px">공개할 때 조합원 전원에게 알림톡 발송</label><div style="display:flex;justify-content:flex-end;gap:8px"><button type="button" class="btn" data-act="close">취소</button><button class="btn pri">등록</button></div></form>');
@@ -1505,7 +1534,12 @@ var ACT = {
   cafeWrite: function () { location.hash = '#cafe/write'; },
   reqPerm: function () { if (S.permReq.some(function (q) { return q.uid === ME; })) { toast('이미 신청했습니다. 매니저 승인을 기다려 주세요.'); return; } S.permReq.push({ uid: ME, name: U().name, at: now() }); save(); toast('글쓰기 권한을 신청했습니다.'); },
   like: function (t) { var c = S.cafe.filter(function (x) { return x.id === +t.dataset.id; })[0]; if (S.view['lk' + c.id + ME]) { toast('이미 좋아요를 눌렀습니다.'); return; } c.likes++; S.view['lk' + c.id + ME] = 1; save(); render(); },
-  delCafe: function (t) { if (!confirm('이 글을 삭제할까요?')) return; S.cafe = S.cafe.filter(function (x) { return x.id !== +t.dataset.id; }); save(); location.hash = '#cafe'; },
+  delCafe: function (t) {
+    if (!confirm('이 글을 삭제할까요?')) return;
+    var c = S.cafe.filter(function (x) { return x.id === +t.dataset.id; })[0];
+    if (c && c.att && c.att.path && window.SYNC && SYNC.on) SYNC.removeFile(c.att.path); // 첨부도 함께 삭제
+    S.cafe = S.cafe.filter(function (x) { return x.id !== +t.dataset.id; }); save(); location.hash = '#cafe';
+  },
   auth: function (t) { t.disabled = true; t.textContent = '인증 중…'; setTimeout(function () { cstep = 1; render(); toast('본인인증이 완료되었습니다.'); }, 900); },
   cnext1: function () { if (!$('#ck').checked) { toast('동의서 내용을 확인해 주세요.'); return; } cstep = 2; render(); },
   cpick: function (t) { cchoice = t.dataset.v === '1'; render(); },
@@ -1683,14 +1717,24 @@ var FORMS = {
   proReq: function (f) { var p = PROS[+f.dataset.i], cn = PRO_CATS.filter(function (c) { return c[0] === p[0]; })[0][2]; S.proReq.unshift({ at: today(), uid: ME, name: U().name, pro: p[1], cat: cn, msg: f.m.value + ' (' + f.c.value + ')' }); save(); closeModal(); render(); toast(p[1] + '에 상담 요청을 보냈습니다 (시안).'); },
   proJoin: function (f) { closeModal(); toast(f.n.value + ' 입점 신청이 접수되었습니다 (시안). 자격 확인 후 연락드립니다.'); },
   post: function (f) {
-    var fn = f.file.files[0], id = Date.now(), draft = f.mode.value === 'draft', w = f.w.value.replace(/-/g, '.');
-    var p = { id: id, cat: f.cat.value, title: f.title.value, body: f.body.value, file: fn ? fn.name : '', w: w, at: draft ? '' : today(), state: draft ? 'draft' : 'pub', push: f.push.checked, views: 0, reads: [] };
+    uploadField(f, 'posts').then(function (att) { FORMS.postSave(f, att); }).catch(function (e) { toast('첨부 실패: ' + e.message); });
+  },
+  postSave: function (f, att) {
+    var id = Date.now(), draft = f.mode.value === 'draft', w = f.w.value.replace(/-/g, '.');
+    var p = { id: id, cat: f.cat.value, title: f.title.value, body: f.body.value, file: att ? att.name : '', w: w, at: draft ? '' : today(), state: draft ? 'draft' : 'pub', push: f.push.checked, views: 0, reads: [] };
+    if (att && !att.local) p.att = att;
     S.posts.push(p);
     if (!draft && f.push.checked) S.sms.unshift({ at: now(), target: '전체 조합원', ch: '알림톡', msg: '[' + UNION + '] 정보공개: ' + f.title.value, n: roster().length });
     save(); closeModal(); render();
     toast(draft ? '공개 대기로 저장했습니다. 공개 기한: ' + dF(discDue(p)) : '공개했습니다.' + (f.push.checked ? ' 조합원 ' + roster().length + '명에게 알림톡을 보냈습니다.' : '') + (discStatus(p)[0] === 'no' ? ' (15일 기한을 넘긴 공개입니다)' : ''));
   },
-  cafe: function (f) { var id = Math.max.apply(null, S.cafe.map(function (c) { return c.id; }).concat(0)) + 1; S.cafe.push({ id: id, board: f.board.value, notice: f.board.value === '공지사항', title: f.title.value, body: f.body.value, author: U().name, aid: ME, at: today(), views: 0, likes: 0, comments: [] }); save(); location.hash = '#cafe/post/' + id; toast('글이 등록되었습니다.'); },
+  cafe: function (f) {
+    uploadField(f, 'cafe').then(function (att) {
+      var id = Math.max.apply(null, S.cafe.map(function (c) { return c.id; }).concat(0)) + 1, c = { id: id, board: f.board.value, notice: f.board.value === '공지사항', title: f.title.value, body: f.body.value, author: U().name, aid: ME, at: today(), views: 0, likes: 0, comments: [] };
+      if (att && !att.local) c.att = att;
+      S.cafe.push(c); save(); location.hash = '#cafe/post/' + id; toast('글이 등록되었습니다.');
+    }).catch(function (e) { toast('첨부 실패: ' + e.message); });
+  },
   comment: function (f) { var c = S.cafe.filter(function (x) { return x.id === +f.dataset.id; })[0]; c.comments.push({ author: U().name, body: f.b.value, at: now() }); save(); render(); },
   chat: function (f) { S.asm.chat.push({ n: U().name, m: f.m.value }); save(); render(); },
   sms: function (f) { var n = { '전체 조합원': roster().length, '동의서 미제출자': consentStats().none, '서면결의서 미제출자': roster().filter(function (x) { return !x.written; }).length, '대의원': 4 }[f.t.value]; S.sms.unshift({ at: now(), target: f.t.value, ch: f.c.value, msg: f.m.value, n: n }); save(); render(); toast(f.t.value + ' ' + n + '명에게 ' + f.c.value + '을 보냈습니다 (시안). 예상 비용 ' + won(n * (f.c.value === '알림톡' ? 15 : 50)) + '원'); },
