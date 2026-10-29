@@ -787,7 +787,7 @@
     if (forms.length) {
       h += '<h4>공식 서식 (시행규칙 별지, 국가법령정보센터 제공)</h4><ul>' + forms.map(function (f) {
         return '<li>별지 제' + esc(f.no.replace('-', '호의')) + (f.no.indexOf('-') < 0 ? '호' : '') + '서식 ' + esc(f.name) +
-          ' <a target="_blank" rel="noopener" href="' + formUrl(f.hwp, f.cls) + '">한글 파일</a> · <a target="_blank" rel="noopener" href="' + formUrl(f.pdf, f.cls) + '">PDF</a></li>';
+          ' <a target="_blank" rel="noopener" href="docs/forms/form-' + f.no + '.pdf">PDF 보기</a> · <a target="_blank" rel="noopener" href="' + formUrl(f.hwp, f.cls) + '">한글(HWP)</a></li>';
       }).join('') + '</ul>';
     }
     if (sheets.length) {
@@ -939,6 +939,14 @@
   }
   function saveFile(name, text, mime) {
     function viaLink() {
+      // 휴대폰: 공유 창으로 저장(파일에 저장·카카오톡) — 아이폰 홈 화면 앱은 일반 다운로드가 막히는 경우가 많음
+      var mobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || (navigator.maxTouchPoints > 1 && /Mac/.test(navigator.platform));
+      if (mobile && navigator.canShare) {
+        try {
+          var file = new File([text], name, { type: mime });
+          if (navigator.canShare({ files: [file] })) { navigator.share({ files: [file], title: name }).then(function () { msg('공유 창으로 보냈습니다: ' + name); }, function () {}); return; }
+        } catch (e) {}
+      }
       var a = document.createElement('a');
       a.href = URL.createObjectURL(new Blob([text], { type: mime }));
       a.download = name; document.body.appendChild(a); a.click(); a.remove();
@@ -1133,5 +1141,6 @@
   if (PHASES) start(); else gate();
 })();
 </script>
+<script src="appback.js"></script>
 </body>
 </html>

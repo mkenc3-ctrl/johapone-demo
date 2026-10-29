@@ -70,5 +70,19 @@
       { name: 'xl/worksheets/sheet1.xml', text: ws }
     ]);
   }
-  window.JOHAP_SHEETS = { SHEETS: SHEETS, STEP: STEP, FORMMAP: FORMMAP, SHEETMAP: SHEETMAP, xlsx: xlsx };
+  // 휴대폰 여부 (아이패드 포함)
+  function isMobile() { return /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || (navigator.maxTouchPoints > 1 && /Mac/.test(navigator.platform)); }
+  // 파일 저장: 휴대폰은 공유 창(파일에 저장·카카오톡) — 아이폰 홈 화면 앱은 일반 다운로드가 막히는 경우가 많음. 그 외는 일반 다운로드
+  function save(data, name, mime) {
+    var blob = new Blob([data], { type: mime });
+    function link() { var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 1000); }
+    if (isMobile() && navigator.canShare) {
+      try {
+        var file = new File([blob], name, { type: mime });
+        if (navigator.canShare({ files: [file] })) { navigator.share({ files: [file], title: name }).catch(function (e) { if (!e || e.name !== 'AbortError') link(); }); return 'share'; }
+      } catch (e) {}
+    }
+    link(); return 'link';
+  }
+  window.JOHAP_SHEETS = { SHEETS: SHEETS, STEP: STEP, FORMMAP: FORMMAP, SHEETMAP: SHEETMAP, xlsx: xlsx, save: save, isMobile: isMobile };
 })();

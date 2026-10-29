@@ -32,6 +32,8 @@ h1{margin:0;font-size:24px}
 .btn{height:36px;padding:0 14px;border-radius:8px;border:1px solid var(--bd);background:#fff;font:inherit;font-size:14px;font-weight:700;cursor:pointer;color:var(--ink);text-decoration:none;display:inline-flex;align-items:center;white-space:nowrap}
 .btn.pri{background:var(--pri);border-color:var(--pri);color:#fff}
 .note{font-size:12.5px;color:var(--muted);margin-top:16px;line-height:1.7}
+.back{display:inline-flex;align-items:center;min-height:44px;margin-bottom:8px;font-weight:700;color:var(--pri);text-decoration:none;font-size:16px}
+.mob{background:var(--acc-s);color:var(--acc-d);border-radius:10px;padding:12px 14px;font-size:15px;margin:0 0 14px}
 .empty{text-align:center;color:var(--muted);padding:30px;background:#fff;border-radius:10px;border:1px dashed var(--line)}
 @media (max-width:640px){.item{grid-template-columns:1fr}.acts{justify-content:flex-start}}
 </style>
@@ -39,9 +41,11 @@ h1{margin:0;font-size:24px}
 <body>
 <div class="wrap">
   <h1>서식함</h1>
-  <p class="sub">공식 서식(한글·PDF) · 엑셀 관리 양식 · 조합ONE 서식을 한 곳에서 찾고 내려받습니다. 단계별 사용처는 절차 체크리스트와 연결됩니다.</p>
+  <a class="back" id="back" href="union.html#home" hidden>← 조합ONE으로 돌아가기</a>
+  <p class="sub">공식 서식(PDF·한글) · 엑셀 관리 양식 · 조합ONE 서식을 이 화면에서 바로 열고 내려받습니다.</p>
+  <p class="mob" id="mob" hidden>📱 휴대폰에서는 <b>PDF 보기</b>를 누르세요. 한글(HWP) 파일은 한컴오피스 앱이 있어야 열리므로 PC에서 받는 것을 권합니다. 엑셀 양식은 공유 창이 뜨면 「파일에 저장」이나 카카오톡으로 보내면 됩니다.</p>
   <div class="tool">
-    <input id="q" type="search" placeholder="서식 이름·단계 검색 (예: 동의서, 명부, 총회, 매도청구)">
+    <input id="q" type="search" placeholder="서식 이름 검색 (예: 동의서, 명부, 총회, 매도청구)">
     <div class="chips" id="chips"></div>
   </div>
   <p class="count" id="count"></p>
@@ -53,8 +57,6 @@ h1{margin:0;font-size:24px}
 <script>
   var J = window.JOHAP_SHEETS, D = window.LAW_DATA;
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
-  function stepsOf(map, key) { return Object.keys(map).filter(function (s) { return map[s].indexOf(key) >= 0; }); }
-  function stepLinks(ids) { return ids.length ? '사용 단계: ' + ids.map(function (s) { return '<a href="rebuild.html#' + s + '" target="_blank" rel="noopener">' + esc(J.STEP[s] || s) + '</a>'; }).join(' · ') : ''; }
   function formUrl(seq, cls) { return 'https://www.law.go.kr/LSW/flDownload.do?gubun=&flSeq=' + seq + '&bylClsCd=' + cls; }
 
   var ITEMS = [];
@@ -62,14 +64,16 @@ h1{margin:0;font-size:24px}
   if (D) D.laws.forEach(function (law) {
     (law.forms || []).forEach(function (f) {
       var label = '별지 제' + f.no.replace('-', '호의') + (f.no.indexOf('-') < 0 ? '호' : '') + '서식';
-      ITEMS.push({ type: 'law', title: f.name, sub: label + ' · ' + (law.id === 'rule' ? '시행규칙' : law.id === 'decree' ? '시행령' : '법'), steps: law.id === 'rule' ? stepsOf(J.FORMMAP, f.no) : [],
-        acts: '<a class="btn" target="_blank" rel="noopener" href="' + formUrl(f.hwp, f.cls) + '">한글</a><a class="btn" target="_blank" rel="noopener" href="' + formUrl(f.pdf, f.cls) + '">PDF</a>' });
+      // PDF는 조합ONE에 올려둔 사본(휴대폰에서도 바로 보임), 한글은 국가법령정보센터 원본
+      var pdf = law.id === 'rule' ? 'docs/forms/form-' + f.no + '.pdf' : formUrl(f.pdf, f.cls);
+      ITEMS.push({ type: 'law', title: f.name, sub: label + ' · ' + (law.id === 'rule' ? '시행규칙' : law.id === 'decree' ? '시행령' : '법'),
+        acts: '<a class="btn pri" target="_blank" rel="noopener" href="' + pdf + '">PDF 보기</a><a class="btn" target="_blank" rel="noopener" href="' + formUrl(f.hwp, f.cls) + '">한글(HWP)</a>' });
     });
   });
   // 2) 엑셀 관리 양식
   Object.keys(J.SHEETS).forEach(function (k) {
     var sh = J.SHEETS[k];
-    ITEMS.push({ type: 'xls', title: sh.title, sub: '열 ' + sh.cols.length + '개 · ' + sh.cols.slice(0, 4).map(function (c) { return c[0]; }).join(', ') + ' …', steps: stepsOf(J.SHEETMAP, k),
+    ITEMS.push({ type: 'xls', title: sh.title, sub: '열 ' + sh.cols.length + '개 · ' + sh.cols.slice(0, 4).map(function (c) { return c[0]; }).join(', ') + ' …',
       acts: '<button class="btn pri" data-sheet="' + k + '">엑셀 받기</button>' });
   });
   // 3) 조합ONE 서식 (앱 안에서 작성·출력)
@@ -80,31 +84,33 @@ h1{margin:0;font-size:24px}
     ['맞춤 비용 절감 리포트', '조합원 수·총회 횟수 입력 → A4 리포트 PDF', 'report.html', '열기'],
     ['건축물대장 서식 (일반건축물대장 갑)', '조합 앱 → 조합명부관리 → 건축물대장 서식 탭에서 작성·인쇄', 'union.html#roster', '앱에서 열기'],
     ['조합원 확인서 · 동의서 제출 확인서', '조합 앱 → 내 정보 → 전자증명서 발급', 'union.html#me', '앱에서 열기']
-  ].forEach(function (x) { ITEMS.push({ type: 'one', title: x[0], sub: x[1], steps: [], acts: '<a class="btn" href="' + x[2] + '" target="_top">' + x[3] + '</a>' }); });
+  ].forEach(function (x) { ITEMS.push({ type: 'one', title: x[0], sub: x[1], acts: '<a class="btn" href="' + x[2] + '" target="_top">' + x[3] + '</a>' }); });
 
-  var TYPES = [['all', '전체'], ['law', '공식 서식 (한글·PDF)'], ['xls', '엑셀 양식'], ['one', '조합ONE 서식']], cur = 'all';
+  var TYPES = [['all', '전체'], ['law', '공식 서식 (PDF·한글)'], ['xls', '엑셀 양식'], ['one', '조합ONE 서식']], cur = 'all';
   var TAG = { law: '<span class="tag t-law">공식</span>', xls: '<span class="tag t-xls">엑셀</span>', one: '<span class="tag t-one">조합ONE</span>' };
   function draw() {
     var q = document.getElementById('q').value.trim().toLowerCase();
     var L = ITEMS.filter(function (it) {
       if (cur !== 'all' && it.type !== cur) return false;
       if (!q) return true;
-      return (it.title + ' ' + it.sub + ' ' + it.steps.map(function (s) { return J.STEP[s]; }).join(' ')).toLowerCase().indexOf(q) >= 0;
+      return (it.title + ' ' + it.sub).toLowerCase().indexOf(q) >= 0;
     });
     document.getElementById('chips').innerHTML = TYPES.map(function (t) { var n = t[0] === 'all' ? ITEMS.length : ITEMS.filter(function (i) { return i.type === t[0]; }).length; return '<button class="' + (t[0] === cur ? 'on' : '') + '" data-t="' + t[0] + '">' + t[1] + ' ' + n + '</button>'; }).join('');
     document.getElementById('count').textContent = L.length + '개 서식';
     document.getElementById('list').innerHTML = L.map(function (it) {
-      return '<div class="item"><div><b>' + TAG[it.type] + esc(it.title) + '</b><div class="meta">' + esc(it.sub) + (it.steps.length ? '<br>' + stepLinks(it.steps) : '') + '</div></div><div class="acts">' + it.acts + '</div></div>';
+      return '<div class="item"><div><b>' + TAG[it.type] + esc(it.title) + '</b><div class="meta">' + esc(it.sub) + '</div></div><div class="acts">' + it.acts + '</div></div>';
     }).join('') || '<div class="empty">검색 결과가 없습니다.</div>';
   }
   document.getElementById('q').addEventListener('input', draw);
   document.addEventListener('click', function (e) {
     var c = e.target.closest('[data-t]'); if (c) { cur = c.dataset.t; draw(); return; }
     var s = e.target.closest('[data-sheet]'); if (!s) return;
-    var sh = J.SHEETS[s.dataset.sheet], blob = new Blob([J.xlsx(sh)], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-    var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = sh.title + '.xlsx'; document.body.appendChild(a); a.click();
-    setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+    var sh = J.SHEETS[s.dataset.sheet];
+    J.save(J.xlsx(sh), sh.title + '.xlsx', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
   });
+  // 조합ONE 앱에서 휴대폰으로 열었을 때: 돌아가기 버튼 · 휴대폰 안내
+  if (/[?&]app=1/.test(location.search)) document.getElementById('back').hidden = false;
+  if (J.isMobile()) document.getElementById('mob').hidden = false;
   draw();
 </script>
 </body>

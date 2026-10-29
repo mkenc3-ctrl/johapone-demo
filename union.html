@@ -1499,7 +1499,10 @@ V.pro = function () {
 };
 
 /* --- 법령·판례 / 절차 체크리스트 (기존 도구를 앱 안에 그대로 띄움) --- */
-function embed(src, title, sub) { return ph(title, sub, '<a class="btn sm" href="' + src + '" target="_blank" rel="noopener">새 창으로 크게 보기 ↗</a>') + '<iframe class="embed" src="' + src + '" title="' + title + '"></iframe>'; }
+// 휴대폰: 작은 창(iframe) 대신 전체 화면으로 열기 — 기록을 바꿔치기해서 뒤로 가기가 앱 이전 화면으로 돌아감
+function embed(src, title, sub) {
+  if (window.innerWidth <= 900) { setTimeout(function () { location.replace(src + '?app=1'); }, 0); return ph(title, '전체 화면으로 여는 중…'); }
+  return ph(title, sub, '<a class="btn sm" href="' + src + '" target="_blank" rel="noopener">새 창으로 크게 보기 ↗</a>') + '<iframe class="embed" allow="web-share" src="' + src + '" title="' + title + '"></iframe>'; }
 V.law = function () { return embed('index.html', '법령·판례 검색', '도시정비법·시행령·시행규칙 조문과 관련 판례를 검색합니다. 조문 사이 참조도 바로 따라갈 수 있습니다.'); };
 V.forms = function () { return embed('forms.html', '서식함', '시행규칙 별지 공식 서식(한글·PDF), 엑셀 관리 양식, 조합ONE 서식을 한 곳에서 찾고 내려받습니다.'); };
 V.bylaws = function () { return embed('bylaws.html', '정관 개정 패키지', '전자의결·온라인총회 도입을 위한 정관 개정안, 총회 안건 서식, 소집통지 문구 (법 제45조·제44조의2, 시행령 제42조 기준)'); };
