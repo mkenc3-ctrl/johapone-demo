@@ -346,8 +346,8 @@ function seed() {
       { d: '2026-11-30', t: '조합설립 동의서 징구 마감', k: '동의' }
     ],
     bids: [
-      { id: 1, title: '정비계획 변경 용역 협력업체 선정 입찰', type: '일반경쟁', at: '2026.10.21', due: '2026.11.12', st: '진행' },
-      { id: 2, title: '조합 회계감사 용역 입찰', type: '제한경쟁', at: '2026.10.02', due: '2026.10.23', st: '마감' }
+      { id: 1, title: '정비계획 변경 용역 협력업체 선정 입찰', kind: 'svc', est: 25000, type: '일반경쟁', ep: true, at: '2026.10.21', due: '2026.11.12', st: '진행' },
+      { id: 2, title: '조합 회계감사 용역 입찰', kind: 'svc', est: 3000, type: '수의계약', at: '2026.10.02', due: '2026.10.23', st: '마감' }
     ],
     qna: [{ id: 1, uid: 'hong', name: '홍길동', title: '주소 변경 신고는 어떻게 하나요?', body: '이사를 해서 우편물 주소를 바꾸고 싶습니다.', at: '2026.10.26', answer: '내 정보 메뉴에서 주소 변경을 신청하시면 조합 사무국이 확인 후 반영합니다.' }],
     sms: [{ at: '2026.10.15 10:00', target: '전체 조합원', ch: '알림톡', msg: '[OO1구역] 정기총회 소집 공고가 등록되었습니다.', n: 24 }],
@@ -489,7 +489,7 @@ V.home = function () {
     '<li><span class="tag acc">문의</span><a class="tt" href="#qna">답변 대기 1:1 문의</a><span class="m">' + S.qna.filter(function (q) { return !q.answer; }).length + '건</span></li>' +
     '<li><span class="tag ' + (S.posts.some(function (p) { return p.state === 'draft' && discStatus(p)[0] === 'no'; }) ? 'no' : 'acc') + '">공개</span><a class="tt" href="#disclosure">정보공개 공개 대기 (15일 기한)</a><span class="m">' + S.posts.filter(function (p) { return p.state === 'draft'; }).length + '건</span></li>' +
     '<li><span class="tag acc">권한</span><a class="tt" href="#admin">모임방 글쓰기 권한 신청</a><span class="m">' + S.permReq.length + '건</span></li>' +
-    '<li><span class="tag">교육</span><a class="tt" href="#edu">임원 운영·윤리교육 이수 기한 임박</a><span class="m">1명</span></li>' +
+    (function () { var L = offc().list, no = L.filter(function (o) { return offStat(o)[0] === 'no'; }).length, ac = L.filter(function (o) { return offStat(o)[0] === 'acc'; }).length; return '<li><span class="tag ' + (no ? 'no' : ac ? 'acc' : '') + '">교육</span><a class="tt" href="#edu" onclick="etab=&quot;이수 현황&quot;">임원 운영·윤리교육 미이수 (기한 초과·임박)</a><span class="m">' + (no + ac) + '명</span></li>'; })() +
     '<li><span class="tag">명부</span><a class="tt" href="#roster">서면결의서 미제출 조합원</a><span class="m">' + R.filter(function (x) { return !x.written; }).length + '명</span></li></ul></div></div>';
 };
 function action(h, ic, b, s, go) { return '<a class="action" href="' + h + '"><span class="ic">' + ic + '</span><span><b>' + b + '</b><span>' + s + '</span></span><span class="go">' + go + ' ›</span></a>'; }
@@ -924,10 +924,49 @@ V.calendar = function () {
 };
 
 /* --- 입찰공고 --- */
+// 법 제29조 · 시행령 제24조 금액 기준 (추정가격, 만원). nom: 지명경쟁 가능 이하 / pvt: 수의계약 가능 이하 / ep: 초과 시 전자조달 의무
+var BIDKIND = {
+  gen: { n: '건설공사(종합)', nom: 30000, pvt: 20000, ep: 60000 },
+  spc: { n: '전문공사', nom: 10000, pvt: 10000, ep: 20000 },
+  etc: { n: '기타 법령 공사(전기·통신 등)', nom: 10000, pvt: 8000, ep: 20000 },
+  svc: { n: '용역·물품·기타', nom: 10000, pvt: 5000, ep: 20000 },
+  con: { n: '시공자 선정' }
+};
+function won(m) { m = +m || 0; return m >= 10000 ? (m / 10000).toFixed(m % 10000 ? 1 : 0).replace(/\.0$/, '') + '억원' : m.toLocaleString() + '만원'; }
+// 반환: [[상태(ok/acc/no), 내용, 근거], ...]
+function bidCheck(b) {
+  var K = BIDKIND[b.kind], out = [], est = +b.est || 0, fails = +b.fails || 0;
+  if (!K) return [['acc', '분류·추정가격이 입력되지 않아 법정 점검을 할 수 없습니다.', '']];
+  if (b.kind === 'con') {
+    out.push(b.auth ? ['ok', '조합설립인가 후 선정', '법 제29조 제4항'] : ['no', '시공자는 조합설립인가를 받은 후 선정해야 합니다.', '법 제29조 제4항']);
+    out.push(['acc', '총회에서 선정 (조합원 100인 이하는 정관으로 정하는 바에 따라 선정 가능 · 현재 명부 ' + S.roster.length + '명)', '법 제29조 제4항, 시행령 제24조 제3항']);
+    if (b.type === '수의계약') out.push(fails >= 2 ? ['ok', '경쟁입찰 ' + fails + '회 유찰 후 수의계약', '법 제29조 제4항'] : ['no', '시공자 수의계약은 경쟁입찰이 2회 이상 유찰된 경우만 가능합니다 (현재 ' + fails + '회).', '법 제29조 제4항']);
+    else out.push(['ok', '경쟁입찰 방식', '법 제29조 제4항']);
+    var br = +b.brief || 0;
+    out.push(br >= 2 ? ['ok', '합동설명회 ' + br + '회 개최', '법 제29조 제8항'] : ['no', '합동설명회를 2회 이상 개최해야 합니다 (현재 ' + br + '회).', '법 제29조 제8항']);
+    return out;
+  }
+  if (b.type === '일반경쟁') out.push(['ok', '일반경쟁 원칙', '법 제29조 제1항']);
+  else if (b.type === '지명경쟁') out.push(est <= K.nom ? ['ok', K.n + ' 추정가격 ' + won(K.nom) + ' 이하 — 지명경쟁 가능', '시행령 제24조 제1항 제1호'] : ['no', K.n + '는 추정가격 ' + won(K.nom) + ' 이하만 지명경쟁 가능 (특수 기술 등 입찰대상자 10인 이내 사유 제외)', '시행령 제24조 제1항 제1호']);
+  else if (b.type === '수의계약') out.push(est <= K.pvt ? ['ok', K.n + ' 추정가격 ' + won(K.pvt) + ' 이하 — 수의계약 가능', '시행령 제24조 제1항 제2호'] : fails >= 2 ? ['ok', '일반경쟁 ' + fails + '회 유찰 후 수의계약', '시행령 제24조 제1항 제2호 바목'] : ['no', K.n + ' 수의계약은 ' + won(K.pvt) + ' 이하이거나, 일반경쟁이 2회 이상 유찰된 경우 등만 가능', '시행령 제24조 제1항 제2호']);
+  else out.push(['acc', b.type + ' — 제한 요건은 계약업무 처리기준(국토부 고시)에서 확인', '법 제29조 제3항']);
+  if (b.type === '일반경쟁' && est > K.ep) out.push(b.ep ? ['ok', '전자조달시스템(누리장터) 이용', '법 제29조 제2항, 시행령 제24조 제2항'] : ['no', K.n + ' 추정가격 ' + won(K.ep) + ' 초과 — 전자조달시스템(누리장터) 이용 의무', '법 제29조 제2항, 시행령 제24조 제2항']);
+  return out;
+}
+function bidLevel(b) { var c = bidCheck(b); return c.some(function (x) { return x[0] === 'no'; }) ? 'no' : c.some(function (x) { return x[0] === 'acc'; }) ? 'acc' : 'ok'; }
+function bidDays(b) { return Math.round((dP(b.due) - dP(b.at)) / 864e5); }
 V.bids = function () {
-  return ph('입찰공고', '협력업체 선정 입찰을 투명하게 공개합니다.<br><span class="law">정비사업 계약업무 처리기준 — 일반경쟁 원칙, 공고 내용 공개</span>', role() === 'admin' ? '<button class="btn pri" data-act="addBid">+ 입찰공고 등록</button>' : '') +
-    '<div class="card" style="padding:0"><div class="tw" style="border-top:0"><table class="t"><thead><tr><th>공고명</th><th class="c">방식</th><th class="c">공고일</th><th class="c">마감일</th><th class="c">상태</th></tr></thead><tbody>' +
-    S.bids.map(function (b) { return '<tr><td>' + (role() === 'gov' ? '<span class="tag gray">OO1구역</span> ' : '') + esc(b.title) + '</td><td class="c">' + b.type + '</td><td class="c">' + b.at + '</td><td class="c">' + b.due + '</td><td class="c"><span class="tag ' + (b.st === '진행' ? 'ok' : 'gray') + '">' + b.st + '</span></td></tr>'; }).join('') + '</tbody></table></div></div>';
+  var r = role(), L = S.bids, lv = { ok: '적합', acc: '확인 필요', no: '보완 필요' };
+  var cnt = { ok: 0, acc: 0, no: 0 }; L.forEach(function (b) { cnt[bidLevel(b)]++; });
+  return ph('입찰공고', '협력업체·시공자 선정 입찰을 투명하게 공개합니다. 등록하면 계약 방식이 법정 요건에 맞는지 자동 점검합니다.<br><span class="law">법 제29조(일반경쟁 원칙·전자조달·시공자 선정) · 시행령 제24조(지명경쟁·수의계약 금액 기준)</span>', r === 'admin' ? '<button class="btn pri" data-act="addBid">+ 입찰공고 등록</button>' : '') +
+    (r === 'member' ? '' : '<div class="grid g3" style="margin-bottom:16px">' + kpi('보완 필요', cnt.no, '건', 'acc') + kpi('확인 필요', cnt.acc, '건') + kpi('적합', cnt.ok, '건') + '</div>') +
+    '<div class="card" style="padding:0"><div class="tw" style="border-top:0"><table class="t"><thead><tr><th>공고명</th><th class="c">분류 · 방식</th><th class="r">추정가격</th><th class="c">공고 기간</th>' + (r === 'member' ? '' : '<th class="c">법정 점검</th>') + '<th class="c">상태</th></tr></thead><tbody>' +
+    (L.map(function (b) {
+      var l = bidLevel(b), st = b.st === '진행' ? 'ok' : b.st === '유찰' ? 'acc' : 'gray';
+      return '<tr style="cursor:pointer" data-act="bidView" data-id="' + b.id + '"><td>' + (r === 'gov' ? '<span class="tag gray">' + esc(UNION) + '</span> ' : '') + '<a class="tt" href="javascript:void 0">' + esc(b.title) + '</a></td><td class="c">' + (BIDKIND[b.kind] ? BIDKIND[b.kind].n + '<br>' : '') + b.type + '</td><td class="r">' + (b.kind && b.kind !== 'con' ? won(b.est) : b.est ? won(b.est) : '-') + '</td><td class="c">' + b.at + ' ~ ' + b.due.slice(5) + '<br><span class="law">' + bidDays(b) + '일</span></td>' +
+        (r === 'member' ? '' : '<td class="c"><span class="tag ' + l + '">' + lv[l] + '</span></td>') + '<td class="c"><span class="tag ' + st + '">' + (b.st === '유찰' ? '유찰 ' + b.fails + '회' : b.st + (b.fails ? ' · 유찰 ' + b.fails + '회' : '')) + '</span></td></tr>';
+    }).join('') || '<tr><td colspan="6" class="empty">등록된 입찰공고가 없습니다.</td></tr>') + '</tbody></table></div></div>' +
+    '<p class="law" style="margin-top:10px">· 공고 기간·현장설명회 등 세부 절차는 「정비사업 계약업무 처리기준」(국토교통부 고시)을 따릅니다. 조합ONE은 법·시행령에 명시된 요건만 자동 점검합니다.</p>';
 };
 
 /* --- 1:1 문의 --- */
@@ -978,18 +1017,43 @@ V.edu = function () {
     [['정비사업 정보몽땅 (서울시)', 'https://cleanup.seoul.go.kr', '교육 일정·이수기준, e-러닝, 표준정관'], ['한국부동산원', 'https://www.reb.or.kr', '조합임원 운영·윤리교육 위탁 기관'], ['국가법령정보센터', 'https://www.law.go.kr', '도시정비법·시행령 원문'], ['서울시 주택분야 누리집', 'https://news.seoul.go.kr/citybuild/archives/502410', '조합임원 교육 안내']].map(function (x) { return '<li><a class="tt" href="' + x[1] + '" target="_blank" rel="noopener">' + x[0] + ' ↗</a><span class="m">' + x[2] + '</span></li>'; }).join('') +
     '</ul><p class="note" style="margin-top:12px">조합ONE 교육은 법정 교육의 <b>사전·보충 학습과 이수 관리</b>용입니다. 법정 이수 인정은 지자체 위탁(시행령 제96조제3항) 협의 후 적용할 수 있습니다.</p></div>';
   if (etab === '이수 현황') {
-    var mine = eduHours('officer', 'admin');
-    var off = [['박정수', '조합장', '2026.06.10', mine], ['이영호', '이사', '2026.03.02', 12], ['최미경', '감사', '2026.05.20', 6], ['정대현', '이사', '2026.05.03', 2]];
-    return head + '<div class="card" style="padding:0"><div class="tw" style="border-top:0"><table class="t"><thead><tr><th>성명</th><th>직책</th><th class="c">선임일</th><th class="c">이수 기한</th><th>이수 시간</th><th class="c">상태</th></tr></thead><tbody>' + off.map(function (o) {
-      var p = o[2].split('.'), due = (+p[1] + 6 > 12 ? +p[0] + 1 : p[0]) + '.' + pad((+p[1] + 6 - 1) % 12 + 1) + '.' + p[2], soon = due < '2026.11.30';
-      return '<tr><td>' + o[0] + '</td><td>' + o[1] + '</td><td class="c">' + o[2] + '</td><td class="c">' + due + '</td><td><div style="display:flex;gap:8px;align-items:center"><div class="bar" style="flex:1"><i style="width:' + Math.min(100, o[3] / 12 * 100) + '%"></i></div>' + o[3] + '/12h</div></td><td class="c">' + (o[3] >= 12 ? '<span class="tag ok">이수</span>' : soon ? '<span class="tag no">기한 임박</span>' : '<span class="tag">진행 중</span>') + '</td></tr>';
-    }).join('') + '</tbody></table></div></div>';
+    var oc = offc(), st = { ok: 0, no: 0, acc: 0, '': 0 };
+    oc.list.forEach(function (o) { st[offStat(o)[0]]++; });
+    return head + '<div class="grid g4" style="margin-bottom:16px">' + kpi('임원', oc.list.length, '명') + kpi('이수 완료', st.ok, '명') + kpi('기한 임박 (30일 이내)', st.acc, '명', 'acc') + kpi('기한 초과', st.no, '명', 'acc') + '</div>' +
+      '<div class="card" style="margin-bottom:14px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between"><label style="display:flex;gap:8px;align-items:center;font-size:14.5px"><input type="checkbox" data-act="offRecog"' + (oc.recog ? ' checked' : '') + '> 조합ONE 온라인 교육을 법정 이수 시간에 포함 <span class="law">(지자체 위탁 협의 완료 시 · 시행령 제96조 제3항)</span></label><button class="btn pri" data-act="offEdit">+ 임원 등록</button></div>' +
+      '<div class="card" style="padding:0"><div class="tw" style="border-top:0"><table class="t"><thead><tr><th>성명 · 직책</th><th class="c">선임일</th><th class="c">이수 기한</th><th class="r">외부 법정교육</th><th class="r">조합ONE 수강</th><th>인정 시간</th><th class="c">상태</th><th></th></tr></thead><tbody>' +
+      (oc.list.map(function (o) {
+        var h = offHours(o), s = offStat(o), on = o.uid ? eduHours('officer', o.uid) : 0;
+        return '<tr><td><b>' + esc(o.name) + '</b> ' + esc(o.title) + (o.uid ? '' : '<br><span class="law">계정 미연결</span>') + '</td><td class="c">' + o.at + '</td><td class="c">' + dF(offDue(o)) + '</td><td class="r">' + (+o.ext || 0) + 'h</td><td class="r">' + (o.uid ? on + 'h' : '-') + '</td><td><div style="display:flex;gap:8px;align-items:center"><div class="bar" style="flex:1"><i style="width:' + Math.min(100, h / 12 * 100) + '%"></i></div>' + h + '/12h</div></td><td class="c"><span class="tag ' + s[0] + '">' + s[1] + '</span></td><td class="c"><button class="btn" style="height:32px" data-act="offEdit" data-id="' + o.id + '">수정</button></td></tr>';
+      }).join('') || '<tr><td colspan="8" class="empty">등록된 임원이 없습니다.</td></tr>') + '</tbody></table></div></div>' +
+      '<p class="law" style="margin-top:10px">· 외부 법정교육: 국토부·지자체·한국부동산원 교육 이수 시간(수료증 기준)을 입력합니다. · 조합ONE 수강: 연결된 계정의 온라인 강의 수강 기록이 자동 반영됩니다.' + (oc.recog ? '' : ' 현재는 참고용으로만 표시하고 인정 시간에는 포함하지 않습니다.') + '</p>';
   }
   var key = etab === '임원 교육' ? 'officer' : 'member', C = COURSE[key], done = (S.edu[ME] || []), tot = C.reduce(function (s, c) { return s + c[2]; }, 0), h = eduHours(key, ME);
   return head + '<div class="card" style="margin-bottom:14px"><div style="display:flex;justify-content:space-between;font-size:15px;margin-bottom:8px"><b>' + etab + ' 진도</b><span>' + h + ' / ' + tot + '시간</span></div><div class="bar acc"><i style="width:' + pct(h, tot) + '%"></i></div></div>' +
     '<div class="grid g3">' + C.map(function (c, i) { var dn = done.indexOf(c[0]) >= 0; return '<div class="card" style="display:flex;flex-direction:column;gap:8px"><span style="font-size:13px;color:var(--muted)">' + (i + 1) + '강 · ' + c[2] + '시간</span><b style="font-size:17px">' + c[1] + '</b><ul style="margin:0;padding-left:18px;font-size:14px;color:var(--ink2);flex:1">' + c[3].map(function (x) { return '<li>' + x + '</li>'; }).join('') + '</ul><button class="btn ' + (dn ? '' : 'pri') + '" data-act="lesson" data-k="' + key + '" data-i="' + i + '">' + (dn ? '✓ 수강 완료 · 다시 보기' : '수강하기') + '</button></div>'; }).join('') + '</div>';
 };
 function eduHours(key, uid) { var d = S.edu[uid] || []; return COURSE[key].reduce(function (s, c) { return s + (d.indexOf(c[0]) >= 0 ? c[2] : 0); }, 0); }
+// 임원 이수 관리 (시행령 제90조: 선임일부터 6개월 이내 12시간). uid: 연결 계정(데모 'admin' 또는 실제 'u:<uuid>')
+function offc() {
+  return S.offc || { recog: false, list: [
+    { id: 'f1', name: '박정수', title: '조합장', at: '2026.06.10', ext: 0, uid: 'admin' },
+    { id: 'f2', name: '이영호', title: '이사', at: '2026.03.02', ext: 12, uid: '' },
+    { id: 'f3', name: '최미경', title: '감사', at: '2026.05.20', ext: 6, uid: '' },
+    { id: 'f4', name: '정대현', title: '이사', at: '2026.05.03', ext: 2, uid: '' }] };
+}
+function offDue(o) { var d = dP(o.at), day = d.getDate(); d.setDate(1); d.setMonth(d.getMonth() + 6); d.setDate(Math.min(day, new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate())); return d; }
+function offHours(o) { return (+o.ext || 0) + (offc().recog && o.uid ? eduHours('officer', o.uid) : 0); }
+function offStat(o) {
+  if (offHours(o) >= 12) return ['ok', '이수'];
+  var left = Math.round((offDue(o) - todayD()) / 864e5);
+  return left < 0 ? ['no', '기한 초과 ' + (-left) + '일'] : left <= 30 ? ['acc', '기한 임박 D-' + left] : ['', '진행 중 D-' + left];
+}
+function offAccounts() {
+  var a = [['', '연결 안 함'], ['admin', '박정수 (데모 관리자)']];
+  if (U().real) a.push([ME, U().name + ' (내 계정)']);
+  (MEMBERS || []).forEach(function (p) { var k = 'u:' + p.user_id; if (k !== ME) a.push([k, p.name + ' (실제 계정)']); });
+  return a;
+}
 
 /* --- 서비스·권한 관리 (조합 관리자) --- */
 var SVC = [['disclosure', '정보공개', '무료', '-'], ['cafe', '조합 모임방', '무료', '-'], ['calendar', '조합 일정', '무료', '-'], ['bids', '입찰공고', '무료', '-'], ['qna', '1:1 문의', '무료', '-'], ['edu', '임원·조합원 교육', '무료', '-'], ['calc', '분담금 계산', '무료', '-'], ['cert', '전자증명서 발급', '무료', '-'],
@@ -1353,9 +1417,37 @@ var ACT = {
   },
   certPrint: function () { document.body.classList.add('printing'); window.print(); setTimeout(function () { document.body.classList.remove('printing'); }, 500); },
   addEv: function () { modal('일정 추가', '<form class="f" data-form="ev"><div class="row"><label>날짜<input type="date" name="d" value="2026-11-25" min="2026-11-01" max="2026-11-30" required></label><label>구분<select name="k"><option>회의</option><option>총회</option><option>교육</option><option>동의</option><option>투표</option></select></label></div><label>내용<input name="t" required></label><button class="btn pri">추가</button></form>'); },
-  addBid: function () { modal('입찰공고 등록', '<form class="f" data-form="bid"><label>공고명<input name="t" required></label><div class="row"><label>방식<select name="ty"><option>일반경쟁</option><option>제한경쟁</option><option>지명경쟁</option></select></label><label>마감일<input type="date" name="d" required></label></div><button class="btn pri">등록</button></form>'); },
+  addBid: function () {
+    modal('입찰공고 등록', '<form class="f" data-form="bid"><label>공고명<input name="t" required></label>' +
+      '<div class="row"><label>분류<select name="k">' + Object.keys(BIDKIND).map(function (k) { return '<option value="' + k + '">' + BIDKIND[k].n + '</option>'; }).join('') + '</select></label><label>추정가격 (만원)<input type="number" name="e" min="0" step="100" placeholder="예: 25000 = 2.5억"></label></div>' +
+      '<div class="row"><label>계약 방식<select name="ty"><option>일반경쟁</option><option>제한경쟁</option><option>지명경쟁</option><option>수의계약</option></select></label><label>마감일<input type="date" name="d" required></label></div>' +
+      '<div class="row"><label>이전 유찰 횟수<input type="number" name="fa" min="0" value="0"></label><label>합동설명회 개최 횟수 (시공자)<input type="number" name="br" min="0" value="0"></label></div>' +
+      '<label style="flex-direction:row;gap:8px;align-items:center"><input type="checkbox" name="ep" style="width:auto"> 전자조달시스템(누리장터) 공고</label>' +
+      '<label style="flex-direction:row;gap:8px;align-items:center"><input type="checkbox" name="au" style="width:auto"> 조합설립인가 완료 (시공자 선정 시)</label>' +
+      '<p class="law" style="margin:0">등록 후 법 제29조·시행령 제24조 요건을 자동 점검합니다.</p><button class="btn pri">등록</button></form>');
+  },
+  bidView: function (t) {
+    var b = S.bids.filter(function (x) { return String(x.id) === t.dataset.id; })[0]; if (!b) return;
+    var ic = { ok: '✓', acc: '!', no: '✕' }, adm = role() === 'admin';
+    modal(esc(b.title), '<table class="t"><tr><th style="width:120px">분류</th><td>' + (BIDKIND[b.kind] ? BIDKIND[b.kind].n : '-') + '</td></tr><tr><th>추정가격</th><td>' + (b.est ? won(b.est) : '-') + '</td></tr><tr><th>계약 방식</th><td>' + b.type + (b.fails ? ' (유찰 ' + b.fails + '회)' : '') + '</td></tr><tr><th>공고 기간</th><td>' + b.at + ' ~ ' + b.due + ' (' + bidDays(b) + '일)</td></tr><tr><th>상태</th><td>' + b.st + '</td></tr></table>' +
+      (role() === 'member' ? '' : '<h3 style="margin:16px 0 8px;font-size:16px">법정 요건 점검</h3><ul class="list">' + bidCheck(b).map(function (c) { return '<li><span class="tag ' + c[0] + '">' + ic[c[0]] + '</span><span class="tt">' + esc(c[1]) + '</span><span class="m">' + c[2] + '</span></li>'; }).join('') + '</ul>'),
+      '<button class="btn" data-act="close">닫기</button>' + (adm && b.st === '진행' ? '<button class="btn" data-act="bidFail" data-id="' + b.id + '">유찰 처리</button><button class="btn pri" data-act="bidClose" data-id="' + b.id + '">낙찰·마감</button>' : ''));
+  },
+  bidFail: function (t) { var b = S.bids.filter(function (x) { return String(x.id) === t.dataset.id; })[0]; b.fails = (+b.fails || 0) + 1; b.st = '유찰'; log('입찰 유찰 처리: ' + b.title); save(); closeModal(); render(); toast('유찰 ' + b.fails + '회로 기록했습니다.' + (b.fails >= 2 ? ' 2회 이상 유찰되어 수의계약 요건을 충족합니다.' : '')); },
+  bidClose: function (t) { var b = S.bids.filter(function (x) { return String(x.id) === t.dataset.id; })[0]; b.st = '마감'; log('입찰 마감: ' + b.title); save(); closeModal(); render(); },
   newQ: function () { modal('1:1 문의하기', '<form class="f" data-form="q"><label>제목<input name="t" required></label><label>내용<textarea name="b" rows="6" required></textarea></label><button class="btn pri">문의 등록</button></form>'); },
   etab: function (t) { etab = t.dataset.v; render(); },
+  offRecog: function (t) { var o = offc(); o.recog = t.checked; S.offc = o; log('교육 인정 기준 변경: 조합ONE 수강 ' + (o.recog ? '포함' : '제외')); save(); render(); },
+  offEdit: function (t) {
+    var id = t.dataset.id, o = offc().list.filter(function (x) { return x.id === id; })[0] || { name: '', title: '이사', at: today(), ext: 0, uid: '' };
+    if (window.SYNC && SYNC.auth && U().real && MEMBERS === null) { MEMBERS = []; SYNC.listMembers().then(function (r) { MEMBERS = r.data || []; ACT.offEdit(t); }); }
+    modal(id ? '임원 정보 수정' : '임원 등록', '<form class="f" data-form="off" data-id="' + (id || '') + '"><div class="row"><label>성명<input name="n" required value="' + esc(o.name) + '"></label><label>직책<select name="ti">' + ['조합장', '이사', '감사', '추진위원장', '추진위원'].map(function (x) { return '<option' + (x === o.title ? ' selected' : '') + '>' + x + '</option>'; }).join('') + '</select></label></div>' +
+      '<div class="row"><label>선임일<input type="date" name="at" required value="' + o.at.replace(/\./g, '-') + '"></label><label>외부 법정교육 이수 시간<input type="number" name="ex" min="0" max="40" step="0.5" value="' + (+o.ext || 0) + '"></label></div>' +
+      '<label>조합ONE 계정 연결 (수강 기록 자동 반영)<select name="u">' + offAccounts().map(function (a) { return '<option value="' + esc(a[0]) + '"' + (a[0] === o.uid ? ' selected' : '') + '>' + esc(a[1]) + '</option>'; }).join('') + '</select></label>' +
+      '<p class="law" style="margin:0">이수 기한: 선임일부터 6개월 · 12시간 이상 (시행령 제90조)</p><button class="btn pri">저장</button></form>',
+      id ? '<button class="btn" data-act="offDel" data-id="' + id + '">삭제</button>' : '');
+  },
+  offDel: function (t) { if (!confirm('이 임원을 이수 관리 목록에서 삭제할까요?')) return; var o = offc(); o.list = o.list.filter(function (x) { return x.id !== t.dataset.id; }); S.offc = o; log('임원 이수 관리 삭제'); save(); closeModal(); render(); },
   lesson: function (t) {
     var c = COURSE[t.dataset.k][+t.dataset.i];
     modal(c[1], '<div class="stage" style="aspect-ratio:16/9;padding:20px"><div style="font-size:54px;opacity:.9">▶</div><p style="margin:8px 0 0">강의 영상 (' + c[2] + '시간) — 영상 제작 후 연결 예정</p></div><h3 style="margin:18px 0 8px">학습 내용</h3><ul style="margin:0;padding-left:20px;line-height:1.9">' + c[3].map(function (x) { return '<li>' + x + '</li>'; }).join('') + '</ul><p style="margin:14px 0 0"><a href="index.html?q=' + encodeURIComponent(c[4]) + '" target="_blank">관련 조문·판례 보기 ↗</a></p>',
@@ -1430,7 +1522,17 @@ var FORMS = {
   chat: function (f) { S.asm.chat.push({ n: U().name, m: f.m.value }); save(); render(); },
   sms: function (f) { var n = { '전체 조합원': roster().length, '동의서 미제출자': consentStats().none, '서면결의서 미제출자': roster().filter(function (x) { return !x.written; }).length, '대의원': 4 }[f.t.value]; S.sms.unshift({ at: now(), target: f.t.value, ch: f.c.value, msg: f.m.value, n: n }); save(); render(); toast(f.t.value + ' ' + n + '명에게 ' + f.c.value + '을 보냈습니다 (시안). 예상 비용 ' + won(n * (f.c.value === '알림톡' ? 15 : 50)) + '원'); },
   ev: function (f) { S.events.push({ d: f.d.value, t: f.t.value, k: f.k.value }); S.events.sort(function (a, b) { return a.d < b.d ? -1 : 1; }); save(); closeModal(); render(); },
-  bid: function (f) { S.bids.unshift({ id: Date.now(), title: f.t.value, type: f.ty.value, at: today(), due: f.d.value.replace(/-/g, '.'), st: '진행' }); save(); closeModal(); render(); },
+  off: function (f) {
+    var o = offc(), id = f.dataset.id, v = { id: id || 'f' + Date.now(), name: f.n.value.trim(), title: f.ti.value, at: f.at.value.replace(/-/g, '.'), ext: +f.ex.value || 0, uid: f.u.value };
+    if (id) o.list = o.list.map(function (x) { return x.id === id ? v : x; }); else o.list.push(v);
+    S.offc = o; log((id ? '임원 정보 수정: ' : '임원 등록: ') + v.name + ' ' + v.title); save(); closeModal(); render(); toast('저장했습니다. 이수 기한 ' + dF(offDue(v)));
+  },
+  bid: function (f) {
+    var b = { id: Date.now(), title: f.t.value, kind: f.k.value, est: +f.e.value || 0, type: f.ty.value, fails: +f.fa.value || 0, brief: +f.br.value || 0, ep: f.ep.checked, auth: f.au.checked, at: today(), due: f.d.value.replace(/-/g, '.'), st: '진행' };
+    if (b.due < b.at) return toast('마감일이 공고일보다 빠릅니다.');
+    S.bids.unshift(b); log('입찰공고 등록: ' + b.title); save(); closeModal(); render();
+    var l = bidLevel(b); toast(l === 'no' ? '등록했습니다. 법정 요건 보완이 필요합니다 — 공고를 눌러 확인하세요.' : l === 'acc' ? '등록했습니다. 확인이 필요한 항목이 있습니다.' : '등록했습니다. 법정 요건에 적합합니다.');
+  },
   q: function (f) { S.qna.unshift({ id: Date.now(), uid: ME, name: U().name, title: f.t.value, body: f.b.value, at: today(), answer: '' }); save(); closeModal(); render(); toast('문의가 등록되었습니다.'); },
   ans: function (f) { var q = S.qna.filter(function (x) { return x.id === +f.dataset.id; })[0]; q.answer = f.a.value; save(); render(); }
 };
