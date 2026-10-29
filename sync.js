@@ -115,7 +115,8 @@
       c.from('records').select('tenant_id,coll,id,data').in('coll', ['roster', 'posts', 'ballots', 'consents'])
     ]).then(function (res) {
       if (res[0].error || res[1].error) { setStatus('error', (res[0].error || res[1].error).message); SYNC.gov = []; return; }
-      var by = {};
+      var by = {}; SYNC.govPosts = [];
+      res[1].data.forEach(function (r) { if (r.coll === 'posts') SYNC.govPosts.push({ tenant_id: r.tenant_id, p: r.data }); });
       res[1].data.forEach(function (r) { var o = by[r.tenant_id] = by[r.tenant_id] || { roster: 0, posts: 0, ballots: 0, agree: 0, last: '' }; if (r.coll === 'roster') o.roster++; if (r.coll === 'ballots') o.ballots++; if (r.coll === 'consents' && r.data.agree) o.agree++; if (r.coll === 'posts') { o.posts++; if (String(r.data.at) > o.last) o.last = String(r.data.at); } });
       var mine = SYNC.auth && SYNC.auth.profile && SYNC.auth.profile.approved && SYNC.auth.profile.role === 'gov' ? SYNC.auth.profile.gov : null; // 실제 담당자는 관할만
       SYNC.gov = res[0].data.filter(function (t) { return !mine || t.gov === mine; }).map(function (t) { var o = by[t.id] || { roster: 0, posts: 0, ballots: 0, agree: 0, last: '' }; return { id: t.id, name: t.name, kind: t.kind, stage: t.stage, gov: t.gov, members: o.roster, posts: o.posts, lastPost: o.last, ballots: o.ballots, rate: o.roster ? Math.round(o.agree / o.roster * 100) : 0 }; });

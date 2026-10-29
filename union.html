@@ -460,9 +460,9 @@ var LOGO = '<svg width="34" height="34" viewBox="0 0 40 40" aria-hidden="true"><
 V.home = function () {
   var r = role(), R = roster();
   if (r === 'gov') return V.govHome();
-  var agree = consentStats().agree, unread = S.posts.filter(function (p) { return p.reads.indexOf(ME) < 0; }).length;
+  var agree = consentStats().agree, unread = S.posts.filter(function (p) { return p.state !== 'draft' && p.reads.indexOf(ME) < 0; }).length;
   var ev = S.events.slice(0, 4).map(function (e) { return '<li><span class="tag ' + (e.k === '총회' ? 'acc' : '') + '">' + e.k + '</span><span class="tt">' + esc(e.t) + '</span><time>' + e.d.slice(5).replace('-', '.') + '</time></li>'; }).join('');
-  var dis = S.posts.slice().sort(byAt).slice(0, 5).map(function (p) { return '<li><span class="tag gray">' + p.cat + '</span><a class="tt" href="#disclosure/' + p.id + '">' + esc(p.title) + '</a>' + (p.reads.indexOf(ME) < 0 && r === 'member' ? '<span class="tag acc">미확인</span>' : '') + '<time>' + p.at.slice(5) + '</time></li>'; }).join('');
+  var dis = S.posts.filter(function (p) { return p.state !== 'draft'; }).sort(byAt).slice(0, 5).map(function (p) { return '<li><span class="tag gray">' + p.cat + '</span><a class="tt" href="#disclosure/' + p.id + '">' + esc(p.title) + '</a>' + (p.reads.indexOf(ME) < 0 && r === 'member' ? '<span class="tag acc">미확인</span>' : '') + '<time>' + p.at.slice(5) + '</time></li>'; }).join('');
   var cf = S.cafe.filter(function (c) { return !c.notice; }).sort(byAt).slice(0, 5).map(function (c) { return '<li><a class="tt" href="#cafe/post/' + c.id + '">' + esc(c.title) + ' <span class="cnt">[' + c.comments.length + ']</span></a><span class="m">' + esc(c.author) + '</span></li>'; }).join('');
   if (r === 'member') {
     var mine = myRow(), c = mine && S.consents[mine.no], voted = S.vote.ballots[U().name];
@@ -487,6 +487,7 @@ V.home = function () {
     '<div class="grid g2" style="margin-top:16px"><div class="card"><h2>최근 정보공개 <a href="#disclosure">관리 ›</a></h2><ul class="list">' + dis + '</ul></div>' +
     '<div class="card"><h2>처리할 일</h2><ul class="list">' +
     '<li><span class="tag acc">문의</span><a class="tt" href="#qna">답변 대기 1:1 문의</a><span class="m">' + S.qna.filter(function (q) { return !q.answer; }).length + '건</span></li>' +
+    '<li><span class="tag ' + (S.posts.some(function (p) { return p.state === 'draft' && discStatus(p)[0] === 'no'; }) ? 'no' : 'acc') + '">공개</span><a class="tt" href="#disclosure">정보공개 공개 대기 (15일 기한)</a><span class="m">' + S.posts.filter(function (p) { return p.state === 'draft'; }).length + '건</span></li>' +
     '<li><span class="tag acc">권한</span><a class="tt" href="#admin">모임방 글쓰기 권한 신청</a><span class="m">' + S.permReq.length + '건</span></li>' +
     '<li><span class="tag">교육</span><a class="tt" href="#edu">임원 운영·윤리교육 이수 기한 임박</a><span class="m">1명</span></li>' +
     '<li><span class="tag">명부</span><a class="tt" href="#roster">서면결의서 미제출 조합원</a><span class="m">' + R.filter(function (x) { return !x.written; }).length + '명</span></li></ul></div></div>';
@@ -520,26 +521,46 @@ function saveCalc(n) {
 
 /* --- 정보공개 --- */
 var DCATS = ['전체', '공지', '계약', '회의록', '회계', '인가·고시'];
+// 법 제124조: 작성·변경 후 15일 이내 공개. w=작성·변경일, at=공개일, state 'draft'=공개 대기
+function dP(s) { var p = String(s || '').split(/[.\-]/); return new Date(+p[0], +p[1] - 1, +p[2]); }
+function dF(d) { return d.getFullYear() + '.' + pad(d.getMonth() + 1) + '.' + pad(d.getDate()); }
+function todayD() { var d = new Date(); d.setHours(0, 0, 0, 0); return d; }
+function discDue(p) { var d = dP(p.w || p.at); d.setDate(d.getDate() + 15); return d; }
+function discStatus(p) {
+  var dd = discDue(p);
+  if (p.state === 'draft') { var left = Math.round((dd - todayD()) / 864e5); return left >= 0 ? ['acc', '공개 대기 D-' + left] : ['no', '미공개 · ' + (-left) + '일 초과']; }
+  var late = Math.round((dP(p.at) - dd) / 864e5);
+  return late > 0 ? ['no', late + '일 늦게 공개'] : ['ok', '기한 내 공개'];
+}
+function discTag(p) { var s = discStatus(p); return '<span class="tag ' + s[0] + '">' + s[1] + '</span>'; }
 V.disclosure = function (a) {
   if (a[0] === 'new') { setTimeout(function () { ACT.newPost(); }, 0); a = []; }
   if (a[0] && a[0] !== 'new') setTimeout(function () { openPost(+a[0]); }, 0);
-  var f = S.view.dcat || '전체', r = role();
-  var rows = S.posts.slice().sort(byAt).filter(function (p) { return f === '전체' || p.cat === f; }).map(function (p) {
-    var read = p.reads.indexOf(ME) >= 0, nw = p.at >= '2026.10.25';
-    var st = r === 'member' ? (read ? '<span class="tag ok">확인함</span>' : '<span class="tag acc">미확인</span>') : '<span class="m">' + p.reads.length + '/' + roster().length + '명</span>';
-    return '<tr class="click" data-act="openPost" data-id="' + p.id + '"><td class="c"><span class="tag gray">' + p.cat + '</span></td><td>' + esc(p.title) + (nw ? ' <span class="tag acc">N</span>' : '') + (p.file ? ' 📎' : '') + '</td><td class="c">' + p.at + '</td><td class="c">' + p.views + '</td><td class="c">' + st + '</td></tr>';
+  var f = S.view.dcat || '전체', r = role(), staff = r !== 'member';
+  var L = S.posts.filter(function (p) { return (staff || p.state !== 'draft') && (f === '전체' || p.cat === f); })
+    .sort(function (x, y) { return (y.state === 'draft') - (x.state === 'draft') || (x.at < y.at ? 1 : -1); });
+  var drafts = S.posts.filter(function (p) { return p.state === 'draft'; }), over = drafts.filter(function (p) { return discStatus(p)[0] === 'no'; }).length;
+  var rows = L.map(function (p) {
+    var read = p.reads.indexOf(ME) >= 0, nw = p.state !== 'draft' && (todayD() - dP(p.at)) / 864e5 <= 3;
+    var st = !staff ? (read ? '<span class="tag ok">확인함</span>' : '<span class="tag acc">미확인</span>') : p.state === 'draft' ? '-' : '<span class="m">' + p.reads.length + '/' + roster().length + '명</span>';
+    return '<tr class="click' + (p.state === 'draft' ? ' notice' : '') + '" data-act="openPost" data-id="' + p.id + '"><td class="c"><span class="tag gray">' + p.cat + '</span></td><td>' + esc(p.title) + (nw ? ' <span class="tag acc">N</span>' : '') + (p.file ? ' 📎' : '') + '</td>' +
+      (staff ? '<td class="c">' + (p.w || p.at) + '</td><td class="c">' + discTag(p) + '</td>' : '') +
+      '<td class="c">' + (p.state === 'draft' ? '-' : p.at) + '</td><td class="c">' + p.views + '</td><td class="c">' + st + '</td></tr>';
   }).join('');
   return ph('정보공개', '조합이 등록한 공지·계약·회의록·회계 자료를 조합원 누구나 확인할 수 있습니다.<br><span class="law">도시정비법 제124조 — 작성·변경 후 15일 이내 공개, 조합원 열람·복사 청구 시 15일 이내 응답</span>', r === 'admin' ? '<button class="btn pri" data-act="newPost">+ 자료 등록</button>' : '') +
+    (staff && drafts.length ? '<div class="note' + (over ? ' acc' : '') + '" style="margin-bottom:12px">공개 대기 <b>' + drafts.length + '</b>건' + (over ? ' · 그중 <b>' + over + '</b>건은 15일 공개 기한을 넘겼습니다. 바로 공개하세요.' : ' · 기한 안에 공개하세요.') + '</div>' : '') +
     '<div class="tool"><div class="seg">' + DCATS.map(function (c) { return '<button class="' + (c === f ? 'on' : '') + '" data-act="dcat" data-v="' + c + '">' + c + '</button>'; }).join('') + '</div></div>' +
-    '<div class="card" style="padding:0"><div class="tw" style="border-top:0"><table class="t"><thead><tr><th class="c" style="width:100px">분류</th><th>제목</th><th class="c" style="width:120px">등록일</th><th class="c" style="width:70px">조회</th><th class="c" style="width:110px">' + (r === 'member' ? '확인' : '확인 현황') + '</th></tr></thead><tbody>' + (rows || '<tr><td colspan="5" class="empty">등록된 자료가 없습니다.</td></tr>') + '</tbody></table></div></div>';
+    '<div class="card" style="padding:0"><div class="tw" style="border-top:0"><table class="t"><thead><tr><th class="c" style="width:100px">분류</th><th>제목</th>' + (staff ? '<th class="c">작성·변경일</th><th class="c">공개 기한</th>' : '') + '<th class="c" style="width:110px">공개일</th><th class="c" style="width:60px">조회</th><th class="c" style="width:100px">' + (staff ? '확인 현황' : '확인') + '</th></tr></thead><tbody>' + (rows || '<tr><td colspan="7" class="empty">등록된 자료가 없습니다.</td></tr>') + '</tbody></table></div></div>';
 };
 function openPost(id) {
   var p = S.posts.filter(function (x) { return x.id === id; })[0]; if (!p) return;
-  p.views++; save();
-  var r = role(), read = p.reads.indexOf(ME) >= 0, n = roster().length;
-  var foot = r === 'member' ? (read ? '<span class="tag ok" style="align-self:center">' + '확인 완료</span><button class="btn" data-act="close">닫기</button>' : '<button class="btn" data-act="close">닫기</button><button class="btn pri" data-act="readPost" data-id="' + id + '">확인했습니다</button>') : '<button class="btn" data-act="close">닫기</button>';
+  var r = role(), read = p.reads.indexOf(ME) >= 0, n = roster().length, draft = p.state === 'draft';
+  if (r === 'member' && draft) return;
+  if (!draft) { p.views++; save(); }
+  var foot = r === 'member' ? (read ? '<span class="tag ok" style="align-self:center">' + '확인 완료</span><button class="btn" data-act="close">닫기</button>' : '<button class="btn" data-act="close">닫기</button><button class="btn pri" data-act="readPost" data-id="' + id + '">확인했습니다</button>')
+    : '<button class="btn" data-act="close">닫기</button>' + (draft && r === 'admin' ? '<button class="btn acc" data-act="pubPost" data-id="' + id + '">지금 공개</button>' : '');
   modal('<span class="tag gray">' + p.cat + '</span> ' + esc(p.title),
-    '<p class="law" style="margin:0 0 14px">등록 ' + p.at + ' · 조회 ' + p.views + '</p><div style="font-size:16px;line-height:1.8">' + nl(p.body) + '</div>' +
+    '<p class="law" style="margin:0 0 14px">' + (r !== 'member' ? '작성·변경 ' + (p.w || p.at) + ' · 공개 기한 ' + dF(discDue(p)) + ' · ' + discTag(p) + '<br>' : '') + (draft ? '아직 공개하지 않은 자료입니다 (조합원에게 보이지 않음)' : '공개 ' + p.at + ' · 조회 ' + p.views) + '</p><div style="font-size:16px;line-height:1.8">' + nl(p.body) + '</div>' +
     (p.file ? '<div style="margin-top:18px;padding:12px 14px;border:1px solid var(--line);border-radius:8px;display:flex;justify-content:space-between;align-items:center;gap:8px"><span>📎 ' + esc(p.file) + '</span><button class="btn sm" data-act="dl">내려받기</button></div>' : '') +
     (r !== 'member' ? '<div style="margin-top:18px"><p style="margin:0 0 6px;font-size:14px">조합원 확인 현황 <b>' + p.reads.length + '</b> / ' + n + '명</p><div class="bar"><i style="width:' + pct(p.reads.length, n) + '%"></i></div></div>' : ''), foot);
 }
@@ -1067,6 +1088,20 @@ V.govHome = function () {
     '<div class="card"><h2>담당자 권한</h2><ul style="margin:0;padding-left:20px;line-height:1.9;font-size:15px"><li>관할 조합 자료 <b>열람 전용</b> (수정·삭제 불가)</li><li>열람 이력은 조합 접속기록에 남습니다</li><li>공무원 인증서·기관 IP 제한 로그인</li></ul></div></div>';
 };
 V.gdisc = function () {
+  // 공유 서버 연결 시: 관할 조합 전체의 실제 정보공개 기록으로 점검 (기한 초과·미공개 우선)
+  if (window.SYNC && SYNC.on) {
+    if (!SYNC.gov) { SYNC.loadGov().then(function () { if (location.hash === '#gdisc') render(); }); return ph('정보공개 점검', '서버에서 불러오는 중…'); }
+    var names = {}; SYNC.gov.forEach(function (u) { names[u.id] = u.name; });
+    var rank = { no: 0, acc: 1, ok: 2 };
+    var L = (SYNC.govPosts || []).filter(function (x) { return names[x.tenant_id]; }).map(function (x) { return { t: x.tenant_id, p: x.p, s: discStatus(x.p) }; })
+      .sort(function (a, b) { return rank[a.s[0]] - rank[b.s[0]] || (String(b.p.w || b.p.at) > String(a.p.w || a.p.at) ? 1 : -1); });
+    var cnt = { no: 0, acc: 0, ok: 0 }; L.forEach(function (x) { cnt[x.s[0]]++; });
+    return ph('정보공개 점검', '관할 조합의 법정 공개 이행 현황 · 작성·변경 후 15일 이내 공개 (법 제124조)', '<button class="btn" data-act="govRefresh">↻ 새로고침</button>') +
+      '<div class="grid g3" style="margin-bottom:16px">' + kpi('기한 초과', cnt.no, '건', 'acc') + kpi('공개 대기 (기한 내)', cnt.acc, '건') + kpi('기한 내 공개', cnt.ok, '건') + '</div>' +
+      '<div class="card" style="padding:0"><div class="tw" style="border-top:0"><table class="t"><thead><tr><th>조합</th><th>자료</th><th class="c">작성·변경일</th><th class="c">공개 기한</th><th class="c">공개일</th><th class="c">상태</th></tr></thead><tbody>' +
+      (L.map(function (x) { return '<tr><td>' + esc(names[x.t]) + '</td><td><span class="tag gray">' + esc(x.p.cat) + '</span> ' + esc(x.p.title) + '</td><td class="c">' + (x.p.w || x.p.at) + '</td><td class="c">' + dF(discDue(x.p)) + '</td><td class="c">' + (x.p.state === 'draft' ? '-' : x.p.at) + '</td><td class="c">' + discTag(x.p) + '</td></tr>'; }).join('') || '<tr><td colspan="6" class="empty">정보공개 기록이 없습니다.</td></tr>') +
+      '</tbody></table></div></div>';
+  }
   return ph('정보공개 점검', '관할 조합의 법정 공개 이행 현황 (작성 후 15일 이내 공개)') + '<div class="card" style="padding:0"><div class="tw" style="border-top:0"><table class="t"><thead><tr><th>조합</th><th>자료</th><th class="c">작성일</th><th class="c">공개일</th><th class="c">상태</th></tr></thead><tbody>' +
     [['OO맨션', '제12차 이사회 회의록', '2026.09.02', '-', 'no'], ['OO맨션', '철거공사 계약서', '2026.09.18', '-', 'no'], ['OO2구역', '2분기 자금 운용 내역', '2026.07.15', '-', 'no'], ['OO1구역', '제5차 대의원회 회의록', '2026.10.20', '2026.10.27', 'ok'], ['OO아파트', '설계용역 변경계약서', '2026.10.10', '2026.10.24', 'ok']].map(function (r) { return '<tr><td>' + r[0] + '</td><td>' + r[1] + '</td><td class="c">' + r[2] + '</td><td class="c">' + r[3] + '</td><td class="c">' + (r[4] === 'ok' ? '<span class="tag ok">기한 내 공개</span>' : '<span class="tag no">기한 초과</span>') + '</td></tr>'; }).join('') + '</tbody></table></div></div>';
 };
@@ -1189,11 +1224,20 @@ var ACT = {
   go: function (t) { location.hash = t.dataset.h; },
   dcat: function (t) { S.view.dcat = t.dataset.v; render(); },
   openPost: function (t) { openPost(+t.dataset.id); },
+  pubPost: function (t) {
+    var p = S.posts.filter(function (x) { return x.id === +t.dataset.id; })[0]; if (!p) return;
+    p.state = 'pub'; p.at = today();
+    if (p.push) S.sms.unshift({ at: now(), target: '전체 조합원', ch: '알림톡', msg: '[' + UNION + '] 정보공개: ' + p.title, n: roster().length });
+    save(); closeModal(); render(); toast('공개했습니다.' + (discStatus(p)[0] === 'no' ? ' 15일 공개 기한을 넘겨 공개되었습니다.' : ''));
+  },
   readPost: function (t) { var p = S.posts.filter(function (x) { return x.id === +t.dataset.id; })[0]; if (p.reads.indexOf(ME) < 0) p.reads.push(ME); save(); closeModal(); render(); toast('확인 처리되었습니다.'); },
   dl: function () { toast('시안: 첨부파일 내려받기는 실제 파일 연동 후 동작합니다.'); },
   newPost: function () {
+    var td = new Date(), iso = td.getFullYear() + '-' + pad(td.getMonth() + 1) + '-' + pad(td.getDate());
     modal('정보공개 자료 등록', '<form class="f" data-form="post"><div class="row"><label>분류<select name="cat">' + DCATS.slice(1).map(function (c) { return '<option>' + c + '</option>'; }).join('') + '</select></label><label>첨부파일<input type="file" name="file" style="padding-top:8px"></label></div><label>제목<input name="title" required></label><label>내용<textarea name="body" rows="6" required></textarea></label>' +
-      '<label style="flex-direction:row;align-items:center;gap:8px"><input type="checkbox" name="push" checked style="width:18px;height:18px">조합원 전원에게 알림톡 발송</label><div style="display:flex;justify-content:flex-end;gap:8px"><button type="button" class="btn" data-act="close">취소</button><button class="btn pri">등록</button></div></form>');
+      '<div class="row"><label>작성·변경일 <span style="font-weight:400;color:var(--muted)">(공개 기한 = +15일)</span><input type="date" name="w" value="' + iso + '" max="' + iso + '" required></label>' +
+      '<label>공개 방식<select name="mode"><option value="pub">바로 공개</option><option value="draft">공개 대기로 저장</option></select></label></div>' +
+      '<label style="flex-direction:row;align-items:center;gap:8px"><input type="checkbox" name="push" checked style="width:18px;height:18px">공개할 때 조합원 전원에게 알림톡 발송</label><div style="display:flex;justify-content:flex-end;gap:8px"><button type="button" class="btn" data-act="close">취소</button><button class="btn pri">등록</button></div></form>');
   },
   board: function (t, e) { e.preventDefault(); S.view.board = t.dataset.v; location.hash = '#cafe'; render(); },
   cafeWrite: function () { location.hash = '#cafe/write'; },
@@ -1306,7 +1350,14 @@ var FORMS = {
   },
   proReq: function (f) { var p = PROS[+f.dataset.i], cn = PRO_CATS.filter(function (c) { return c[0] === p[0]; })[0][2]; S.proReq.unshift({ at: today(), uid: ME, name: U().name, pro: p[1], cat: cn, msg: f.m.value + ' (' + f.c.value + ')' }); save(); closeModal(); render(); toast(p[1] + '에 상담 요청을 보냈습니다 (시안).'); },
   proJoin: function (f) { closeModal(); toast(f.n.value + ' 입점 신청이 접수되었습니다 (시안). 자격 확인 후 연락드립니다.'); },
-  post: function (f) { var fn = f.file.files[0]; var id = Date.now(); S.posts.push({ id: id, cat: f.cat.value, title: f.title.value, body: f.body.value, file: fn ? fn.name : '', at: today(), views: 0, reads: [] }); if (f.push.checked) S.sms.unshift({ at: now(), target: '전체 조합원', ch: '알림톡', msg: '[OO1구역] 정보공개: ' + f.title.value, n: roster().length }); save(); closeModal(); render(); toast('등록되었습니다.' + (f.push.checked ? ' 조합원 ' + roster().length + '명에게 알림톡을 보냈습니다.' : '')); },
+  post: function (f) {
+    var fn = f.file.files[0], id = Date.now(), draft = f.mode.value === 'draft', w = f.w.value.replace(/-/g, '.');
+    var p = { id: id, cat: f.cat.value, title: f.title.value, body: f.body.value, file: fn ? fn.name : '', w: w, at: draft ? '' : today(), state: draft ? 'draft' : 'pub', push: f.push.checked, views: 0, reads: [] };
+    S.posts.push(p);
+    if (!draft && f.push.checked) S.sms.unshift({ at: now(), target: '전체 조합원', ch: '알림톡', msg: '[' + UNION + '] 정보공개: ' + f.title.value, n: roster().length });
+    save(); closeModal(); render();
+    toast(draft ? '공개 대기로 저장했습니다. 공개 기한: ' + dF(discDue(p)) : '공개했습니다.' + (f.push.checked ? ' 조합원 ' + roster().length + '명에게 알림톡을 보냈습니다.' : '') + (discStatus(p)[0] === 'no' ? ' (15일 기한을 넘긴 공개입니다)' : ''));
+  },
   cafe: function (f) { var id = Math.max.apply(null, S.cafe.map(function (c) { return c.id; }).concat(0)) + 1; S.cafe.push({ id: id, board: f.board.value, notice: f.board.value === '공지사항', title: f.title.value, body: f.body.value, author: U().name, aid: ME, at: today(), views: 0, likes: 0, comments: [] }); save(); location.hash = '#cafe/post/' + id; toast('글이 등록되었습니다.'); },
   comment: function (f) { var c = S.cafe.filter(function (x) { return x.id === +f.dataset.id; })[0]; c.comments.push({ author: U().name, body: f.b.value, at: now() }); save(); render(); },
   chat: function (f) { S.asm.chat.push({ n: U().name, m: f.m.value }); save(); render(); },
