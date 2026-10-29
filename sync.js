@@ -64,7 +64,7 @@
 
   var timer = null;
   SYNC.push = function () {
-    if (!SYNC.on) return Promise.resolve();
+    if (!SYNC.on || SYNC.readOnly) return Promise.resolve(); // 시·구 담당자·운영자 열람은 서버에 쓰지 않음
     var d = SYNC.diff(); SYNC.snap = d.cur;
     var jobs = [];
     if (d.up.length) jobs.push(SYNC.client.from('records').upsert(d.up));
@@ -116,7 +116,8 @@
       if (res[0].error || res[1].error) { setStatus('error', (res[0].error || res[1].error).message); SYNC.gov = []; return; }
       var by = {};
       res[1].data.forEach(function (r) { var o = by[r.tenant_id] = by[r.tenant_id] || { roster: 0, posts: 0, ballots: 0, agree: 0, last: '' }; if (r.coll === 'roster') o.roster++; if (r.coll === 'ballots') o.ballots++; if (r.coll === 'consents' && r.data.agree) o.agree++; if (r.coll === 'posts') { o.posts++; if (String(r.data.at) > o.last) o.last = String(r.data.at); } });
-      SYNC.gov = res[0].data.map(function (t) { var o = by[t.id] || { roster: 0, posts: 0, ballots: 0, agree: 0, last: '' }; return { id: t.id, name: t.name, kind: t.kind, stage: t.stage, gov: t.gov, members: o.roster, posts: o.posts, lastPost: o.last, ballots: o.ballots, rate: o.roster ? Math.round(o.agree / o.roster * 100) : 0 }; });
+      var mine = SYNC.auth && SYNC.auth.profile && SYNC.auth.profile.approved && SYNC.auth.profile.role === 'gov' ? SYNC.auth.profile.gov : null; // 실제 담당자는 관할만
+      SYNC.gov = res[0].data.filter(function (t) { return !mine || t.gov === mine; }).map(function (t) { var o = by[t.id] || { roster: 0, posts: 0, ballots: 0, agree: 0, last: '' }; return { id: t.id, name: t.name, kind: t.kind, stage: t.stage, gov: t.gov, members: o.roster, posts: o.posts, lastPost: o.last, ballots: o.ballots, rate: o.roster ? Math.round(o.agree / o.roster * 100) : 0 }; });
     });
   };
 
@@ -146,11 +147,51 @@
         }).subscribe(function (st) { SYNC.rt = st; });
   }
 
-  // 설정이 있으면 Supabase 클라이언트를 불러와 연결
+  // ── 실제 로그인 (Supabase Auth) ──────────────────────────────
+  // SYNC.auth = { user, profile } (profile.approved 가 false 면 승인 대기)
+  SYNC.auth = null;
+  SYNC.loadProfile = function (user) {
+    var c = SYNC.client;
+    return c.from('profiles').select('*').eq('user_id', user.id).maybeSingle().then(function (r) {
+      if (r.data) { SYNC.auth = { user: user, profile: r.data }; return SYNC.auth; }
+      // 첫 로그인: 가입 때 입력한 정보(user_metadata)로 회원 정보 생성 (승인 대기 상태)
+      var m = user.user_metadata || {};
+      if (!m.role) { SYNC.auth = { user: user, profile: null }; return SYNC.auth; }
+      var p = { user_id: user.id, tenant_id: m.tenant_id || null, role: m.role, gov: m.gov || null, name: m.name || user.email, email: user.email };
+      return c.from('profiles').insert(p).then(function (ir) {
+        if (ir.error) SYNC.msg = ir.error.message;
+        p.approved = false; SYNC.auth = { user: user, profile: p }; return SYNC.auth;
+      });
+    });
+  };
+  SYNC.signIn = function (email, pw) {
+    return SYNC.client.auth.signInWithPassword({ email: email, password: pw }).then(function (r) { if (r.error) throw r.error; return SYNC.loadProfile(r.data.user); });
+  };
+  SYNC.signUp = function (email, pw, meta) {
+    return SYNC.client.auth.signUp({ email: email, password: pw, options: { data: meta, emailRedirectTo: location.origin + location.pathname + location.search } })
+      .then(function (r) { if (r.error) throw r.error; return r.data.session ? SYNC.loadProfile(r.data.user).then(function () { return 'in'; }) : 'confirm'; });
+  };
+  SYNC.signOut = function () { return SYNC.client.auth.signOut(); };
+  SYNC.listPending = function () { return SYNC.client.from('profiles').select('*').eq('approved', false).order('created_at'); };
+  SYNC.approve = function (uid) { return SYNC.client.from('profiles').update({ approved: true }).eq('user_id', uid); };
+  SYNC.reject = function (uid) { return SYNC.client.from('profiles').delete().eq('user_id', uid); };
+
+  // 설정이 있으면 Supabase 클라이언트를 불러와 연결: 로그인 상태 확인 → 데이터 연결
   if (CFG.supabaseUrl && CFG.supabaseAnonKey) {
     var sc = document.createElement('script');
     sc.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js';
-    sc.onload = function () { SYNC.start(window.supabase.createClient(CFG.supabaseUrl, CFG.supabaseAnonKey)); };
+    sc.onload = function () {
+      var client = window.supabase.createClient(CFG.supabaseUrl, CFG.supabaseAnonKey);
+      SYNC.client = client;
+      client.auth.getSession().then(function (r) {
+        var s = r.data && r.data.session;
+        return s ? SYNC.loadProfile(s.user) : null;
+      }).then(function () {
+        // 앱 쪽에서 로그인 사용자 반영 (다른 조합 소속이면 이동). false 를 돌려주면 연결 중단
+        var go = typeof window.onAuthReady === 'function' ? window.onAuthReady(SYNC.auth) : true;
+        if (go !== false) SYNC.start(client);
+      });
+    };
     sc.onerror = function () { setStatus('error', '서버 연결 모듈을 불러오지 못했습니다'); };
     document.head.appendChild(sc);
   }
