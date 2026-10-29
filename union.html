@@ -702,9 +702,9 @@ var WK = '일월화수목금토';
 function dtKo(v) { if (!v) return '-'; var d = new Date(v); return isNaN(d) ? v : d.getFullYear() + '.' + pad(d.getMonth() + 1) + '.' + pad(d.getDate()) + '(' + WK[d.getDay()] + ') ' + pad(d.getHours()) + ':' + pad(d.getMinutes()); }
 var voter = null, vsel = [];
 function voteStats() {
-  var e = Object.keys(S.vote.ballots), paper = S.vote.paper || [];
+  var e = Object.keys(S.vote.ballots), paper = S.vote.paper || [], live = S.vote.live || [];
   var res = agendas().map(function (a, i) {
-    var c = a.o.map(function (_, j) { return ((paper[i] || [])[j]) || 0; });
+    var c = a.o.map(function (_, j) { return (((paper[i] || [])[j]) || 0) + (((live[i] || [])[j]) || 0); });
     e.forEach(function (n) { var k = S.vote.ballots[n].a[i]; if (k != null && c[k] != null) c[k]++; });
     return c;
   });
@@ -719,14 +719,14 @@ V.vote = function () {
     '<p style="margin:0 0 12px;font-size:14px">참여: 전자투표 <b>' + vs.e + '</b>명 · 서면결의 <b>' + vs.p + '</b>명</p>' +
     (S.vote.open ? '<p class="note" style="margin:0">찬반 집계는 <b>투표 마감·개표 후</b> 공개됩니다. 조합장·시구 담당자도 개표 전에는 결과를 볼 수 없습니다.<br><span class="law">시행령 제42조 제2항 제3호 가목</span></p>' :
       agendas().map(function (a, i) {
-        var c = vs.res[i], tot = c.reduce(function (s, x) { return s + x; }, 0), pp = (S.vote.paper || [])[i] || [];
+        var c = vs.res[i], tot = c.reduce(function (s, x) { return s + x; }, 0), pp = (S.vote.paper || [])[i] || [], lv = (S.vote.live || [])[i] || [];
         return '<div style="margin-bottom:16px"><b style="font-size:15px">' + a.t + ' ' + a.h + '</b>' + a.o.map(function (o, j) {
-          var el = c[j] - (pp[j] || 0);
+          var el = c[j] - (pp[j] || 0) - (lv[j] || 0);
           return '<div style="display:grid;grid-template-columns:70px 1fr 90px;gap:10px;align-items:center;font-size:14px;margin-top:6px"><span>' + o + '</span><div class="bar' + (j ? ' acc' : '') + '"><i style="width:' + pct(c[j], tot) + '%"></i></div><span class="r">' + c[j] + '표 (' + pct(c[j], tot) + '%)</span></div>' +
-            '<div style="font-size:12px;color:var(--muted);margin:2px 0 0 80px">서면 ' + (pp[j] || 0) + ' · 전자 ' + el + '</div>';
+            '<div style="font-size:12px;color:var(--muted);margin:2px 0 0 80px">서면 ' + (pp[j] || 0) + ' · 전자 ' + el + (lv[j] ? ' · 현장 ' + lv[j] : '') + '</div>';
         }).join('') + '</div>';
       }).join('') + '<p class="law" style="margin:0">서면·전자 결과 구분 관리 (법 제45조 제6항 제2호) · 전자의결 결과는 사업 완료·폐지 시까지 보관 (시행령 제42조 제2항 제3호 나목)</p>') + '</div>';
-  if (r !== 'member' && r !== 'admin') return head + results;
+  if (r !== 'member' && r !== 'admin') return head + results + quorumCard();
   var box;
   if (!S.vote.open) box = '<div class="card empty">투표가 마감되었습니다.</div>';
   else if (!voter) {
@@ -736,8 +736,60 @@ V.vote = function () {
     box = '<div class="card"><h2>' + voter + '님의 투표용지 <button class="btn sm" data-act="unvoter">취소</button></h2>' + agendas().map(function (a, i) { return '<div class="agenda"><h3>' + a.t + ' · ' + a.h + '</h3><p>' + a.d + '</p><div class="opts">' + a.o.map(function (o, j) { return '<button class="' + (vsel[i] === j ? 'on' : '') + '" data-act="vopt" data-i="' + i + '" data-j="' + j + '">' + o + '</button>'; }).join('') + '</div></div>'; }).join('') +
       '<div style="text-align:right"><button class="btn acc lg" data-act="vsubmit">투표 제출 (' + vsel.filter(function (x) { return x != null; }).length + '/' + agendas().length + ')</button></div></div>';
   }
-  return head + '<div class="grid g2">' + box + results + '</div>';
+  return head + '<div class="grid g2">' + box + results + '</div>' + (r === 'admin' ? quorumCard() : '');
 };
+
+/* --- 성원·의결 점검 (법 제45조 제3항·제4항·제10항, 제40조 제3항, 시행령 제42조 제3항) --- */
+// d: 직접출석 비율(%) · v: 의결 기준(att 출석 과반수 / mem 조합원 과반수 / mem23 조합원 2/3)
+var AGK = {
+  gen: { n: '일반 안건', d: 10, v: 'att', law: '법 제45조 제3항' },
+  con: { n: '시공자 선정·변경', d: 50, v: 'att', law: '법 제45조 제10항 단서' },
+  cancel: { n: '시공자 선정 취소', d: 20, v: 'att', law: '시행령 제42조 제3항 제1호의2' },
+  plan: { n: '사업시행계획서 작성·변경', d: 20, v: 'mem', law: '법 제45조 제4항, 시행령 제42조 제3항 제2호' },
+  mgmt: { n: '관리처분계획 수립·변경', d: 20, v: 'mem', law: '법 제45조 제4항, 시행령 제42조 제3항 제3호' },
+  cost: { n: '정비사업비 사용·변경', d: 20, v: 'att', law: '시행령 제42조 제3항 제4호' },
+  bylaw: { n: '정관 변경', d: 10, v: 'mem', law: '법 제40조 제3항 본문' },
+  bylaw2: { n: '정관 변경 (조합원 자격·제명·구역·비용부담·사업비 부담·시공자 선정 조항)', d: 10, v: 'mem23', law: '법 제40조 제3항 단서' }
+};
+var MTYPE = { reg: '정기총회', tmp: '임시총회', found: '창립총회' };
+var VRULE = { att: '출석 조합원 과반수 찬성', mem: '조합원 과반수 찬성', mem23: '조합원 3분의 2 이상 찬성' };
+function agRule(a) { var k = AGK[a.k] || AGK.gen; return (a.k === 'plan' || a.k === 'mgmt') && a.inc ? { n: k.n, d: k.d, v: 'mem23', law: '법 제45조 제4항 단서 (정비사업비 10% 이상 증가)' } : k; }
+function directReq(m) {
+  var d = m.mt === 'found' ? 20 : 10, why = m.mt === 'found' ? '창립총회 (시행령 제42조 제3항 제1호)' : '일반 (법 제45조 제10항 본문)';
+  m.agendas.forEach(function (a) { var r = agRule(a); if (r.d > d) { d = r.d; why = r.n + ' (' + r.law + ')'; } });
+  return { pct: d, why: why };
+}
+function needN(n, pct) { return pct === 50 ? Math.floor(n / 2) + 1 : Math.ceil(n * pct / 100); }
+function quorum() {
+  var n = roster().length, v = S.vote, eKeys = Object.keys(v.ballots), on = Object.keys(S.asm.attend || {});
+  var onl = on.length, eOnly = eKeys.filter(function (k) { return on.indexOf(k) < 0; }).length; // 전자투표 후 온라인총회에도 참석하면 1명으로
+  var site = +v.site || 0, proxy = +v.proxy || 0, paper = ((v.paper || [])[0] || []).reduce(function (s, x) { return s + x; }, 0);
+  var direct = site + proxy + onl, att = direct + paper + eOnly, req = directReq(meet());
+  return { n: n, site: site, proxy: proxy, onl: onl, paper: paper, e: eOnly, direct: direct, att: att, req: req, needD: needN(n, req.pct), needA: Math.floor(n / 2) + 1 };
+}
+function quorumCard() {
+  var q = quorum(), adm = role() === 'admin', okD = q.direct >= q.needD, okA = q.att >= q.needA, vs = voteStats();
+  var num = function (k, v) { return adm ? '<input type="number" min="0" data-q="' + k + '" value="' + v + '" style="width:80px;height:34px">' : '<b>' + v + '</b>'; };
+  var rows = '<table class="t"><tr><td>현장 직접 출석</td><td class="r">' + num('site', q.site) + ' 명</td></tr><tr><td>대리인 출석 (법 제45조 제5항)</td><td class="r">' + num('proxy', q.proxy) + ' 명</td></tr><tr><td>온라인총회 참석 (법 제44조의2 제2항)</td><td class="r"><b>' + q.onl + '</b> 명</td></tr>' +
+    '<tr><td><b>직접 출석 계</b></td><td class="r"><b>' + q.direct + '</b> 명</td></tr><tr><td>서면결의 (출석 간주, 제5항)</td><td class="r">' + q.paper + ' 명</td></tr><tr><td>전자의결 (출석 간주, 제6항)</td><td class="r">' + q.e + ' 명</td></tr><tr><td><b>출석 계</b></td><td class="r"><b>' + q.att + '</b> / ' + q.n + ' 명</td></tr></table>';
+  var chk = '<ul class="list" style="margin-top:10px"><li><span class="tag ' + (okA ? 'ok' : 'no') + '">' + (okA ? '✓' : '✕') + '</span><span class="tt">의사정족수: 조합원 과반수 출석 (' + q.needA + '명 이상)</span><span class="m">법 제45조 제3항</span></li>' +
+    '<li><span class="tag ' + (okD ? 'ok' : 'no') + '">' + (okD ? '✓' : '✕') + '</span><span class="tt">직접 출석 ' + q.req.pct + '% 이상 (' + q.needD + '명 이상) — ' + esc(q.req.why) + '</span><span class="m">법 제45조 제10항</span></li>' + (q.att > q.n ? '<li><span class="tag acc">!</span><span class="tt">출석 계(' + q.att + '명)가 조합원 수(' + q.n + '명)보다 많습니다. 서면·전자 제출자가 현장에도 출석했는지 중복을 확인하세요.</span></li>' : '') + '</ul>';
+  var res = '';
+  if (!S.vote.open) res = '<h3 style="margin:16px 0 8px;font-size:16px">안건별 의결 판정</h3><div class="tw"><table class="t"><thead><tr><th>안건</th><th>기준</th><th class="r">찬성(최다)</th><th class="c">판정</th></tr></thead><tbody>' + agendas().map(function (a, i) {
+      var r = agRule(a), c = vs.res[i], yn = a.o[0] === '찬성', yes = yn ? c[0] : Math.max.apply(null, c), need = r.v === 'att' ? Math.floor(q.att / 2) + 1 : r.v === 'mem' ? Math.floor(q.n / 2) + 1 : Math.ceil(q.n * 2 / 3);
+      var pass = okA && okD && yes >= need;
+      return '<tr><td>' + esc(a.t) + ' ' + esc(a.h) + '<br><span class="law">' + esc(r.n) + '</span></td><td>' + VRULE[r.v] + '<br><span class="law">' + need + '표 이상 · ' + r.law + '</span></td><td class="r">' + yes + (yn ? '' : '<br><span class="law">' + esc(a.o[c.indexOf(yes)]) + '</span>') + '</td><td class="c"><span class="tag ' + (pass ? 'ok' : 'no') + '">' + (pass ? '가결' : !okA || !okD ? '성원 미달' : '부결') + '</span></td></tr>';
+    }).join('') + '</tbody></table></div><p class="law" style="margin:6px 0 0">· 찬성 수 = 서면 + 전자 + 현장 표결 합계. 정관에 다른 정함이 있으면 정관을 따릅니다 (법 제45조 제3항·제11항).</p>';
+  return '<div class="card" style="margin-top:16px"><h2>성원·의결 점검 <span class="tag gray">' + esc(MTYPE[meet().mt || 'reg']) + '</span></h2>' + (adm ? '<p class="law" style="margin:-6px 0 8px">현장·대리인 출석 수를 입력하면 성원 여부를 바로 계산합니다. 온라인총회 참석은 입장 기록으로 자동 집계됩니다.</p>' : '') +
+    '<div class="grid g2" style="gap:14px"><div>' + rows + '</div><div>' + chk + (!S.vote.open && adm ? liveInputs() : '') + '</div></div>' + res + '</div>';
+}
+// 현장(온라인총회 포함) 표결 입력: 안건×선택지
+function liveInputs() {
+  var L = S.vote.live || [];
+  return '<h3 style="margin:14px 0 6px;font-size:15px">현장 표결 입력</h3>' + agendas().map(function (a, i) {
+    return '<div style="font-size:14px;margin-bottom:6px"><b>' + esc(a.t) + '</b> ' + a.o.map(function (o, j) { return esc(o) + ' <input type="number" min="0" data-lv="' + i + ',' + j + '" value="' + (((L[i] || [])[j]) || 0) + '" style="width:64px;height:30px">'; }).join(' ') + '</div>';
+  }).join('');
+}
 
 /* --- 총회 설정·소집통지 (조합 관리자) --- */
 var MD = null; // 편집 중인 총회 설정 (저장 전)
@@ -760,16 +812,20 @@ V.meetset = function () {
       '<input data-md="h" data-i="' + i + '" value="' + esc(a.h) + '" placeholder="안건명 (예: 2027년 예산(안) 승인의 건)" style="flex:1 1 260px">' +
       '<button class="btn sm" data-act="mdDel" data-i="' + i + '"' + (MD.agendas.length < 2 ? ' disabled' : '') + '>삭제</button></div>' +
       '<input data-md="d" data-i="' + i + '" value="' + esc(a.d) + '" placeholder="설명" style="width:100%;margin-top:8px">' +
+      '<div style="display:flex;gap:8px;align-items:center;margin-top:8px;flex-wrap:wrap;font-size:14px"><span>안건 종류</span><select data-md="k" data-i="' + i + '">' + Object.keys(AGK).map(function (k) { return '<option value="' + k + '"' + ((a.k || 'gen') === k ? ' selected' : '') + '>' + AGK[k].n + '</option>'; }).join('') + '</select>' +
+      ((a.k === 'plan' || a.k === 'mgmt') ? '<label style="display:flex;gap:6px;align-items:center"><input type="checkbox" data-md="inc" data-i="' + i + '"' + (a.inc ? ' checked' : '') + ' style="width:auto"> 정비사업비 10% 이상 증가</label>' : '') +
+      '<span class="law">' + VRULE[agRule(a).v] + ' · 직접출석 ' + agRule(a).d + '%</span></div>' +
       '<div style="display:flex;gap:8px;align-items:center;margin-top:8px;flex-wrap:wrap;font-size:14px"><span>선택지</span>' +
       '<select data-md="kind" data-i="' + i + '"><option value="yn"' + (preset ? ' selected' : '') + '>찬성 · 반대 · 기권</option><option value="custom"' + (preset ? '' : ' selected') + '>직접 입력 (업체·후보 선택 등)</option></select>' +
       (preset ? '' : '<input data-md="o" data-i="' + i + '" value="' + esc(a.o.join(', ')) + '" placeholder="쉼표로 구분 (예: A업체, B업체, C업체)" style="flex:1 1 220px">') + '</div></div>';
   }).join('');
   return ph('총회 설정·소집통지', '총회 일시·장소·전자의결 기간·안건을 정하고, 소집통지문을 만들어 알림톡으로 보냅니다.<br><span class="law">시행령 제42조 제2항 제1호 — 소집통지 시 전자의결 방법·기간 통지 / 법 제44조의2 — 온라인총회는 총회 의결로 병행</span>') +
     '<div class="grid g2"><div class="card"><h2>총회 정보</h2><form class="f" onsubmit="return false">' +
-    '<label>총회명<input data-md="title" value="' + esc(MD.title) + '"></label>' +
+    '<div class="row"><label>총회명<input data-md="title" value="' + esc(MD.title) + '"></label><label>총회 종류<select data-md="mt">' + Object.keys(MTYPE).map(function (k) { return '<option value="' + k + '"' + ((MD.mt || 'reg') === k ? ' selected' : '') + '>' + MTYPE[k] + '</option>'; }).join('') + '</select></label></div>' +
     '<div class="row"><label>총회 일시<input type="datetime-local" data-md="held" value="' + esc(MD.held) + '"></label><label>장소<input data-md="place" value="' + esc(MD.place) + '"></label></div>' +
     '<div class="row"><label>전자의결 시작<input type="datetime-local" data-md="vFrom" value="' + esc(MD.vFrom) + '"></label><label>전자의결 마감<input type="datetime-local" data-md="vTo" value="' + esc(MD.vTo) + '"></label></div></form>' +
     '<h2 style="margin-top:18px">안건 <button class="btn sm" data-act="mdAdd">+ 안건 추가</button></h2>' + rows +
+    (function () { var q = directReq(MD), n = roster().length; return '<p class="note" style="margin-top:10px">이 총회의 성원 요건: 조합원 ' + n + '명 중 <b>출석 ' + (Math.floor(n / 2) + 1) + '명 이상</b>(서면·전자 포함), 그중 <b>직접 출석 ' + needN(n, q.pct) + '명 이상</b>(' + q.pct + '% · ' + esc(q.why) + ')<br><span class="law">직접 출석 = 현장 + 대리인 + 온라인총회 참석 (법 제45조 제10항, 제44조의2 제2항)</span></p>'; })() +
     (ballots ? '<p class="note acc">이미 전자투표 ' + ballots + '건이 있습니다. 안건을 바꿔 저장하면 기존 전자투표와 서면 집계가 초기화됩니다.</p>' : '') +
     '<div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px"><button class="btn" data-act="mdReset">되돌리기</button><button class="btn pri" data-act="mdSave">저장</button></div></div>' +
     '<div class="card"><h2>소집통지문 미리보기</h2><div class="doc" id="mdNotice" style="white-space:pre-line;max-height:none">' + esc(meetNotice(MD)) + '</div>' +
@@ -1348,10 +1404,11 @@ var ACT = {
     if (m.vTo > m.held) { toast('전자의결 마감은 총회 일시 이전이어야 합니다.'); return; }
     if (bad) { toast('안건명과 선택지(2개 이상)를 모두 입력하세요.'); return; }
     m.agendas.forEach(function (a, i) { a.t = '제' + (i + 1) + '호 안건'; });
-    var changed = JSON.stringify(m.agendas) !== JSON.stringify(agendas()), nb = Object.keys(S.vote.ballots).length;
+    var sig = function (L) { return JSON.stringify(L.map(function (a) { return [a.h, a.o]; })); }; // 안건 종류만 바꾸면 투표 유지
+    var changed = sig(m.agendas) !== sig(agendas()), nb = Object.keys(S.vote.ballots).length;
     if (changed && nb && !confirm('안건이 바뀌어 기존 전자투표 ' + nb + '건과 서면 집계가 초기화됩니다. 저장할까요?')) return;
     S.meet = JSON.parse(JSON.stringify(m));
-    if (changed) { S.vote.ballots = {}; S.vote.paper = m.agendas.map(function (a) { return a.o.map(function () { return 0; }); }); S.asm.idx = 0; }
+    if (changed) { S.vote.ballots = {}; S.vote.paper = m.agendas.map(function (a) { return a.o.map(function () { return 0; }); }); delete S.vote.live; S.asm.idx = 0; }
     // 조합 일정에 총회·전자의결 마감 반영
     S.events = S.events.filter(function (e) { return e.auto !== 'meet'; }).concat([
       { d: m.held.slice(0, 10), t: m.title + ' (' + m.held.slice(11, 16) + ')', k: '총회', auto: 'meet', id: 'meet-held' },
@@ -1616,7 +1673,8 @@ document.addEventListener('submit', function (e) { var f = e.target, k = f.datas
 document.addEventListener('input', function (e) {
   // 총회 설정 편집: 다시 그리지 않고 편집본(MD)과 소집통지 미리보기만 갱신
   if (e.target.dataset && e.target.dataset.md && MD && e.target.dataset.md !== 'kind') {
-    var k = e.target.dataset.md, i = e.target.dataset.i, v = e.target.value;
+    var k = e.target.dataset.md, i = e.target.dataset.i, v = e.target.type === 'checkbox' ? e.target.checked : e.target.value;
+    if (k === 'k' || k === 'mt' || k === 'inc') { if (i == null) MD[k] = v; else MD.agendas[+i][k] = v; render(); return; } // 요건 안내가 바뀌므로 다시 그림
     if (i == null) MD[k] = v;
     else if (k === 'o') MD.agendas[+i].o = v.split(',').map(function (s) { return s.trim(); }).filter(Boolean);
     else MD.agendas[+i][k] = v;
@@ -1630,6 +1688,12 @@ document.addEventListener('input', function (e) {
 document.addEventListener('change', function (e) {
   if (e.target.dataset && e.target.dataset.md === 'kind' && MD) { var a = MD.agendas[+e.target.dataset.i]; a.o = e.target.value === 'yn' ? OPT_PRESET.yn.slice() : ['A업체', 'B업체']; render(); return; }
   if (e.target.id === 'rfilter') { rfilter = e.target.value; render(); }
+  // 성원 집계 입력 (현장·대리인 출석, 현장 표결)
+  if (e.target.dataset.q) { S.vote[e.target.dataset.q] = Math.max(0, +e.target.value || 0); save(); render(); return; }
+  if (e.target.dataset.lv) {
+    var ij = e.target.dataset.lv.split(','), L = S.vote.live = S.vote.live || agendas().map(function (a) { return a.o.map(function () { return 0; }); });
+    (L[+ij[0]] = L[+ij[0]] || [])[+ij[1]] = Math.max(0, +e.target.value || 0); save(); var y = window.scrollY; render(); window.scrollTo(0, y); return;
+  }
   if (e.target.dataset.link) { // 실제 조합원 ↔ 명부 연결 변경
     var uid = e.target.dataset.link, v = e.target.value;
     SYNC.linkMember(uid, v).then(function (r) { if (r.error) toast('연결 실패: ' + r.error.message); else { (MEMBERS || []).forEach(function (m) { if (m.user_id === uid) m.member_no = v || null; }); toast(v ? '명부와 연결했습니다.' : '연결을 해제했습니다.'); } });

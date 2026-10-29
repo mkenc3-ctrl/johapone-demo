@@ -43,8 +43,8 @@
     roster:  arr(P(function () { return S.roster; }, function (v) { S.roster = v; }), function (a, b) { return a.no - b.no; }),
     logs:    arr(P(function () { return S.logs; }, function (v) { S.logs = v; }), byAtDesc),
     meta: {
-      get: function () { var m = { vote: { open: S.vote.open, paper: S.vote.paper }, asm: { idx: S.asm.idx }, svc: S.svc }; if (S.meet) m.meet = S.meet; if (S.campaign) m.campaign = S.campaign; if (S.offc) m.offc = S.offc; return m; },
-      set: function (m) { if (m.vote) { S.vote.open = m.vote.open; S.vote.paper = m.vote.paper; } if (m.asm) S.asm.idx = m.asm.idx; if (m.svc) S.svc = m.svc; if (m.meet) S.meet = m.meet; else delete S.meet; if (m.campaign) S.campaign = m.campaign; else delete S.campaign; if (m.offc) S.offc = m.offc; else delete S.offc; }
+      get: function () { var m = { vote: { open: S.vote.open, paper: S.vote.paper, site: S.vote.site || 0, proxy: S.vote.proxy || 0, live: S.vote.live || null }, asm: { idx: S.asm.idx }, svc: S.svc }; if (S.meet) m.meet = S.meet; if (S.campaign) m.campaign = S.campaign; if (S.offc) m.offc = S.offc; return m; },
+      set: function (m) { if (m.vote) { S.vote.open = m.vote.open; S.vote.paper = m.vote.paper; S.vote.site = m.vote.site || 0; S.vote.proxy = m.vote.proxy || 0; if (m.vote.live) S.vote.live = m.vote.live; else delete S.vote.live; } if (m.asm) S.asm.idx = m.asm.idx; if (m.svc) S.svc = m.svc; if (m.meet) S.meet = m.meet; else delete S.meet; if (m.campaign) S.campaign = m.campaign; else delete S.campaign; if (m.offc) S.offc = m.offc; else delete S.offc; }
     }
   };
   SYNC.COLLS = COLLS;
