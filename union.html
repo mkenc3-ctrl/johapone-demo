@@ -360,6 +360,8 @@ try { S = JSON.parse(localStorage.getItem(K)); } catch (e) {}
 if (!S || S.v !== 3) S = seed();
 if (!S.proReq) S.proReq = []; // 이전에 저장된 데모 데이터 호환
 var ME = null; try { ME = sessionStorage.getItem('johapone-me'); } catch (e) {}
+// 시연용: 데모 조합에서만 ?as=hong|soon|admin|gov 로 해당 데모 계정 바로 입장 (demo.html 시나리오)
+(function () { var a = (location.search.match(/[?&]as=(hong|soon|admin|gov)(?:&|$)/) || [])[1]; if (a && /^demo-/.test(TENANT)) { ME = a; try { sessionStorage.setItem('johapone-me', a); } catch (e) {} } })();
 var IMPORTED = null; // 엑셀로 불러온 명부는 메모리에만 보관
 function save() { try { localStorage.setItem(K, JSON.stringify(S)); } catch (e) {} if (window.SYNC) SYNC.schedule(); }
 function roster() { return IMPORTED || S.roster; }
