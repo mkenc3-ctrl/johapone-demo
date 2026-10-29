@@ -468,7 +468,7 @@ V.home = function () {
     var mine = myRow(), c = mine && S.consents[mine.no], voted = S.vote.ballots[U().name];
     var acts = '';
     if (S.vote.open && !voted) acts += action('#vote', '🗳️', esc(meet().title) + ' 전자투표가 진행 중입니다', dtKo(meet().vTo) + ' 마감 · 안건 ' + agendas().length + '건', '투표하기');
-    if (!c) acts += action('#consent', '✍️', '조합설립 동의서를 아직 제출하지 않았습니다', '휴대폰으로 1분이면 제출할 수 있습니다', '제출하기');
+    if (!c) acts += action('#consent', '✍️', CTYPE[camp().type] + '서를 아직 제출하지 않았습니다', '휴대폰으로 1분이면 제출할 수 있습니다', '제출하기');
     if (unread) acts += action('#disclosure', '📢', '확인하지 않은 정보공개 자료 ' + unread + '건', '조합 공지·계약·회의록을 확인하세요', '확인하기');
     acts += action('#assembly', '🎥', dtKo(meet().held) + ' ' + esc(meet().title), '집에서 온라인으로 참석할 수 있습니다', '입장 안내');
     return ph(esc(U().name) + '님, 안녕하세요', UNION + ' 조합원 전용 공간입니다.') +
@@ -481,7 +481,7 @@ V.home = function () {
   var vs = voteStats();
   return ph('대시보드', UNION + ' · 조합 관리자', '<a class="btn pri" href="#disclosure/new">+ 정보공개 등록</a>') +
     '<div class="grid g4" style="margin-bottom:16px">' +
-    kpi('조합원', R.length, '명') + kpi('조합설립 동의율', pct(agree, R.length), '%', 'acc') +
+    kpi('조합원', R.length, '명') + kpi(CTYPE[camp().type] + '율', pct(agree, R.length), '%', 'acc') +
     kpi('전자투표 참여', vs.total, '명 / ' + R.length) + kpi('신분증 미제출', R.filter(function (x) { return !x.idcard; }).length, '명', 'acc') + '</div>' +
     saveCalc(R.length) +
     '<div class="grid g2" style="margin-top:16px"><div class="card"><h2>최근 정보공개 <a href="#disclosure">관리 ›</a></h2><ul class="list">' + dis + '</ul></div>' +
@@ -608,31 +608,71 @@ function cafeWriteForm() {
 }
 
 /* --- 전자동의서 --- */
-function consentStats() { var a = 0, d = 0, e = 0, R = roster(); R.forEach(function (r) { var c = S.consents[r.no]; if (c) { c.agree ? a++ : d++; if (c.method === '전자') e++; } }); return { agree: a, dis: d, none: R.length - a - d, e: e }; }
+// 동의 캠페인: type 'union'(조합설립) | 'setup'(추진위원회 구성), cert=시장·군수 검인·확인 번호, founding=창립총회일, applied=인·허가 신청 여부
+var CTYPE = { union: '조합설립 동의', setup: '추진위원회 구성 동의' };
+function camp() { return S.campaign || { type: 'union', cert: '', founding: '', applied: false }; }
+function unionKind() { return (window.SYNC && SYNC.tenantRow && SYNC.tenantRow.kind) || (localTenants()[TENANT] || {}).kind || '재개발'; }
+function consentReq() {
+  if (camp().type === 'setup') return { goal: 50, text: '토지등소유자 과반수 동의 (법 제31조 제1항)' };
+  if (unionKind() === '재건축') return { goal: 70, text: '공동주택 동별 구분소유자 과반수 + 전체 구분소유자 70% 이상 + 토지면적 70% 이상 (법 제35조 제3항)' };
+  return { goal: 75, text: '토지등소유자 3/4 이상 + 토지면적 1/2 이상 (법 제35조 제2항)' };
+}
+// 시행령 제33조 제2항: 철회 가능 시기
+function canWithdraw(c) {
+  var cp = camp(); if (!c || c.wd) return [false, ''];
+  if (cp.applied) return [false, '인·허가를 신청한 뒤에는 철회할 수 없습니다 (시행령 제33조 제2항 제1호)'];
+  if (cp.type === 'union') {
+    if (cp.founding && todayD() >= dP(cp.founding)) return [false, '창립총회 후에는 조합설립 동의를 철회할 수 없습니다 (시행령 제33조 제2항 제2호 단서)'];
+    var days = Math.floor((todayD() - dP(String(c.at).slice(0, 10))) / 864e5);
+    if (days > 30) return [false, '최초 동의일부터 30일이 지나 철회할 수 없습니다 (시행령 제33조 제2항 제2호)'];
+    return [true, '최초 동의일부터 30일 이내·창립총회 전이므로 철회할 수 있습니다 (남은 기간 ' + (30 - days) + '일)'];
+  }
+  return [true, '인·허가 신청 전까지 철회할 수 있습니다 (시행령 제33조 제2항 제1호)'];
+}
+function consentStats() { var a = 0, d = 0, e = 0, w = 0, R = roster(); R.forEach(function (r) { var c = S.consents[r.no]; if (!c) return; if (c.wd) { w++; return; } c.agree ? a++ : d++; if (c.method === '전자') e++; }); return { agree: a, dis: d, none: R.length - a - d - w, e: e, wd: w }; }
 var cstep = 0, cchoice = null;
 V.consent = function () {
-  var r = role(), st = consentStats(), n = roster().length;
-  var sum = '<div class="card" style="margin-bottom:16px"><h2>조합설립 동의 현황</h2><div class="grid g4" style="margin-bottom:14px">' + kpi('찬성', st.agree, '명') + kpi('반대', st.dis, '명') + kpi('미제출', st.none, '명', 'acc') + kpi('전자 제출', st.e, '명') + '</div>' +
-    '<p style="margin:0 0 6px;font-size:14px">동의율 <b>' + pct(st.agree, n) + '%</b> · 법정 요건 75% (토지등소유자 3/4 이상, 토지면적 1/2 이상)</p><div class="bar acc"><i style="width:' + pct(st.agree, n) + '%"></i><span class="goal" style="left:75%"></span></div>' +
-    '<p class="law" style="margin:8px 0 0">도시정비법 제35조(조합설립인가 등), 제36조(동의방법). 토지면적 요건은 명부 면적 연동 후 산정됩니다.</p></div>';
+  var r = role(), st = consentStats(), n = roster().length, cp = camp(), req = consentReq(), tl = CTYPE[cp.type];
+  var sum = '<div class="card" style="margin-bottom:16px"><h2>' + tl + ' 현황 <span class="tag gray">' + esc(unionKind()) + '</span></h2><div class="grid g4" style="margin-bottom:14px">' + kpi('찬성', st.agree, '명') + kpi('반대', st.dis, '명') + kpi('미제출', st.none, '명', 'acc') + kpi('철회', st.wd, '명') + '</div>' +
+    '<p style="margin:0 0 6px;font-size:14px">동의율 <b>' + pct(st.agree, n) + '%</b> (전자 ' + st.e + '명) · 요건: ' + req.text + '</p><div class="bar acc"><i style="width:' + pct(st.agree, n) + '%"></i><span class="goal" style="left:' + req.goal + '%"></span></div>' +
+    '<p class="law" style="margin:8px 0 0">동의율은 명부 인원 기준입니다. 토지면적·동별 요건은 명부의 면적·동 정보로 별도 확인하세요. 동의 방법: 서면동의서(성명·지장·신분증 사본) 또는 전자서명동의서 (법 제36조 제1항)</p></div>';
   if (r !== 'member') {
-    var rows = roster().map(function (x) { var c = S.consents[x.no]; return '<tr><td class="c">' + x.no + '</td><td>' + esc(x.name) + '</td><td>' + esc(x.jibun) + ' ' + esc(x.bldg) + '</td><td class="c">' + (c ? (c.agree ? '<span class="tag ok">찬성</span>' : '<span class="tag no">반대</span>') : '<span class="tag gray">미제출</span>') + '</td><td class="c">' + (c ? c.method : '-') + '</td><td class="c">' + (c ? c.at : '-') + '</td><td class="c">' + (c && c.sig ? '<img src="' + c.sig + '" alt="서명" style="height:28px">' : '') + '</td></tr>'; }).join('');
-    return ph('전자동의서' + paidTag('consent'), '조합설립 동의서를 휴대폰 본인인증·전자서명으로 받고 실시간으로 집계합니다.', r === 'admin' ? '<button class="btn acc" data-act="nudge">미제출자에게 알림 보내기</button>' : '') + sum +
-      '<div class="card" style="padding:0"><div class="tw" style="border-top:0"><table class="t"><thead><tr><th class="c">연번</th><th>성명</th><th>소재지</th><th class="c">찬반</th><th class="c">방식</th><th class="c">제출일시</th><th class="c">서명</th></tr></thead><tbody>' + rows + '</tbody></table></div></div>';
+    var warn = cp.type && !cp.cert ? '<div class="note acc" style="margin-bottom:16px"><b>검인·확인 필요</b> — 추진위원회 구성·조합설립 동의서는 <b>시장·군수등이 검인 또는 확인한 동의서</b>를 써야 하며, 그렇지 않으면 효력이 없습니다 (법 제36조 제3항). 확인 번호를 아래 설정에 입력하세요.</div>' : '';
+    var setCard = r === 'admin' ? '<div class="card" style="margin-bottom:16px"><h2>동의서 설정</h2><form class="f" data-form="camp"><div class="row">' +
+      '<label>동의서 종류<select name="type"><option value="union"' + (cp.type === 'union' ? ' selected' : '') + '>조합설립 동의 (별지 제6호)</option><option value="setup"' + (cp.type === 'setup' ? ' selected' : '') + '>추진위원회 구성 동의 (별지 제4호)</option></select></label>' +
+      '<label>시장·군수 검인·확인 번호<input name="cert" value="' + esc(cp.cert || '') + '" placeholder="예) OO구 검인 제2026-○○호"></label></div><div class="row">' +
+      '<label>창립총회일 (조합설립 동의)<input type="date" name="founding" value="' + esc(cp.founding || '') + '"></label>' +
+      '<label style="flex-direction:row;align-items:center;gap:8px;margin-top:22px"><input type="checkbox" name="applied"' + (cp.applied ? ' checked' : '') + ' style="width:18px;height:18px">인·허가 신청 완료 (이후 철회 불가)</label></div>' +
+      '<div style="display:flex;justify-content:flex-end"><button class="btn pri">저장</button></div></form></div>' : '';
+    var rows = roster().map(function (x) {
+      var c = S.consents[x.no], s = !c ? '<span class="tag gray">미제출</span>' : c.wd ? '<span class="tag gray">철회 (' + esc(c.wd.at) + ')</span>' : c.agree ? '<span class="tag ok">찬성</span>' : '<span class="tag no">반대</span>';
+      return '<tr><td class="c">' + x.no + '</td><td>' + esc(x.name) + '</td><td>' + esc(x.jibun) + ' ' + esc(x.bldg) + '</td><td class="c">' + s + '</td><td class="c">' + (c ? c.method : '-') + '</td><td class="c">' + (c ? c.at : '-') + '</td><td class="c">' + (c && c.sig ? '<img src="' + c.sig + '" alt="서명" style="height:28px">' : '') + '</td>' +
+        (r === 'admin' ? '<td class="c">' + (c && !c.wd ? '<button class="btn sm" data-act="wdIn" data-no="' + x.no + '">철회 접수</button>' : '') + '</td>' : '') + '</tr>';
+    }).join('');
+    return ph('전자동의서' + paidTag('consent'), tl + '를 휴대폰 본인인증·전자서명으로 받고 실시간으로 집계합니다.', r === 'admin' ? '<button class="btn acc" data-act="nudge">미제출자에게 알림 보내기</button>' : '') + warn + sum + setCard +
+      '<div class="card" style="padding:0"><div class="tw" style="border-top:0"><table class="t"><thead><tr><th class="c">연번</th><th>성명</th><th>소재지</th><th class="c">상태</th><th class="c">방식</th><th class="c">제출일시</th><th class="c">서명</th>' + (r === 'admin' ? '<th class="c">철회</th>' : '') + '</tr></thead><tbody>' + rows + '</tbody></table></div></div>' +
+      '<p class="law">철회는 철회서(성명·지장·신분증 사본)를 내용증명으로 조합과 시장·군수등에게 보내는 방법으로만 할 수 있으며, 도달한 때 또는 시장·군수등이 접수 사실을 통지한 때 중 빠른 때에 효력이 생깁니다 (시행령 제33조 제3항·제4항).</p>';
   }
   var me = myRow(), done = me && S.consents[me.no];
-  if (done) return ph('전자동의서' + paidTag('consent'), '조합설립 동의서') +
-    '<div class="card" style="max-width:640px"><div style="text-align:center;padding:10px 0 18px"><div style="font-size:44px">✅</div><h2 style="display:block;font-size:22px;margin:6px 0">제출이 완료되었습니다</h2><p style="margin:0;color:var(--muted)">접수번호 C-2026-' + String(me.no).padStart(5, '0') + '</p></div>' +
-    '<div class="doc" style="max-height:none"><table><tr><th>성명</th><td>' + esc(me.name) + '</td></tr><tr><th>소재지</th><td>' + esc(me.jibun + ' ' + me.bldg) + '</td></tr><tr><th>의사표시</th><td>' + (done.agree ? '<b style="color:var(--ok)">찬성 (동의)</b>' : '<b style="color:var(--no)">반대 (부동의)</b>') + '</td></tr><tr><th>제출 방식</th><td>' + done.method + '</td></tr><tr><th>제출 일시</th><td>' + done.at + '</td></tr></table></div>' +
-    '<p class="law">동의의 철회는 조합설립인가 신청 전까지 서면으로 할 수 있습니다 (시행령 제33조). <a href="#" data-act="resetConsent">[데모] 다시 작성</a></p></div>';
+  if (done) {
+    var cw = canWithdraw(done);
+    return ph('전자동의서' + paidTag('consent'), tl + '서') +
+    '<div class="card" style="max-width:640px"><div style="text-align:center;padding:10px 0 18px"><div style="font-size:44px">' + (done.wd ? '↩️' : '✅') + '</div><h2 style="display:block;font-size:22px;margin:6px 0">' + (done.wd ? '동의 철회가 접수되었습니다' : '제출이 완료되었습니다') + '</h2><p style="margin:0;color:var(--muted)">접수번호 C-2026-' + String(me.no).padStart(5, '0') + '</p></div>' +
+    '<div class="doc" style="max-height:none"><table><tr><th>성명</th><td>' + esc(me.name) + '</td></tr><tr><th>소재지</th><td>' + esc(me.jibun + ' ' + me.bldg) + '</td></tr><tr><th>의사표시</th><td>' + (done.agree ? '<b style="color:var(--ok)">찬성 (동의)</b>' : '<b style="color:var(--no)">반대 (부동의)</b>') + (done.wd ? ' → <b>철회 (' + esc(done.wd.at) + ')</b>' : '') + '</td></tr><tr><th>제출 방식</th><td>' + done.method + '</td></tr><tr><th>제출 일시</th><td>' + done.at + '</td></tr></table></div>' +
+    (done.wd ? '' : '<div class="note' + (cw[0] ? '' : ' acc') + '" style="margin-top:14px"><b>동의 철회</b> — ' + cw[1] + (cw[0] ? '<br>철회는 앱에서 할 수 없고, <b>철회서를 내용증명으로</b> 조합과 시장·군수등에게 보내야 합니다 (시행령 제33조 제3항).<div style="margin-top:8px"><button class="btn sm" data-act="wdForm">철회서 작성·출력</button></div>' : '') + '</div>') +
+    '<p class="law"><a href="#" data-act="resetConsent">[데모] 다시 작성</a></p></div>';
+  }
   var names = ['본인확인', '동의서 확인', '찬반 선택', '전자서명', '제출'];
   var stp = '<div class="steps">' + names.map(function (x, i) { return '<span class="' + (i === cstep ? 'on' : i < cstep ? 'done' : '') + '">' + (i + 1) + '. ' + x + '</span>'; }).join('') + '</div>';
   var body = '';
   if (cstep === 0) body = '<p>본인 명의 휴대폰으로 인증해 주세요.</p><div class="doc" style="max-height:none"><table><tr><th>성명</th><td>' + esc(U().name) + '</td></tr><tr><th>조합원번호</th><td>' + (me ? me.mno : '-') + '</td></tr><tr><th>소재지</th><td>' + (me ? esc(me.jibun + ' ' + me.bldg) : '-') + '</td></tr></table></div><div style="margin-top:16px;text-align:right"><button class="btn pri lg" data-act="auth">휴대폰 본인인증</button></div>';
-  if (cstep === 1) body = '<div class="doc"><h3>조합설립 동의서</h3><p>본인은 ' + UNION + ' 설립에 관하여 아래 사항을 확인하고 동의 여부를 표시합니다.</p><table>' +
+  if (cstep === 1 && camp().type === 'setup') body = '<div class="doc"><h3>정비사업 조합설립추진위원회 구성동의서</h3><p>본인은 ' + esc(UNION) + ' 조합설립추진위원회 구성에 관하여 아래 사항을 확인하고 동의 여부를 표시합니다.</p><table>' +
+    '<tr><th>추진위원장·추진위원</th><td>추진위원장 포함 5명 이상 (명단 별첨, 예시)</td></tr><tr><th>운영규정</th><td>국토교통부 고시 운영규정에 따른 운영규정(안) 별첨</td></tr></table>' +
+    '<p class="law">법 제31조 제1항 · 시행규칙 별지 제4호서식 · 시장·군수등 검인·확인 동의서 사용 (법 제36조 제3항)</p></div><label style="display:flex;gap:8px;align-items:center;margin-top:14px"><input type="checkbox" id="ck" style="width:20px;height:20px"> 위 내용을 모두 읽고 확인했습니다.</label><div style="margin-top:16px;text-align:right"><button class="btn pri lg" data-act="cnext1">다음</button></div>';
+  else if (cstep === 1) body = '<div class="doc"><h3>조합설립 동의서</h3><p>본인은 ' + esc(UNION) + ' 설립에 관하여 아래 사항을 확인하고 동의 여부를 표시합니다.</p><table>' +
     '<tr><th>건설되는 건축물의 설계 개요</th><td>공동주택 12개동, 지하 3층·지상 29층, 1,150세대 (예시)</td></tr><tr><th>공사비 등 정비사업비 개략 금액</th><td>약 4,280억원 (예시)</td></tr><tr><th>정비사업비 분담 기준</th><td>권리가액 비율에 따라 분담 (정관 제○조)</td></tr><tr><th>사업 완료 후 소유권 귀속</th><td>관리처분계획에 따라 조합원에게 귀속</td></tr><tr><th>조합 정관</th><td>첨부 정관(안) 참조</td></tr></table>' +
     '<p class="law">시행령 제30조 — 조합설립 동의서 법정 기재사항</p></div><label style="display:flex;gap:8px;align-items:center;margin-top:14px"><input type="checkbox" id="ck" style="width:20px;height:20px"> 위 내용을 모두 읽고 확인했습니다.</label><div style="margin-top:16px;text-align:right"><button class="btn pri lg" data-act="cnext1">다음</button></div>';
-  if (cstep === 2) body = '<p>조합설립에 대한 의사를 선택하세요.</p><div class="choice"><button class="y' + (cchoice === true ? ' on' : '') + '" data-act="cpick" data-v="1">찬성<small>조합설립에 동의합니다</small></button><button class="n' + (cchoice === false ? ' on' : '') + '" data-act="cpick" data-v="0">반대<small>조합설립에 동의하지 않습니다</small></button></div><div style="margin-top:16px;display:flex;justify-content:space-between"><button class="btn" data-act="cback">이전</button><button class="btn pri lg" data-act="cnext2">다음</button></div>';
+  if (cstep === 2) body = '<p>' + CTYPE[camp().type] + '에 대한 의사를 선택하세요.</p><div class="choice"><button class="y' + (cchoice === true ? ' on' : '') + '" data-act="cpick" data-v="1">찬성<small>동의합니다</small></button><button class="n' + (cchoice === false ? ' on' : '') + '" data-act="cpick" data-v="0">반대<small>동의하지 않습니다</small></button></div><div style="margin-top:16px;display:flex;justify-content:space-between"><button class="btn" data-act="cback">이전</button><button class="btn pri lg" data-act="cnext2">다음</button></div>';
   if (cstep === 3) body = '<p>아래 칸에 손가락이나 마우스로 서명하세요. <b>' + (cchoice ? '찬성' : '반대') + '</b>으로 제출됩니다.</p><canvas class="sig" id="sig"></canvas><div style="margin-top:16px;display:flex;justify-content:space-between;gap:8px"><span><button class="btn" data-act="cback">이전</button> <button class="btn" data-act="sigClear">지우기</button></span><button class="btn acc lg" data-act="csubmit">서명하고 제출</button></div>';
   return ph('전자동의서' + paidTag('consent'), '조합설립 동의서를 휴대폰으로 제출합니다. 종이 동의서와 같은 효력을 갖도록 본인인증과 전자서명을 거칩니다.') + '<div class="card" style="max-width:760px">' + stp + body + '</div>';
 };
@@ -1254,8 +1294,25 @@ var ACT = {
     var c = $('#sig'); if (!c.dataset.drawn) { toast('서명을 해주세요.'); return; }
     var m = myRow(); S.consents[m.no] = { agree: cchoice, method: '전자', at: now(), sig: c.toDataURL('image/png') }; m.consent = cchoice; save(); cstep = 0; cchoice = null; render(); toast('동의서가 제출되었습니다.');
   },
+  wdIn: function (t) {
+    var x = roster().filter(function (r) { return r.no === +t.dataset.no; })[0], td = new Date(), iso = td.getFullYear() + '-' + pad(td.getMonth() + 1) + '-' + pad(td.getDate());
+    var cw = canWithdraw(S.consents[x.no]);
+    modal('동의 철회 접수 — ' + esc(x.name), '<form class="f" data-form="wd" data-no="' + x.no + '"><p class="note' + (cw[0] ? '' : ' acc') + '" style="margin:0">' + (cw[1] || '') + '</p>' +
+      '<div class="row"><label>철회서 도달일 (또는 시장·군수 통지일 중 빠른 날)<input type="date" name="d" value="' + iso + '" max="' + iso + '" required></label>' +
+      '<label>접수 경로<select name="via"><option>내용증명 도달</option><option>시장·군수등 접수 통지</option></select></label></div>' +
+      '<label style="flex-direction:row;align-items:center;gap:8px"><input type="checkbox" name="ok" required style="width:18px;height:18px">철회서에 성명·지장 날인과 신분증 사본이 첨부되어 있음을 확인했습니다 (시행령 제33조 제3항)</label>' +
+      '<div style="display:flex;justify-content:flex-end;gap:8px"><button type="button" class="btn" data-act="close">취소</button><button class="btn acc">철회 기록</button></div></form>');
+  },
+  wdForm: function () {
+    var m = myRow(), c = m && S.consents[m.no]; if (!c) return;
+    modal('동의 철회서', '<div class="cert doc" style="max-height:none;padding:28px"><h3 style="font-size:22px;letter-spacing:.2em">동의 철회서</h3>' +
+      '<table><tr><th>성명</th><td>' + esc(m.name) + '</td></tr><tr><th>소재지</th><td>' + esc(m.jibun + ' ' + m.bldg + (m.d ? ' ' + m.d + '동' : '') + (m.ho ? ' ' + m.ho + '호' : '')) + '</td></tr><tr><th>철회 대상</th><td>' + CTYPE[camp().type] + ' (' + esc(UNION) + ')</td></tr><tr><th>최초 동의일</th><td>' + esc(String(c.at).slice(0, 10)) + '</td></tr></table>' +
+      '<p style="margin:18px 0">본인은 위 동의를 「도시 및 주거환경정비법 시행령」 제33조에 따라 철회합니다.</p><p style="text-align:right;margin:0">' + today() + '<br><br>성명 ' + esc(m.name) + ' &nbsp; (지장)</p>' +
+      '<p class="law" style="margin-top:18px">첨부: 신분증명서 사본 1부<br>보내는 곳: 동의의 상대방(' + esc(UNION) + ') 및 시장·군수등 — 각각 <b>내용증명</b>으로 발송</p></div>',
+      '<button class="btn" data-act="close">닫기</button><button class="btn pri" data-act="certPrint">인쇄</button>');
+  },
   resetConsent: function (t, e) { e.preventDefault(); var m = myRow(); delete S.consents[m.no]; save(); render(); },
-  nudge: function () { var n = consentStats().none; S.sms.unshift({ at: now(), target: '동의서 미제출자', ch: '알림톡', msg: '[OO1구역] 조합설립 동의서를 조합ONE에서 제출해 주세요.', n: n }); save(); toast('미제출자 ' + n + '명에게 알림톡을 보냈습니다 (시안).'); },
+  nudge: function () { var n = consentStats().none; S.sms.unshift({ at: now(), target: '동의서 미제출자', ch: '알림톡', msg: '[' + UNION + '] ' + CTYPE[camp().type] + '서를 조합ONE에서 제출해 주세요.', n: n }); save(); toast('미제출자 ' + n + '명에게 알림톡을 보냈습니다 (시안).'); },
   pickVoter: function (t) { voter = t.dataset.v; vsel = []; toast(voter + '님 본인인증 완료'); render(); },
   unvoter: function () { voter = null; render(); },
   vopt: function (t) { vsel[+t.dataset.i] = +t.dataset.j; render(); },
@@ -1319,6 +1376,16 @@ document.addEventListener('click', function (e) {
   a(t, e);
 });
 var FORMS = {
+  camp: function (f) {
+    S.campaign = { type: f.type.value, cert: f.cert.value.trim(), founding: f.founding.value, applied: f.applied.checked };
+    save(); render(); toast('동의서 설정을 저장했습니다.');
+  },
+  wd: function (f) {
+    var c = S.consents[+f.dataset.no]; if (!c) return;
+    c.wd = { at: f.d.value.replace(/-/g, '.'), via: f.via.value };
+    log('동의 철회 기록', '연번 ' + f.dataset.no + ' · ' + f.via.value);
+    save(); closeModal(); render(); toast('철회를 기록했습니다. 동의율에서 제외됩니다.');
+  },
   signin: function (f) {
     var b = f.querySelector('button'); b.disabled = true; b.textContent = '확인 중…';
     SYNC.signIn(f.e.value.trim(), f.p.value).then(function () { location.reload(); }).catch(function (err) {
