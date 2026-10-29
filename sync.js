@@ -44,7 +44,7 @@
     logs:    arr(P(function () { return S.logs; }, function (v) { S.logs = v; }), byAtDesc),
     meta: {
       get: function () { var m = { vote: { open: S.vote.open, paper: S.vote.paper }, asm: { idx: S.asm.idx }, svc: S.svc }; if (S.meet) m.meet = S.meet; return m; },
-      set: function (m) { if (m.vote) { S.vote.open = m.vote.open; S.vote.paper = m.vote.paper; } if (m.asm) S.asm.idx = m.asm.idx; if (m.svc) S.svc = m.svc; if (m.meet) S.meet = m.meet; }
+      set: function (m) { if (m.vote) { S.vote.open = m.vote.open; S.vote.paper = m.vote.paper; } if (m.asm) S.asm.idx = m.asm.idx; if (m.svc) S.svc = m.svc; if (m.meet) S.meet = m.meet; else delete S.meet; }
     }
   };
   SYNC.COLLS = COLLS;
@@ -76,7 +76,8 @@
   // 서버 행 → 상태 반영
   SYNC.apply = function (rows) {
     var g = {}; rows.forEach(function (r) { (g[r.coll] = g[r.coll] || {})[r.id] = r.data; });
-    Object.keys(g).forEach(function (c) { if (COLLS[c]) COLLS[c].set(g[c]); });
+    // 서버 상태를 그대로 반영: 서버에 없는 항목은 이 기기에서도 지움 (기기에만 남은 자료가 나중에 올라가는 것 방지)
+    Object.keys(COLLS).forEach(function (c) { COLLS[c].set(g[c] || {}); });
     SYNC.snap = snapshot();
   };
 
