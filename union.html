@@ -324,9 +324,27 @@ var USERS = {
 var PAID = { consent: 1, vote: 1, assembly: 1, roster: 1, notify: 1 };
 // 지금 사용자의 메뉴: 운영자(조합ONE 운영)는 시·구 메뉴 + 가입 승인 + 조합 서비스 전체를 열람 (시연·운영 확인용)
 var OP_EXTRA = [['meeting', '🗳️ 총회·투표', [['assembly', '온라인총회'], ['vote', '전자투표']]], ['news', '📢 조합 소식', [['disclosure', '정보공개'], ['calendar', '일정'], ['bids', '입찰공고']]], ['pro', '🤝 전문가 연결'], ['community', '💬 모임방', [['cafe', '조합 모임방']]], ['edu', '🎓 교육']];
-function navItems() {
+// 역할별 메뉴 (MENU_BY_ROLE = true 일 때 사용)
+function roleNavItems() {
   var items = NAV[role()].slice();
   if (U().op) { items.splice(1, 0, ['approve', '✅ 가입 승인·조합 개설']); items = items.slice(0, 2).concat(OP_EXTRA, items.slice(2)); }
+  return items;
+}
+// 지금은 모든 계정이 같은 메뉴 (왼쪽 메뉴·휴대폰 아래 탭·첫 화면 공통). 관리 기능만 해당 계정에 「관리」로 덧붙임
+var UNI_TABS = {
+  meeting: [['assembly', '온라인총회'], ['vote', '전자투표']], news: [['disclosure', '정보공개'], ['calendar', '일정'], ['bids', '입찰공고']],
+  mine: [['me', '내 정보·증명서'], ['calc', '분담금 계산']], community: [['cafe', '조합 모임방'], ['qna', '1:1 문의']]
+};
+function manageItem() {
+  var rl = role(), tabs = [];
+  if (rl === 'admin') tabs = [['meetset', '총회 설정·소집통지'], ['notify', '알림톡 발송'], ['approve', '가입 승인'], ['admin', '서비스·권한']];
+  if (rl === 'gov') tabs = (U().op ? [['approve', '가입 승인·조합 개설']] : []).concat([['gdisc', '정보공개 이행'], ['gvote', '총회·의결 결과'], ['gedu', '임원 교육 이수'], ['server', '서버 이용 현황']]);
+  return tabs.length ? ['manage', rl === 'gov' ? '🔍 점검·관리' : '⚙️ 관리', tabs] : null;
+}
+function navItems() {
+  if (MENU_BY_ROLE) return roleNavItems();
+  var items = [['home', '🏠 홈']].concat(ALL_MENU.map(function (m) { return UNI_TABS[m[0]] ? [m[0], m[1], UNI_TABS[m[0]]] : [m[2], m[1]]; }));
+  var mg = manageItem(); if (mg) items.push(mg);
   return items;
 }
 // 홈 첫 화면 전체 메뉴: 홈페이지(platform.html) 서비스 카드와 같은 모양 — 둥근 아이콘 · 이름 · 한 줄 설명 · 유료 표시
@@ -359,7 +377,7 @@ var ALL_MENU = [
 ];
 function allMenuRoutes() { return ALL_MENU.map(function (m) { return m[2]; }).concat(['vote', 'calendar', 'bids', 'calc', 'qna']); }
 function menuGrid() {
-  var L = MENU_BY_ROLE ? navItems().filter(function (it) { return it[0] !== 'home'; }).map(function (it) { var tabs = it[2]; return [it[0], it[1], tabs ? tabs[0][0] : it[0], tabs ? tabs.map(function (t) { return t[0]; }) : [it[0]]]; }) : ALL_MENU;
+  var L = MENU_BY_ROLE ? roleNavItems().filter(function (it) { return it[0] !== 'home'; }).map(function (it) { var tabs = it[2]; return [it[0], it[1], tabs ? tabs[0][0] : it[0], tabs ? tabs.map(function (t) { return t[0]; }) : [it[0]]]; }) : ALL_MENU;
   return '<div class="card mcard"><h2>전체 메뉴</h2><ul class="mgrid">' + L.map(function (m) {
     var lb = m[1].split(' '), em = lb.shift(), np = m[3].filter(function (k) { return PAID[k]; }).length;
     var badge = !np ? '<span class="tag ok">무료</span>' : np === m[3].length ? '<span class="tag acc">유료</span>' : '<span class="tag gray">일부 유료</span>';
