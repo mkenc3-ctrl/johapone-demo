@@ -157,7 +157,7 @@
       // 첫 로그인: 가입 때 입력한 정보(user_metadata)로 회원 정보 생성 (승인 대기 상태)
       var m = user.user_metadata || {};
       if (!m.role) { SYNC.auth = { user: user, profile: null }; return SYNC.auth; }
-      var p = { user_id: user.id, tenant_id: m.tenant_id || null, role: m.role, gov: m.gov || null, name: m.name || user.email, email: user.email };
+      var p = { user_id: user.id, tenant_id: m.tenant_id || null, role: m.role, gov: m.gov || null, name: m.name || user.email, email: user.email, member_no: m.member_no || null };
       return c.from('profiles').insert(p).then(function (ir) {
         if (ir.error) SYNC.msg = ir.error.message;
         p.approved = false; SYNC.auth = { user: user, profile: p }; return SYNC.auth;
@@ -173,7 +173,10 @@
   };
   SYNC.signOut = function () { return SYNC.client.auth.signOut(); };
   SYNC.listPending = function () { return SYNC.client.from('profiles').select('*').eq('approved', false).order('created_at'); };
-  SYNC.approve = function (uid) { return SYNC.client.from('profiles').update({ approved: true }).eq('user_id', uid); };
+  SYNC.approve = function (uid, memberNo) { var u = { approved: true }; if (memberNo !== undefined) u.member_no = memberNo || null; return SYNC.client.from('profiles').update(u).eq('user_id', uid); };
+  SYNC.linkMember = function (uid, memberNo) { return SYNC.client.from('profiles').update({ member_no: memberNo || null }).eq('user_id', uid); };
+  // 이 조합의 승인된 실제 조합원 (조합 관리자·운영자만 조회됨)
+  SYNC.listMembers = function () { return SYNC.client.from('profiles').select('*').eq('tenant_id', SYNC.tenant).eq('role', 'member').eq('approved', true).order('created_at'); };
   SYNC.reject = function (uid) { return SYNC.client.from('profiles').delete().eq('user_id', uid); };
 
   // 설정이 있으면 Supabase 클라이언트를 불러와 연결: 로그인 상태 확인 → 데이터 연결
