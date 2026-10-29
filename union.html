@@ -522,13 +522,7 @@ V.guide = guideView;
 
 V.login = function () {
   return '<div class="login"><div class="lbox">' +
-    '<div class="lhead"><a class="logo" href="platform.html" style="justify-content:center">' + LOGO + '<b>조합<em>ONE</em></b></a><h1>' + UNION + '</h1></div>' +
-    // 처음 오신 분: 가장 눈에 띄게 (어르신도 바로 찾도록 큰 버튼 두 개)
-    (window.SYNC && SYNC.client ? '<div class="lfirst"><h2>처음 오셨나요?</h2><p>회원가입을 하고 조합의 승인을 받으면 이용할 수 있습니다.</p>' +
-      '<button class="btn pri big" data-act="signup">✍️ 회원가입 하기</button>' +
-      '<button class="btn big" data-act="showSignin">🔑 이미 가입했어요 · 로그인</button>' +
-      '<form data-form="signin" id="signinForm" class="su" hidden><label>이메일<input name="e" type="email" required autocomplete="username" placeholder="예) hong@naver.com"></label><label>비밀번호<input name="p" type="password" required autocomplete="current-password"></label><button class="btn pri big">로그인</button></form></div>' : '') +
-    '<p class="ldemo">아래는 <b>체험용 계정</b>입니다 (시안 · 누르면 바로 입장)</p>' +
+    '<div class="lhead"><a class="logo" href="platform.html" style="justify-content:center">' + LOGO + '<b>조합<em>ONE</em></b></a><h1>' + UNION + '</h1><p>이용자 유형을 선택해 로그인하세요. (시안: 체험용 계정으로 바로 입장)</p></div>' +
     '<div class="lcard"><span class="tag">조합원</span><h2>조합원 로그인</h2><p>휴대폰 본인인증으로 로그인합니다. 조합원 인증을 마친 분만 이용할 수 있습니다.</p>' +
     '<ul><li>정보공개 열람, 모임방</li><li>전자동의·전자투표·온라인총회</li><li>내 정보·증명서 발급</li></ul>' +
     '<button class="btn pri" data-act="login" data-u="hong">홍길동 (글쓰기 허가 회원)</button><button class="btn" data-act="login" data-u="soon">홍순자 (일반 회원)</button></div>' +
@@ -538,6 +532,11 @@ V.login = function () {
     '<div class="lcard gov"><span class="tag" style="background:#E8EBF6;color:#3B4A8A">시·구 담당자</span><h2>지자체 담당자 로그인</h2><p>관할 시·구청 담당 공무원 전용입니다. 등록된 기관 IP와 공무원 인증서로만 접속됩니다.</p>' +
     '<ul><li>관할 조합 현황·정보공개 점검</li><li>임원 교육 이수·총회 결과 확인</li><li>조합 자료 열람 (수정 불가)</li></ul>' +
     '<button class="btn" style="background:#3B4A8A;color:#fff;border-color:#3B4A8A;font-weight:700" data-act="login" data-u="gov">김주무관으로 로그인</button></div>' +
+    // 처음 오신 분: 이용자 유형 카드 바로 아래, 큰 버튼 두 개 (어르신도 찾기 쉽게)
+    (window.SYNC && SYNC.client ? '<div class="lfirst"><h2>처음 오셨나요?</h2><p>회원가입을 하고 조합의 승인을 받으면 이용할 수 있습니다.</p>' +
+      '<button class="btn pri big" data-act="signup">✍️ 회원가입 하기</button>' +
+      '<button class="btn big" data-act="showSignin">🔑 이미 가입했어요 · 로그인</button>' +
+      '<form data-form="signin" id="signinForm" class="su" hidden><label>이메일<input name="e" type="email" required autocomplete="username" placeholder="예) hong@naver.com"></label><label>비밀번호<input name="p" type="password" required autocomplete="current-password"></label><button class="btn pri big">로그인</button></form></div>' : '') +
     '<div style="grid-column:1/-1;display:flex;flex-wrap:wrap;gap:8px 16px;justify-content:center;align-items:center;font-size:14px;color:var(--ink2)"><span>조합 코드 <b>' + TENANT + '</b></span>' +
     (TENANT !== 'demo-oo1' ? '<a class="btn sm" href="union.html">기본 데모 조합으로</a>' : '') + '</div>' +
     '<p style="grid-column:1/-1;text-align:center;font-size:13px;color:var(--muted)">디자인 시안 · 화면의 조합·인물·수치는 모두 예시입니다. <a href="#" data-act="reset">데모 데이터 초기화</a></p>' +
