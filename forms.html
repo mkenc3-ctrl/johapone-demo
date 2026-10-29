@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>조합ONE 서식함</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<style>
+:root{--ink:#1E2124;--ink2:#464C53;--muted:#5F6B75;--line:#D6DCE0;--line2:#E6EAED;--bd:#B1B8BE;--pri:#0B5563;--pri-s:#E6F1F3;--bg2:#F4F6F8;--acc:#C2410C;--acc-s:#FDEEE6;--acc-d:#8A2E07;--ok:#1F7A4D;--ok-s:#E5F3EA}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg2);color:var(--ink);font:15.5px/1.6 'Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic',sans-serif;word-break:keep-all}
+.wrap{max-width:1080px;margin:0 auto;padding:22px 16px 60px}
+h1{margin:0;font-size:24px}
+.sub{margin:4px 0 16px;color:var(--ink2);font-size:14.5px}
+.tool{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:14px}
+.tool input{flex:1 1 240px;height:42px;border:1px solid var(--bd);border-radius:8px;padding:0 12px;font:inherit}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chips button{height:38px;padding:0 14px;border:1px solid var(--line);border-radius:999px;background:#fff;font:inherit;font-size:14px;cursor:pointer;color:var(--ink2)}
+.chips button.on{background:var(--ink);border-color:var(--ink);color:#fff;font-weight:700}
+.count{font-size:13px;color:var(--muted);margin:0 0 8px}
+.list{display:grid;gap:8px}
+.item{background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px 16px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 14px;align-items:center}
+.item b{font-size:15.5px}
+.tag{display:inline-block;font-size:11.5px;font-weight:700;border-radius:4px;padding:0 7px;line-height:1.75;margin-right:6px;vertical-align:1px}
+.t-law{background:var(--pri-s);color:var(--pri)}.t-xls{background:var(--ok-s);color:var(--ok)}.t-one{background:var(--acc-s);color:var(--acc-d)}
+.meta{font-size:13px;color:var(--muted)}
+.meta a{color:var(--pri)}
+.acts{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.btn{height:36px;padding:0 14px;border-radius:8px;border:1px solid var(--bd);background:#fff;font:inherit;font-size:14px;font-weight:700;cursor:pointer;color:var(--ink);text-decoration:none;display:inline-flex;align-items:center;white-space:nowrap}
+.btn.pri{background:var(--pri);border-color:var(--pri);color:#fff}
+.note{font-size:12.5px;color:var(--muted);margin-top:16px;line-height:1.7}
+.empty{text-align:center;color:var(--muted);padding:30px;background:#fff;border-radius:10px;border:1px dashed var(--line)}
+@media (max-width:640px){.item{grid-template-columns:1fr}.acts{justify-content:flex-start}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>서식함</h1>
+  <p class="sub">공식 서식(한글·PDF) · 엑셀 관리 양식 · 조합ONE 서식을 한 곳에서 찾고 내려받습니다. 단계별 사용처는 절차 체크리스트와 연결됩니다.</p>
+  <div class="tool">
+    <input id="q" type="search" placeholder="서식 이름·단계 검색 (예: 동의서, 명부, 총회, 매도청구)">
+    <div class="chips" id="chips"></div>
+  </div>
+  <p class="count" id="count"></p>
+  <div class="list" id="list"></div>
+  <p class="note">· 공식 서식은 「도시 및 주거환경정비법 시행규칙」 별지 서식으로, 국가법령정보센터에서 바로 내려받습니다(최신 개정본 여부는 국가법령정보센터에서 확인).<br>· 엑셀 양식은 이 화면에서 빈 양식을 만들어 내려받으며, 기한 계산 등 수식이 들어 있습니다. 개인정보가 들어간 파일은 안전하게 보관하세요.</p>
+</div>
+<script src="data.js"></script>
+<script src="sheets.js"></script>
+<script>
+  var J = window.JOHAP_SHEETS, D = window.LAW_DATA;
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  function stepsOf(map, key) { return Object.keys(map).filter(function (s) { return map[s].indexOf(key) >= 0; }); }
+  function stepLinks(ids) { return ids.length ? '사용 단계: ' + ids.map(function (s) { return '<a href="rebuild.html#' + s + '" target="_blank" rel="noopener">' + esc(J.STEP[s] || s) + '</a>'; }).join(' · ') : ''; }
+  function formUrl(seq, cls) { return 'https://www.law.go.kr/LSW/flDownload.do?gubun=&flSeq=' + seq + '&bylClsCd=' + cls; }
+
+  var ITEMS = [];
+  // 1) 공식 서식: 시행규칙 별지
+  if (D) D.laws.forEach(function (law) {
+    (law.forms || []).forEach(function (f) {
+      var label = '별지 제' + f.no.replace('-', '호의') + (f.no.indexOf('-') < 0 ? '호' : '') + '서식';
+      ITEMS.push({ type: 'law', title: f.name, sub: label + ' · ' + (law.id === 'rule' ? '시행규칙' : law.id === 'decree' ? '시행령' : '법'), steps: law.id === 'rule' ? stepsOf(J.FORMMAP, f.no) : [],
+        acts: '<a class="btn" target="_blank" rel="noopener" href="' + formUrl(f.hwp, f.cls) + '">한글</a><a class="btn" target="_blank" rel="noopener" href="' + formUrl(f.pdf, f.cls) + '">PDF</a>' });
+    });
+  });
+  // 2) 엑셀 관리 양식
+  Object.keys(J.SHEETS).forEach(function (k) {
+    var sh = J.SHEETS[k];
+    ITEMS.push({ type: 'xls', title: sh.title, sub: '열 ' + sh.cols.length + '개 · ' + sh.cols.slice(0, 4).map(function (c) { return c[0]; }).join(', ') + ' …', steps: stepsOf(J.SHEETMAP, k),
+      acts: '<button class="btn pri" data-sheet="' + k + '">엑셀 받기</button>' });
+  });
+  // 3) 조합ONE 서식 (앱 안에서 작성·출력)
+  [
+    ['정관 개정안 (전자의결·온라인총회)', '신·구 조문 대비표 · 법 제45조·제44조의2, 시행령 제42조', 'bylaws.html', '열기'],
+    ['총회 안건 서식 — 정관 일부 변경의 건', '제안 사유·변경 요지·의결 정족수(조합원 과반수 찬성)', 'bylaws.html', '열기'],
+    ['총회 소집통지문 (전자의결 안내 문구)', '전자의결 방법·기간 통지 (시행령 제42조 제2항 제1호)', 'bylaws.html', '열기'],
+    ['맞춤 비용 절감 리포트', '조합원 수·총회 횟수 입력 → A4 리포트 PDF', 'report.html', '열기'],
+    ['건축물대장 서식 (일반건축물대장 갑)', '조합 앱 → 조합명부관리 → 건축물대장 서식 탭에서 작성·인쇄', 'union.html#roster', '앱에서 열기'],
+    ['조합원 확인서 · 동의서 제출 확인서', '조합 앱 → 내 정보 → 전자증명서 발급', 'union.html#me', '앱에서 열기']
+  ].forEach(function (x) { ITEMS.push({ type: 'one', title: x[0], sub: x[1], steps: [], acts: '<a class="btn" href="' + x[2] + '" target="_top">' + x[3] + '</a>' }); });
+
+  var TYPES = [['all', '전체'], ['law', '공식 서식 (한글·PDF)'], ['xls', '엑셀 양식'], ['one', '조합ONE 서식']], cur = 'all';
+  var TAG = { law: '<span class="tag t-law">공식</span>', xls: '<span class="tag t-xls">엑셀</span>', one: '<span class="tag t-one">조합ONE</span>' };
+  function draw() {
+    var q = document.getElementById('q').value.trim().toLowerCase();
+    var L = ITEMS.filter(function (it) {
+      if (cur !== 'all' && it.type !== cur) return false;
+      if (!q) return true;
+      return (it.title + ' ' + it.sub + ' ' + it.steps.map(function (s) { return J.STEP[s]; }).join(' ')).toLowerCase().indexOf(q) >= 0;
+    });
+    document.getElementById('chips').innerHTML = TYPES.map(function (t) { var n = t[0] === 'all' ? ITEMS.length : ITEMS.filter(function (i) { return i.type === t[0]; }).length; return '<button class="' + (t[0] === cur ? 'on' : '') + '" data-t="' + t[0] + '">' + t[1] + ' ' + n + '</button>'; }).join('');
+    document.getElementById('count').textContent = L.length + '개 서식';
+    document.getElementById('list').innerHTML = L.map(function (it) {
+      return '<div class="item"><div><b>' + TAG[it.type] + esc(it.title) + '</b><div class="meta">' + esc(it.sub) + (it.steps.length ? '<br>' + stepLinks(it.steps) : '') + '</div></div><div class="acts">' + it.acts + '</div></div>';
+    }).join('') || '<div class="empty">검색 결과가 없습니다.</div>';
+  }
+  document.getElementById('q').addEventListener('input', draw);
+  document.addEventListener('click', function (e) {
+    var c = e.target.closest('[data-t]'); if (c) { cur = c.dataset.t; draw(); return; }
+    var s = e.target.closest('[data-sheet]'); if (!s) return;
+    var sh = J.SHEETS[s.dataset.sheet], blob = new Blob([J.xlsx(sh)], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = sh.title + '.xlsx'; document.body.appendChild(a); a.click();
+    setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+  });
+  draw();
+</script>
+</body>
+</html>

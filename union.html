@@ -284,7 +284,7 @@ var NAV = {
     ['meeting', '🗳️ 총회·투표', [['assembly', '온라인총회'], ['vote', '전자투표']]],
     ['consent', '✍️ 전자동의서'],
     ['news', '📢 조합 소식', [['disclosure', '정보공개 등록'], ['calendar', '일정'], ['bids', '입찰공고'], ['notify', '알림톡 발송']]],
-    PRO, CHECK, ['bylaws', '📜 정관 개정'], LAW,
+    PRO, CHECK, ['forms', '🗂️ 서식함'], ['bylaws', '📜 정관 개정'], LAW,
     ['community', '💬 모임방·문의', [['cafe', '조합 모임방'], ['qna', '1:1 문의 답변']]],
     EDU,
     ['approve', '✅ 가입 승인'],
@@ -295,7 +295,7 @@ var NAV = {
     ['home', '🏛️ 관할 조합 현황'],
     ['inspect', '🔍 점검', [['gdisc', '정보공개 이행'], ['gvote', '총회·의결 결과'], ['gedu', '임원 교육 이수'], ['bids', '입찰공고']]],
     ['view', '📂 조합 자료 열람', [['disclosure', '정보공개'], ['consent', '동의 현황'], ['roster', '조합명부']]],
-    LAW, CHECK,
+    LAW, CHECK, ['forms', '🗂️ 서식함'],
     ['server', '🖥️ 서버 이용 현황']
   ]
 };
@@ -983,6 +983,7 @@ V.pro = function () {
 /* --- 법령·판례 / 절차 체크리스트 (기존 도구를 앱 안에 그대로 띄움) --- */
 function embed(src, title, sub) { return ph(title, sub, '<a class="btn sm" href="' + src + '" target="_blank" rel="noopener">새 창으로 크게 보기 ↗</a>') + '<iframe class="embed" src="' + src + '" title="' + title + '"></iframe>'; }
 V.law = function () { return embed('index.html', '법령·판례 검색', '도시정비법·시행령·시행규칙 조문과 관련 판례를 검색합니다. 조문 사이 참조도 바로 따라갈 수 있습니다.'); };
+V.forms = function () { return embed('forms.html', '서식함', '시행규칙 별지 공식 서식(한글·PDF), 엑셀 관리 양식, 조합ONE 서식을 한 곳에서 찾고 내려받습니다.'); };
 V.bylaws = function () { return embed('bylaws.html', '정관 개정 패키지', '전자의결·온라인총회 도입을 위한 정관 개정안, 총회 안건 서식, 소집통지 문구 (법 제45조·제44조의2, 시행령 제42조 기준)'); };
 V.check = function () { return embed('rebuild.html', '조합 절차 체크리스트·서식', '재건축 단계별로 해야 할 일과 필요한 서식을 확인하고 체크합니다.'); };
 
