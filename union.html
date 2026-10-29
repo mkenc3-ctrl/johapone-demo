@@ -331,22 +331,39 @@ function navItems() {
 }
 // 홈 첫 화면 전체 메뉴: 홈페이지(platform.html) 서비스 카드와 같은 모양 — 둥근 아이콘 · 이름 · 한 줄 설명 · 유료 표시
 var MENU_DESC = {
-  meeting: '온라인총회 입장 · 전자투표', consent: '조합설립 찬반 · 휴대폰 전자서명', news: '정보공개 · 일정 · 입찰공고',
+  meeting: '온라인총회 입장 · 전자투표', consent: '조합설립 찬반 · 휴대폰 전자서명', news: '정보공개 · 일정 · 입찰공고 · 알림톡',
   mine: '전자증명서 발급 · 분담금 계산', pro: '법률·설계·평가 등 18개 분야', community: '카페형 모임방 · 사무국 1:1 문의',
   law: '도시정비법·시행령·판례 검색', check: '사업 단계별 할 일과 서식', edu: '온라인 교육 · 수강 기록', guide: '메뉴별 쉬운 사용 방법',
   roster: '명부 작성 · 엑셀 · 연번 · 건축물대장', forms: '공식 서식 · 엑셀 양식 내려받기', bylaws: '전자의결 도입 정관 개정안',
   approve: '가입 신청 확인 · 승인', admin: '서비스 신청 · 글쓰기 권한', inspect: '정보공개·총회·교육·입찰 점검',
   view: '정보공개 · 동의 현황 · 명부 열람', server: '이용 계약 · 저장 용량'
 };
-var MENU_DESC_ADMIN = { meeting: '온라인총회 · 전자투표 · 총회 설정·소집통지', news: '정보공개 · 일정 · 입찰공고 · 알림톡', edu: '임원 12시간 교육 이수 관리' };
+// 첫 화면 전체 메뉴: 지금은 로그인한 사람(조합원·조합장·공무원·운영자)과 관계없이 같은 전체 카테고리를 보여줌.
+// 나중에 역할별로 나누려면 MENU_BY_ROLE = true 로 바꾸면 각자 메뉴(navItems)로 돌아감.
+var MENU_BY_ROLE = false;
+// [키, 이름, 첫 화면, 유료 판정용 화면들]
+var ALL_MENU = [
+  ['meeting', '🗳️ 총회·투표', 'assembly', ['assembly', 'vote']],
+  ['consent', '✍️ 전자동의서', 'consent', ['consent']],
+  ['roster', '📋 조합명부관리', 'roster', ['roster']],
+  ['news', '📢 조합 소식', 'disclosure', ['disclosure', 'calendar', 'bids', 'notify']],
+  ['mine', '👤 내 정보', 'me', ['me', 'calc']],
+  ['pro', '🤝 전문가 연결', 'pro', ['pro']],
+  ['community', '💬 모임방·문의', 'cafe', ['cafe', 'qna']],
+  ['check', '✅ 절차 체크리스트', 'check', ['check']],
+  ['forms', '🗂️ 서식함', 'forms', ['forms']],
+  ['law', '⚖️ 법령·판례', 'law', ['law']],
+  ['bylaws', '📜 정관 개정', 'bylaws', ['bylaws']],
+  ['edu', '🎓 교육', 'edu', ['edu']],
+  ['guide', '❓ 사용 가이드', 'guide', ['guide']]
+];
+function allMenuRoutes() { return ALL_MENU.map(function (m) { return m[2]; }).concat(['vote', 'calendar', 'bids', 'calc', 'qna']); }
 function menuGrid() {
-  var rl = role(), items = navItems().filter(function (it) { return it[0] !== 'home'; });
-  return '<div class="card mcard"><h2>전체 메뉴</h2><ul class="mgrid">' + items.map(function (it) {
-    var lb = it[1].split(' '), em = lb.shift(), tabs = it[2], href = '#' + (tabs ? tabs[0][0] : it[0]);
-    var keys = tabs ? tabs.map(function (t) { return t[0]; }) : [it[0]], np = keys.filter(function (k) { return PAID[k]; }).length;
-    var badge = rl === 'gov' ? '<span class="tag gray" title="서버 이용료에 포함">포함</span>' : !np ? '<span class="tag ok">무료</span>' : np === keys.length ? '<span class="tag acc">유료</span>' : '<span class="tag gray">일부 유료</span>'; // 홈페이지와 같은 표기 (모든 역할)
-    var d = (rl === 'admin' && MENU_DESC_ADMIN[it[0]]) || MENU_DESC[it[0]] || (tabs ? tabs.map(function (t) { return t[1]; }).join(' · ') : '');
-    return '<li><a class="mtile' + (np && rl !== 'gov' ? ' paid' : '') + '" href="' + href + '">' + badge + '<span class="me">' + em + '</span><span class="mt"><b>' + lb.join(' ') + '</b><small>' + d + '</small></span></a></li>';
+  var L = MENU_BY_ROLE ? navItems().filter(function (it) { return it[0] !== 'home'; }).map(function (it) { var tabs = it[2]; return [it[0], it[1], tabs ? tabs[0][0] : it[0], tabs ? tabs.map(function (t) { return t[0]; }) : [it[0]]]; }) : ALL_MENU;
+  return '<div class="card mcard"><h2>전체 메뉴</h2><ul class="mgrid">' + L.map(function (m) {
+    var lb = m[1].split(' '), em = lb.shift(), np = m[3].filter(function (k) { return PAID[k]; }).length;
+    var badge = !np ? '<span class="tag ok">무료</span>' : np === m[3].length ? '<span class="tag acc">유료</span>' : '<span class="tag gray">일부 유료</span>';
+    return '<li><a class="mtile' + (np ? ' paid' : '') + '" href="#' + m[2] + '">' + badge + '<span class="me">' + em + '</span><span class="mt"><b>' + lb.join(' ') + '</b><small>' + (MENU_DESC[m[0]] || '') + '</small></span></a></li>';
   }).join('') + '</ul></div>';
 }// 메뉴: [키, 이름, 하위 탭] — 관련 기능은 한 메뉴 안의 탭으로 묶음
 var GUIDE_NAV = ['guide', '❓ 사용 가이드'];
@@ -1191,7 +1208,8 @@ function ledgerView() {
 
 /* --- 내 정보·증명서 --- */
 V.me = function () {
-  var m = myRow(); if (!m) return '<div class="card empty">' + (U().real ? '아직 조합 명부와 연결되지 않았습니다.<br>조합 관리자에게 <b>명부 연결</b>을 요청하세요. (서비스·권한 → 회원 권한)' : '명부에서 본인 정보를 찾지 못했습니다.') + '</div>';
+  var m = myRow(); if (!m && role() !== 'member') return ph('내 정보', '조합원 본인의 정보·제출 현황·전자증명서(조합원 확인서 등)를 보는 화면입니다.') + '<div class="card empty">지금 계정(' + esc(ROLE_KO[role()] || role()) + ')은 조합원 명부에 본인이 없어 내용이 표시되지 않습니다.<br>조합원 계정(예: 홍길동)으로 들어가면 실제 화면을 볼 수 있습니다. <a href="#calc">분담금 계산 ›</a></div>';
+  if (!m) return '<div class="card empty">' + (U().real ? '아직 조합 명부와 연결되지 않았습니다.<br>조합 관리자에게 <b>명부 연결</b>을 요청하세요. (서비스·권한 → 회원 권한)' : '명부에서 본인 정보를 찾지 못했습니다.') + '</div>';
   var c = S.consents[m.no];
   return ph('내 정보·증명서', '조합 명부에 등록된 본인 정보입니다. 변경이 필요하면 1:1 문의로 신청하세요.') +
     '<div class="grid g2"><div class="card"><h2>조합원 정보</h2><div class="doc" style="max-height:none"><table><tr><th>성명</th><td>' + esc(m.name) + '</td></tr><tr><th>조합원번호</th><td>' + m.mno + '</td></tr><tr><th>주민등록번호</th><td>' + maskR(m.rrn) + '</td></tr><tr><th>소재지</th><td>' + esc([m.dong, m.jibun, m.bldg, m.d && m.d + '동', m.ho && m.ho + '호'].filter(Boolean).join(' ')) + '</td></tr><tr><th>지분</th><td>' + m.share + '</td></tr><tr><th>연락처</th><td>' + maskP(m.phone) + '</td></tr><tr><th>우편물 주소</th><td>' + esc(m.addr) + '</td></tr></table></div><a class="btn" style="margin-top:12px" href="#qna">정보 변경 신청</a></div>' +
@@ -1605,6 +1623,7 @@ function render() {
   var parts = location.hash.slice(1).split('/'), r = parts[0] || 'home', args = parts.slice(1), rl = role();
   var items = navItems(), allowed = [], grp = null;
   items.forEach(function (it) { (it[2] || [[it[0]]]).forEach(function (t) { allowed.push(t[0]); if (t[0] === r && !grp) grp = it; }); });
+  if (!MENU_BY_ROLE) allMenuRoutes().forEach(function (k) { if (allowed.indexOf(k) < 0) allowed.push(k); }); // 역할 구분 전: 전체 메뉴 화면은 모두 열람
   if (allowed.indexOf(r) < 0) { r = 'home'; grp = items[0]; }
   ROUTE = r; document.body.classList.toggle('r-member', rl === 'member'); document.body.classList.toggle('big', bigText());
   var tagP = function (k) { return PAID[k] && rl === 'admin' ? '<span class="tag acc">유료</span>' : ''; };
