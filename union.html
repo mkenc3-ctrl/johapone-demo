@@ -333,7 +333,7 @@ function roleNavItems() {
 // 지금은 모든 계정이 같은 메뉴 (왼쪽 메뉴·휴대폰 아래 탭·첫 화면 공통). 관리 기능만 해당 계정에 「관리」로 덧붙임
 var UNI_TABS = {
   meeting: [['assembly', '온라인총회'], ['vote', '전자투표']], news: [['disclosure', '정보공개'], ['calendar', '일정'], ['bids', '입찰공고']],
-  mine: [['me', '내 정보·증명서'], ['calc', '분담금 계산']], community: [['cafe', '조합 모임방'], ['qna', '1:1 문의']]
+  mine: [['me', '내 정보'], ['calc', '분담금 계산']]
 };
 function manageItem() {
   var rl = role(), tabs = [];
@@ -350,7 +350,7 @@ function navItems() {
 // 홈 첫 화면 전체 메뉴: 홈페이지(platform.html) 서비스 카드와 같은 모양 — 둥근 아이콘 · 이름 · 한 줄 설명 · 유료 표시
 var MENU_DESC = {
   meeting: '온라인총회 입장 · 전자투표', consent: '조합설립 찬반 · 휴대폰 전자서명', news: '정보공개 · 일정 · 입찰공고 · 알림톡',
-  mine: '전자증명서 발급 · 분담금 계산', pro: '법률·설계·평가 등 18개 분야', community: '카페형 모임방 · 사무국 1:1 문의',
+  mine: '내 조합원 정보 · 분담금 계산', pro: '법률·설계·평가 등 18개 분야 업체', community: '조합원끼리 소식·자료를 나누는 카페',
   law: '도시정비법·시행령·판례 검색', check: '사업 단계별 할 일과 서식', edu: '온라인 교육 · 수강 기록', guide: '메뉴별 쉬운 사용 방법',
   roster: '명부 작성 · 엑셀 · 연번 · 건축물대장', forms: '공식 서식 · 엑셀 양식 내려받기', bylaws: '전자의결 도입 정관 개정안',
   approve: '가입 신청 확인 · 승인', admin: '서비스 신청 · 글쓰기 권한', inspect: '정보공개·총회·교육·입찰 점검',
@@ -364,14 +364,14 @@ var MENU_BY_ROLE = false;
 var ALL_MENU = [
   ['meeting', '🗳️ 총회·투표', 'assembly', ['assembly', 'vote']],
   ['consent', '✍️ 전자동의서', 'consent', ['consent']],
-  ['roster', '📋 조합명부관리', 'roster', ['roster']],
-  ['news', '📢 조합 소식', 'disclosure', ['disclosure', 'calendar', 'bids', 'notify']],
-  ['pro', '🤝 전문가 연결', 'pro', ['pro']],
-  ['check', '✅ 절차 체크리스트', 'check', ['check']],
-  ['law', '⚖️ 법령·판례', 'law', ['law']],
+  ['roster', '📋 조합자료 관리·작성', 'roster', ['roster']],
+  ['news', '📢 조합 정보공개', 'disclosure', ['disclosure', 'calendar', 'bids', 'notify']],
+  ['pro', '🤝 협력업체 연결', 'pro', ['pro']],
+  ['check', '✅ 조합운영과정 체크리스트', 'check', ['check']],
+  ['law', '⚖️ 법령·판례 검색', 'law', ['law']],
   ['mine', '👤 내 정보', 'me', ['me', 'calc']],
-  ['community', '💬 조합원 카페', 'cafe', ['cafe', 'qna']],
-  ['edu', '🎓 교육', 'edu', ['edu']],
+  ['community', '💬 조합원 카페', 'cafe', ['cafe']],
+  ['edu', '🎓 조합임원교육', 'edu', ['edu']],
   ['forms', '🗂️ 서식함', 'forms', ['forms']],
   ['guide', '❓ 사용 가이드', 'guide', ['guide']]
 ];
@@ -1119,7 +1119,7 @@ V.roster = function () {
   var r = role();
   if (r === 'member') return '<div class="card empty">조합명부는 조합 관리자만 볼 수 있습니다. <a href="#me">내 정보</a>에서 본인 정보를 확인하세요.</div>';
   var tabs = r === 'gov' ? ['명부', '변동이력'] : ['명부', '변동이력', '엑셀 가져오기', '건축물대장 서식', '접속기록'];
-  var head = ph('조합명부관리' + paidTag('roster'), '조합원 명부 작성·관리, 신분증·서면결의서 제출 관리, 건축물대장 서식을 한 곳에서. ' + (IMPORTED ? '<span class="tag acc">엑셀 명부 사용 중: ' + esc(imp && imp.file) + '</span>' : '<span class="tag gray">예시 명부</span>') + '<br><span class="law">주민등록번호 처리 근거: 도시정비법 시행령 제97조 · 화면 기본 마스킹, 원본 열람 시 사유 기록</span>') +
+  var head = ph('조합자료 관리·작성' + paidTag('roster'), '조합원 명부 작성·관리, 신분증·서면결의서 제출 관리, 건축물대장 서식을 한 곳에서. ' + (IMPORTED ? '<span class="tag acc">엑셀 명부 사용 중: ' + esc(imp && imp.file) + '</span>' : '<span class="tag gray">예시 명부</span>') + '<br><span class="law">주민등록번호 처리 근거: 도시정비법 시행령 제97조 · 화면 기본 마스킹, 원본 열람 시 사유 기록</span>') +
     '<div class="tabs">' + tabs.map(function (t) { return '<button class="' + (t === rtab ? 'on' : '') + '" data-act="rtab" data-v="' + t + '">' + t + '</button>'; }).join('') + '</div>';
   if (rtab === '엑셀 가져오기') return head + importView();
   if (rtab === '건축물대장 서식') return head + ledgerView();
@@ -1226,13 +1226,13 @@ function ledgerView() {
 
 /* --- 내 정보·증명서 --- */
 V.me = function () {
-  var m = myRow(); if (!m && role() !== 'member') return ph('내 정보', '조합원 본인의 정보·제출 현황·전자증명서(조합원 확인서 등)를 보는 화면입니다.') + '<div class="card empty">지금 계정(' + esc(ROLE_KO[role()] || role()) + ')은 조합원 명부에 본인이 없어 내용이 표시되지 않습니다.<br>조합원 계정(예: 홍길동)으로 들어가면 실제 화면을 볼 수 있습니다. <a href="#calc">분담금 계산 ›</a></div>';
+  var m = myRow(); if (!m && role() !== 'member') return ph('내 정보', '조합원 본인의 정보와 서류 제출 현황을 보는 화면입니다.') + '<div class="card empty">지금 계정(' + esc(ROLE_KO[role()] || role()) + ')은 조합원 명부에 본인이 없어 내용이 표시되지 않습니다.<br>조합원 계정(예: 홍길동)으로 들어가면 실제 화면을 볼 수 있습니다. <a href="#calc">분담금 계산 ›</a></div>';
   if (!m) return '<div class="card empty">' + (U().real ? '아직 조합 명부와 연결되지 않았습니다.<br>조합 관리자에게 <b>명부 연결</b>을 요청하세요. (서비스·권한 → 회원 권한)' : '명부에서 본인 정보를 찾지 못했습니다.') + '</div>';
   var c = S.consents[m.no];
-  return ph('내 정보·증명서', '조합 명부에 등록된 본인 정보입니다. 변경이 필요하면 1:1 문의로 신청하세요.') +
+  return ph('내 정보', '조합 명부에 등록된 본인 정보입니다. 변경이 필요하면 「정보 변경 신청」을 누르세요.') +
     '<div class="grid g2"><div class="card"><h2>조합원 정보</h2><div class="doc" style="max-height:none"><table><tr><th>성명</th><td>' + esc(m.name) + '</td></tr><tr><th>조합원번호</th><td>' + m.mno + '</td></tr><tr><th>주민등록번호</th><td>' + maskR(m.rrn) + '</td></tr><tr><th>소재지</th><td>' + esc([m.dong, m.jibun, m.bldg, m.d && m.d + '동', m.ho && m.ho + '호'].filter(Boolean).join(' ')) + '</td></tr><tr><th>지분</th><td>' + m.share + '</td></tr><tr><th>연락처</th><td>' + maskP(m.phone) + '</td></tr><tr><th>우편물 주소</th><td>' + esc(m.addr) + '</td></tr></table></div><a class="btn" style="margin-top:12px" href="#qna">정보 변경 신청</a></div>' +
     '<div class="card"><h2>제출 현황</h2><ul class="list"><li><span class="tt">조합설립 동의서</span>' + (c ? '<span class="tag ok">' + (c.agree ? '찬성' : '반대') + ' 제출</span>' : '<a class="tag acc" href="#consent">미제출 · 제출하기</a>') + '</li><li><span class="tt">신분증 사본</span>' + (m.idcard ? '<span class="tag ok">제출</span>' : '<span class="tag acc">미제출</span>') + '</li><li><span class="tt">서면결의서 (정기총회)</span>' + (m.written ? '<span class="tag ok">제출</span>' : '<span class="tag acc">미제출</span>') + '</li><li><span class="tt">전자투표 (정기총회)</span>' + (S.vote.ballots[m.name] ? '<span class="tag ok">완료</span>' : '<a class="tag acc" href="#vote">미참여</a>') + '</li></ul>' +
-    '<h2 style="margin-top:20px">전자증명서 발급</h2><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn pri" data-act="cert" data-v="조합원 확인서">조합원 확인서</button><button class="btn" data-act="cert" data-v="동의서 제출 확인서">동의서 제출 확인서</button></div><p class="law">은행 이주비 대출, 분양신청 등에 제출할 수 있습니다 (시안).</p></div></div>';
+    '</div></div>';
 };
 
 /* --- 분담금 계산 --- */
@@ -1347,9 +1347,9 @@ var COURSE = {
 };
 var etab = null;
 V.edu = function () {
-  var r = role(); if (!etab) etab = r === 'member' ? '조합원 교육' : '임원 교육';
-  var tabs = r === 'admin' ? ['임원 교육', '조합원 교육', '이수 현황', '참고 자료'] : ['조합원 교육', '참고 자료'];
-  var head = ph(r === 'admin' ? '임원·조합원 교육' : '조합원 교육', '언제 어디서나 듣는 온라인 교육. 수강 기록이 자동으로 남습니다.<br><span class="law">도시정비법 제115조제2항·시행령 제90조 — 조합임원은 선임일부터 6개월 이내 운영·윤리교육 12시간 이상 이수 (실시: 국토부·지자체·한국부동산원)</span>') +
+  var r = role(); if (!etab) etab = '임원 교육';
+  var tabs = r === 'admin' ? ['임원 교육', '조합원 교육', '이수 현황', '참고 자료'] : ['임원 교육', '조합원 교육', '참고 자료'];
+  var head = ph('조합임원교육', '언제 어디서나 듣는 온라인 교육. 수강 기록이 자동으로 남습니다.<br><span class="law">도시정비법 제115조제2항·시행령 제90조 — 조합임원은 선임일부터 6개월 이내 운영·윤리교육 12시간 이상 이수 (실시: 국토부·지자체·한국부동산원)</span>') +
     '<div class="tabs">' + tabs.map(function (t) { return '<button class="' + (t === etab ? 'on' : '') + '" data-act="etab" data-v="' + t + '">' + t + '</button>'; }).join('') + '</div>';
   if (etab === '참고 자료') return head + '<div class="card"><h2>공식 교육·자료 출처</h2><ul class="list">' +
     [['정비사업 정보몽땅 (서울시)', 'https://cleanup.seoul.go.kr', '교육 일정·이수기준, e-러닝, 표준정관'], ['한국부동산원', 'https://www.reb.or.kr', '조합임원 운영·윤리교육 위탁 기관'], ['국가법령정보센터', 'https://www.law.go.kr', '도시정비법·시행령 원문'], ['서울시 주택분야 누리집', 'https://news.seoul.go.kr/citybuild/archives/502410', '조합임원 교육 안내']].map(function (x) { return '<li><a class="tt" href="' + x[1] + '" target="_blank" rel="noopener">' + x[0] + ' ↗</a><span class="m">' + x[2] + '</span></li>'; }).join('') +
@@ -1469,7 +1469,7 @@ var pcat = 'all', ptab = '전문가 찾기';
 V.pro = function () {
   var r = role();
   var tabs = r === 'admin' ? ['전문가 찾기', '요청 내역 (' + S.proReq.length + ')', '입점 안내'] : ['전문가 찾기', '내 요청 (' + S.proReq.filter(function (q) { return q.uid === ME; }).length + ')', '입점 안내'];
-  var head = ph('전문가 연결', '조합 업무에 필요한 전문가를 한 곳에서 찾고 상담을 요청합니다. 상담 요청은 무료입니다.') +
+  var head = ph('협력업체 연결', '조합 업무에 필요한 전문가를 한 곳에서 찾고 상담을 요청합니다. 상담 요청은 무료입니다.') +
     '<div class="tabs">' + tabs.map(function (t) { return '<button class="' + (t.indexOf(ptab) === 0 ? 'on' : '') + '" data-act="ptab" data-v="' + t.replace(/ \(.*/, '') + '">' + t + '</button>'; }).join('') + '</div>';
   if (ptab === '입점 안내') return head +
     '<div class="grid g2"><div class="card"><h2>전문가·업체 입점 안내</h2><ul style="margin:0;padding-left:20px;line-height:1.9"><li>재건축·재개발 조합과 조합원에게 직접 노출</li><li>지역·분야별 검색, 상담 요청 알림</li><li><b>정액 입점료(광고형)</b> — 사건·계약 건별 수수료 없음</li><li>자격증·등록증 확인 후 게시</li></ul><button class="btn pri" style="margin-top:16px" data-act="proJoin">입점 신청</button></div>' +
@@ -1503,7 +1503,7 @@ function embed(src, title, sub) { return ph(title, sub, '<a class="btn sm" href=
 V.law = function () { return embed('index.html', '법령·판례 검색', '도시정비법·시행령·시행규칙 조문과 관련 판례를 검색합니다. 조문 사이 참조도 바로 따라갈 수 있습니다.'); };
 V.forms = function () { return embed('forms.html', '서식함', '시행규칙 별지 공식 서식(한글·PDF), 엑셀 관리 양식, 조합ONE 서식을 한 곳에서 찾고 내려받습니다.'); };
 V.bylaws = function () { return embed('bylaws.html', '정관 개정 패키지', '전자의결·온라인총회 도입을 위한 정관 개정안, 총회 안건 서식, 소집통지 문구 (법 제45조·제44조의2, 시행령 제42조 기준)'); };
-V.check = function () { return embed('rebuild.html', '조합 절차 체크리스트·서식', '재건축 단계별로 해야 할 일과 필요한 서식을 확인하고 체크합니다.'); };
+V.check = function () { return embed('rebuild.html', '조합운영과정 체크리스트', '재건축 단계별로 해야 할 일과 필요한 서식을 확인하고 체크합니다.'); };
 
 /* --- 시·구 담당자 --- */
 var GOV_UNIONS = [
