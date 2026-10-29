@@ -153,12 +153,12 @@ dialog::backdrop{background:rgba(30,33,36,.55)}
 .lcard p{margin:0;font-size:14px;color:var(--ink2);flex:1}
 .lcard ul{margin:0;padding-left:18px;font-size:14px;color:var(--ink2)}
 /* 카페 */
-.cafe-cover{height:150px;border-radius:10px 10px 0 0;background:linear-gradient(120deg,#0B5563 0%,#1B7F8F 55%,#F2B84B 140%);position:relative;overflow:hidden}
+.cafe-cover{min-height:150px;display:flex;align-items:flex-end;border-radius:10px 10px 0 0;background:linear-gradient(120deg,#0B5563 0%,#1B7F8F 55%,#F2B84B 140%);position:relative;overflow:hidden}
 .cafe-cover::after{content:"";position:absolute;inset:0;background:repeating-linear-gradient(90deg,rgba(255,255,255,.06) 0 40px,transparent 40px 80px)}
-.cafe-cover h2{position:absolute;left:24px;bottom:18px;margin:0;color:#fff;font-size:26px;z-index:1}
+.cafe-cover h2{position:relative;padding:24px 24px 18px;margin:0;line-height:1.35;color:#fff;font-size:26px;z-index:1}
 .cafe-cover small{display:block;font-size:14px;font-weight:400;opacity:.85}
 .cafe{display:grid;grid-template-columns:230px minmax(0,1fr);gap:20px;margin-top:20px}
-.cafe-l{display:flex;flex-direction:column;gap:12px}
+.cafe-l{display:flex;flex-direction:column;gap:12px;min-width:0}
 .cbox{background:#fff;border:1px solid var(--line);border-radius:8px;padding:16px;font-size:14px}
 .cbox dl{margin:0;display:grid;grid-template-columns:auto 1fr;gap:4px 10px}
 .cbox dt{color:var(--muted)}.cbox dd{margin:0;text-align:right;font-weight:500}
@@ -230,7 +230,7 @@ dialog::backdrop{background:rgba(30,33,36,.55)}
   .top{height:56px;padding:0 14px;gap:10px}
   .logo b{font-size:18px}
   .who .btn{display:none}
-  .shell{grid-template-columns:1fr}
+  .shell{grid-template-columns:minmax(0,1fr)}
   .side{position:fixed;top:0;left:0;bottom:0;width:min(300px,82vw);height:auto;z-index:60;transform:translateX(-102%);transition:transform .22s;box-shadow:8px 0 30px rgba(0,0,0,.18);padding:18px 12px calc(24px + env(safe-area-inset-bottom))}
   body.menu-open .side{transform:none}
   body.menu-open .scrim{display:block;position:fixed;inset:0;background:rgba(30,33,36,.45);z-index:55}
@@ -248,8 +248,9 @@ dialog::backdrop{background:rgba(30,33,36,.55)}
   .embed{height:calc(100vh - 250px);min-height:420px}
   .btn{height:46px}
   .org{display:none}
-  .cafe{grid-template-columns:1fr}
-  .room{grid-template-columns:1fr}
+  .cafe{grid-template-columns:minmax(0,1fr)}
+  .cafe-cover h2{font-size:21px;padding:18px 18px 14px}
+  .room{grid-template-columns:minmax(0,1fr)}
   .who small{display:none}
 }
 </style>
