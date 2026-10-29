@@ -5,7 +5,7 @@
 // - 엑셀로 불러온 실제 명부(IMPORTED)는 절대 올리지 않음 (S.roster의 예시 명부만 대상)
 (function () {
   var CFG = window.JOHAPONE_CONFIG || {};
-  var SYNC = window.SYNC = { on: false, status: 'local', tenant: CFG.tenant || 'demo-oo1', client: null, snap: {}, pending: false };
+  var SYNC = window.SYNC = { on: false, status: 'local', tenant: window.TENANT || CFG.tenant || 'demo-oo1', client: null, snap: {}, pending: false, gov: null };
 
   function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
   // 배열 컬렉션: 항목마다 고유키(_k)를 붙여 행으로 저장
@@ -96,6 +96,31 @@
 
   SYNC.start = function (client) {
     SYNC.client = client; setStatus('connecting');
+    // 1) 조합 확인 (등록된 조합만 연결) → 조합명 표시
+    return client.from('tenants').select('*').eq('id', SYNC.tenant).then(function (t) {
+      if (t.error) { setStatus('error', t.error.message); return; }
+      if (!t.data || !t.data.length) { setStatus('error', '등록되지 않은 조합 코드: ' + SYNC.tenant); return; }
+      SYNC.tenantRow = t.data[0];
+      window.UNION = t.data[0].name;
+      return loadRecords(client);
+    });
+  };
+
+  // 시·구 담당자: 서버에 등록된 조합별 집계
+  SYNC.loadGov = function () {
+    var c = SYNC.client;
+    return Promise.all([
+      c.from('tenants').select('*').order('created_at'),
+      c.from('records').select('tenant_id,coll,id,data').in('coll', ['roster', 'posts', 'ballots', 'consents'])
+    ]).then(function (res) {
+      if (res[0].error || res[1].error) { setStatus('error', (res[0].error || res[1].error).message); SYNC.gov = []; return; }
+      var by = {};
+      res[1].data.forEach(function (r) { var o = by[r.tenant_id] = by[r.tenant_id] || { roster: 0, posts: 0, ballots: 0, agree: 0, last: '' }; if (r.coll === 'roster') o.roster++; if (r.coll === 'ballots') o.ballots++; if (r.coll === 'consents' && r.data.agree) o.agree++; if (r.coll === 'posts') { o.posts++; if (String(r.data.at) > o.last) o.last = String(r.data.at); } });
+      SYNC.gov = res[0].data.map(function (t) { var o = by[t.id] || { roster: 0, posts: 0, ballots: 0, agree: 0, last: '' }; return { id: t.id, name: t.name, kind: t.kind, stage: t.stage, gov: t.gov, members: o.roster, posts: o.posts, lastPost: o.last, ballots: o.ballots, rate: o.roster ? Math.round(o.agree / o.roster * 100) : 0 }; });
+    });
+  };
+
+  function loadRecords(client) {
     return client.from('records').select('coll,id,data').eq('tenant_id', SYNC.tenant).then(function (r) {
       if (r.error) { setStatus('error', r.error.message); return; }
       SYNC.on = true;
@@ -103,9 +128,9 @@
       if (first) SYNC.snap = {}; // 첫 실행: 예시 데이터를 서버에 올림
       else { SYNC.apply(r.data); safeRender(); }
       subscribe(client);
-      return (first ? SYNC.push() : Promise.resolve()).then(function () { setStatus('live'); });
+      return (first ? SYNC.push() : Promise.resolve()).then(function () { setStatus('live'); safeRender(); });
     });
-  };
+  }
 
   function subscribe(client) {
       client.channel('records-' + SYNC.tenant)

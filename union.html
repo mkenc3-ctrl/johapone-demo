@@ -244,7 +244,17 @@ dialog::backdrop{background:rgba(30,33,36,.55)}
 
 <script>
 /* ========== 기본 데이터 ========== */
+// 조합(테넌트): 주소의 ?u=조합코드 로 구분. 데모 조합은 'demo-' 로 시작
+var TENANT = (function () {
+  var u = '';
+  try { u = (new URLSearchParams(location.search).get('u') || '').toLowerCase().replace(/[^a-z0-9-]/g, ''); } catch (e) {}
+  return /^demo-[a-z0-9-]+$/.test(u) ? u : 'demo-oo1';
+})();
+window.TENANT = TENANT;
 var UNION = 'OO1구역 재개발정비사업조합';
+function localTenants() { try { return JSON.parse(localStorage.getItem('johapone-tenants') || '{}'); } catch (e) { return {}; } }
+if (localTenants()[TENANT]) UNION = localTenants()[TENANT].name;
+function tenantUrl(id, hash) { return 'union.html' + (id === 'demo-oo1' ? '' : '?u=' + id) + (hash || ''); }
 var USERS = {
   hong:  { id: 'hong',  name: '홍길동', role: 'member', title: '조합원' },
   soon:  { id: 'soon',  name: '홍순자', role: 'member', title: '조합원' },
@@ -344,7 +354,7 @@ function seed() {
     svc: { disclosure: 1, cafe: 1, calendar: 1, bids: 1, qna: 1, edu: 1, calc: 1, cert: 1, assembly: 1, consent: 1, vote: 1, roster: 1, notify: 0 }
   };
 }
-var K = 'johapone-demo-v3', S;
+var K = 'johapone-demo-v3' + (TENANT === 'demo-oo1' ? '' : ':' + TENANT), S;
 try { S = JSON.parse(localStorage.getItem(K)); } catch (e) {}
 if (!S || S.v !== 3) S = seed();
 if (!S.proReq) S.proReq = []; // 이전에 저장된 데모 데이터 호환
@@ -389,6 +399,8 @@ V.login = function () {
     '<div class="lcard gov"><span class="tag" style="background:#E8EBF6;color:#3B4A8A">시·구 담당자</span><h2>지자체 담당자 로그인</h2><p>관할 시·구청 담당 공무원 전용입니다. 등록된 기관 IP와 공무원 인증서로만 접속됩니다.</p>' +
     '<ul><li>관할 조합 현황·정보공개 점검</li><li>임원 교육 이수·총회 결과 확인</li><li>조합 자료 열람 (수정 불가)</li></ul>' +
     '<button class="btn" style="background:#3B4A8A;color:#fff;border-color:#3B4A8A;font-weight:700" data-act="login" data-u="gov">김주무관으로 로그인</button></div>' +
+    '<div style="grid-column:1/-1;display:flex;flex-wrap:wrap;gap:8px 16px;justify-content:center;align-items:center;font-size:14px;color:var(--ink2)"><span>조합 코드 <b>' + TENANT + '</b></span>' +
+    '<button class="btn sm" data-act="newTenant">+ 새 조합 개설 (데모)</button>' + (TENANT !== 'demo-oo1' ? '<a class="btn sm" href="union.html">기본 데모 조합으로</a>' : '') + '</div>' +
     '<p style="grid-column:1/-1;text-align:center;font-size:13px;color:var(--muted)">디자인 시안 · 화면의 조합·인물·수치는 모두 예시입니다. <a href="#" data-act="reset">데모 데이터 초기화</a></p>' +
     '</div></div>';
 };
@@ -913,6 +925,19 @@ var GOV_UNIONS = [
   ['OO맨션 재건축정비사업조합', '재건축', '이주·철거', 412, '2026.08.12', 4, 50, '2026.06.21']
 ];
 V.govHome = function () {
+  // 공유 서버 연결 시: 서버에 등록된 조합과 실제 집계값
+  if (window.SYNC && SYNC.on) {
+    if (!SYNC.gov) { SYNC.loadGov().then(function () { if (location.hash === '' || location.hash === '#home') render(); }); return ph('관할 조합 현황', '서버에서 조합 목록을 불러오는 중…'); }
+    var L = SYNC.gov, sum = function (k) { return L.reduce(function (s, u) { return s + u[k]; }, 0); };
+    return ph('관할 조합 현황', '공유 서버에 등록된 조합 ' + L.length + '곳 · 실시간 집계 (데모)<br><span class="law">도시정비법 제111조(자료의 제출 등)·제113조(감독) 업무 지원</span>', '<button class="btn" data-act="govRefresh">↻ 새로고침</button>') +
+      '<div class="grid g4" style="margin-bottom:16px">' + kpi('관할 조합', L.length, '곳') + kpi('관리 조합원', won(sum('members')), '명') + kpi('정보공개', sum('posts'), '건') + kpi('전자투표 참여', sum('ballots'), '명', 'acc') + '</div>' +
+      '<div class="card" style="padding:0"><div class="tw" style="border-top:0"><table class="t"><thead><tr><th>조합명</th><th class="c">유형</th><th>단계</th><th>관할</th><th class="r">조합원</th><th class="r">정보공개</th><th class="c">최근 공개</th><th class="r">전자투표</th><th>조합설립 동의율</th><th></th></tr></thead><tbody>' +
+      L.map(function (u) {
+        return '<tr><td><b>' + esc(u.name) + '</b>' + (u.id === TENANT ? ' <span class="tag">현재</span>' : '') + '</td><td class="c">' + esc(u.kind || '-') + '</td><td>' + esc(u.stage || '-') + '</td><td>' + esc(u.gov || '-') + '</td><td class="r">' + won(u.members) + '</td><td class="r">' + u.posts + '건</td><td class="c">' + (u.lastPost || '-') + '</td><td class="r">' + u.ballots + '명</td>' +
+          '<td><div style="display:flex;gap:6px;align-items:center"><div class="bar acc" style="flex:1;min-width:60px"><i style="width:' + u.rate + '%"></i></div>' + u.rate + '%</div></td><td><a class="btn sm" href="' + tenantUrl(u.id, '#disclosure') + '">열람</a></td></tr>';
+      }).join('') + '</tbody></table></div></div>' +
+      '<div class="card" style="margin-top:16px"><h2>담당자 권한</h2><ul style="margin:0;padding-left:20px;line-height:1.9;font-size:15px"><li>관할 조합 자료 <b>열람 전용</b> (수정·삭제 불가)</li><li>열람 이력은 조합 접속기록에 남습니다</li><li>공무원 인증서·기관 IP 제한 로그인</li></ul></div>';
+  }
   var t = GOV_UNIONS.reduce(function (s, u) { return s + u[3]; }, 0);
   return ph('관할 조합 현황', 'OO구청 주택정비팀 · 조합ONE을 이용하는 관할 조합을 한 화면에서 점검합니다.<br><span class="law">도시정비법 제111조(자료의 제출 등)·제113조(감독) 업무 지원</span>') +
     '<div class="grid g4" style="margin-bottom:16px">' + kpi('관할 조합', GOV_UNIONS.length, '곳') + kpi('관리 조합원', won(t), '명') + kpi('정보공개 지연', 6, '건', 'acc') + kpi('교육 미이수 임원', 7, '명', 'acc') + '</div>' +
@@ -929,7 +954,7 @@ V.gedu = function () {
   return ph('임원 교육 이수', '조합임원 운영·윤리교육 (선임 후 6개월 이내 12시간) 관할 이수 현황') + '<div class="card" style="padding:0"><div class="tw" style="border-top:0"><table class="t"><thead><tr><th>조합</th><th class="r">임원 수</th><th class="r">이수</th><th class="r">진행 중</th><th class="r">기한 초과</th><th>이수율</th></tr></thead><tbody>' +
     GOV_UNIONS.map(function (u, i) { var n = [4, 9, 8, 6][i], d = Math.round(n * u[6] / 100); return '<tr><td>' + u[0] + '</td><td class="r">' + n + '</td><td class="r">' + d + '</td><td class="r">' + (n - d - (i === 3 ? 2 : 0)) + '</td><td class="r">' + (i === 3 ? '<span class="tag no">2</span>' : 0) + '</td><td><div class="bar"><i style="width:' + u[6] + '%"></i></div></td></tr>'; }).join('') + '</tbody></table></div></div>';
 };
-V.gvote = function () { return '<p class="tag gray" style="margin:0 0 8px">OO1구역 재개발정비사업조합</p>' + V.vote(); };
+V.gvote = function () { return '<p class="tag gray" style="margin:0 0 8px">' + esc(UNION) + '</p>' + V.vote(); };
 V.server = function () {
   return ph('서버 이용 현황', 'OO구청 · 조합ONE 지자체 서버 이용 계약') +
     '<div class="grid g4" style="margin-bottom:16px">' + kpi('계약 기간', '2026.01~12', '') + kpi('관할 조합', GOV_UNIONS.length, '곳') + kpi('저장 용량', '38.2', 'GB / 100GB') + kpi('월 이용료', '협의', '') + '</div>' +
@@ -971,6 +996,15 @@ function stopTimer() { if (timer) clearInterval(timer); timer = null; }
 var ACT = {
   close: closeModal,
   menu: function () { document.body.classList.toggle('menu-open'); },
+  newTenant: function () {
+    modal('새 조합 개설 (데모)', '<form class="f" data-form="newTenant"><p class="note" style="margin:0">조합마다 독립된 전용 공간과 주소가 만들어집니다. 예시 데이터로 시작합니다.</p>' +
+      '<label>조합명<input name="n" required maxlength="40" placeholder="예) OO아파트 재건축정비사업조합"></label>' +
+      '<div class="row"><label>사업 유형<select name="k"><option>재개발</option><option>재건축</option><option>소규모</option></select></label>' +
+      '<label>사업 단계<select name="s"><option>추진위원회</option><option>조합설립 추진</option><option>조합설립인가</option><option>사업시행인가</option><option>관리처분인가</option><option>이주·철거</option><option>착공</option></select></label></div>' +
+      '<label>관할 시·구<input name="g" required value="OO구"></label>' +
+      '<div style="display:flex;justify-content:flex-end;gap:8px"><button type="button" class="btn" data-act="close">취소</button><button class="btn pri">개설</button></div></form>');
+  },
+  govRefresh: function () { if (window.SYNC) SYNC.gov = null; render(); },
   pcat: function (t) { pcat = t.dataset.v; render(); },
   ptab: function (t) { ptab = t.dataset.v; render(); },
   proAsk: function (t) {
@@ -1076,6 +1110,13 @@ document.addEventListener('click', function (e) {
   a(t, e);
 });
 var FORMS = {
+  newTenant: function (f) {
+    var id = 'demo-' + Math.random().toString(36).slice(2, 8), t = { id: id, name: f.n.value.trim(), kind: f.k.value, stage: f.s.value, gov: f.g.value.trim() };
+    function go() { var m = localTenants(); m[id] = { name: t.name }; try { localStorage.setItem('johapone-tenants', JSON.stringify(m)); } catch (e) {} location.href = tenantUrl(id); }
+    if (window.SYNC && SYNC.on) {
+      SYNC.client.from('tenants').insert(t).then(function (r) { if (r.error) toast('개설 실패: ' + r.error.message); else go(); });
+    } else go();
+  },
   proReq: function (f) { var p = PROS[+f.dataset.i], cn = PRO_CATS.filter(function (c) { return c[0] === p[0]; })[0][2]; S.proReq.unshift({ at: today(), uid: ME, name: U().name, pro: p[1], cat: cn, msg: f.m.value + ' (' + f.c.value + ')' }); save(); closeModal(); render(); toast(p[1] + '에 상담 요청을 보냈습니다 (시안).'); },
   proJoin: function (f) { closeModal(); toast(f.n.value + ' 입점 신청이 접수되었습니다 (시안). 자격 확인 후 연락드립니다.'); },
   post: function (f) { var fn = f.file.files[0]; var id = Date.now(); S.posts.push({ id: id, cat: f.cat.value, title: f.title.value, body: f.body.value, file: fn ? fn.name : '', at: today(), views: 0, reads: [] }); if (f.push.checked) S.sms.unshift({ at: now(), target: '전체 조합원', ch: '알림톡', msg: '[OO1구역] 정보공개: ' + f.title.value, n: roster().length }); save(); closeModal(); render(); toast('등록되었습니다.' + (f.push.checked ? ' 조합원 ' + roster().length + '명에게 알림톡을 보냈습니다.' : '')); },
