@@ -76,8 +76,6 @@ h1,h2,h3{letter-spacing:-.02em}
 body.big .main{zoom:1.14} /* 화면 안 모든 글씨·버튼을 같은 비율로 키움 (글씨 크기가 따로 지정된 곳까지) */
 body.big #modal{zoom:1.08}
 body.big .side a{font-size:18px;padding:13px 12px}
-/* 조합원 화면은 법 조문 안내를 줄여 간단하게 */
-body.r-member .ph .law{display:none}
 .law{font-size:13px;color:var(--muted)}
 .card{background:#fff;border:1px solid var(--line);border-radius:10px;padding:22px}
 .card h2{margin:0 0 12px;font-size:18px;display:flex;justify-content:space-between;align-items:center;gap:8px}
@@ -525,8 +523,8 @@ function guideOf(r) {
 function guideHtml(g) {
   return '<ol class="gsteps">' + g.s.map(function (x) { return '<li><span class="gi">' + x[0] + '</span><span>' + x[1] + '</span></li>'; }).join('') + '</ol>' + (g.tip ? '<p class="gtip">💡 ' + g.tip + '</p>' : '');
 }
-// 글자 크기: 조합원은 기본 '크게', 이 기기에서 바꾼 값은 기억
-function bigText() { var v = null; try { v = localStorage.getItem('johapone-big'); } catch (e) {} return v == null ? role() === 'member' : v === '1'; }
+// 글자 크기: 기본은 보통, 사용 가이드에서 '큰 글씨'를 고르면 이 기기에서 기억
+function bigText() { var v = null; try { v = localStorage.getItem('johapone-big'); } catch (e) {} return v === '1'; }
 function bigToggleHtml() { var b = bigText(); return '<div class="seg" role="group" aria-label="글자 크기"><button class="' + (b ? '' : 'on') + '" data-act="bigSet" data-v="0">가 보통 글씨</button><button class="' + (b ? 'on' : '') + '" data-act="bigSet" data-v="1" style="font-size:1.15em;font-weight:700">가 큰 글씨</button></div>'; }
 function guideView() {
   // 지금 역할의 메뉴 순서대로 가이드를 모아 보여줌
