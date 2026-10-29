@@ -360,6 +360,7 @@ var MENU_DESC = {
 // 나중에 역할별로 나누려면 MENU_BY_ROLE = true 로 바꾸면 각자 메뉴(navItems)로 돌아감.
 var MENU_BY_ROLE = false;
 // [키, 이름, 첫 화면, 유료 판정용 화면들]
+// 정관 개정(bylaws)은 우선 메뉴에서 뺌 (화면은 남아 있음)
 var ALL_MENU = [
   ['meeting', '🗳️ 총회·투표', 'assembly', ['assembly', 'vote']],
   ['consent', '✍️ 전자동의서', 'consent', ['consent']],
@@ -369,10 +370,9 @@ var ALL_MENU = [
   ['pro', '🤝 전문가 연결', 'pro', ['pro']],
   ['community', '💬 모임방·문의', 'cafe', ['cafe', 'qna']],
   ['check', '✅ 절차 체크리스트', 'check', ['check']],
-  ['forms', '🗂️ 서식함', 'forms', ['forms']],
   ['law', '⚖️ 법령·판례', 'law', ['law']],
-  ['bylaws', '📜 정관 개정', 'bylaws', ['bylaws']],
   ['edu', '🎓 교육', 'edu', ['edu']],
+  ['forms', '🗂️ 서식함', 'forms', ['forms']],
   ['guide', '❓ 사용 가이드', 'guide', ['guide']]
 ];
 function allMenuRoutes() { return ALL_MENU.map(function (m) { return m[2]; }).concat(['vote', 'calendar', 'bids', 'calc', 'qna']); }
