@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>정관 개정 패키지 — 전자의결·온라인총회</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<style>
+:root{--ink:#1E2124;--ink2:#464C53;--muted:#5F6B75;--line:#D6DCE0;--line2:#E6EAED;--pri:#0B5563;--pri-s:#E6F1F3;--bg2:#F4F6F8;--acc:#C2410C;--acc-s:#FDEEE6;--acc-d:#8A2E07}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg2);color:var(--ink);font:15.5px/1.75 'Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic',sans-serif;word-break:keep-all}
+.wrap{max-width:960px;margin:0 auto;padding:24px 16px 60px}
+.top{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap;margin-bottom:16px}
+h1{margin:0;font-size:26px;letter-spacing:-.02em}
+.sub{margin:4px 0 0;color:var(--ink2)}
+.btns{display:flex;gap:8px;flex-wrap:wrap}
+.btn{height:40px;padding:0 16px;border-radius:8px;border:1px solid #B1B8BE;background:#fff;font:inherit;font-weight:700;cursor:pointer;color:var(--ink);text-decoration:none;display:inline-flex;align-items:center}
+.btn.pri{background:var(--pri);border-color:var(--pri);color:#fff}
+.warn{background:var(--acc-s);color:var(--acc-d);border-radius:10px;padding:14px 18px;font-size:14px;margin-bottom:16px}
+section{background:#fff;border:1px solid var(--line);border-radius:12px;padding:24px 28px;margin-bottom:16px}
+section h2{margin:0 0 12px;font-size:19px;display:flex;justify-content:space-between;align-items:center;gap:8px}
+section h2 .btn{height:34px;font-size:13px}
+.steps{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;counter-reset:s;margin:0;padding:0;list-style:none}
+.steps li{background:var(--bg2);border-radius:8px;padding:12px;font-size:14px}
+.steps li::before{counter-increment:s;content:"STEP " counter(s);display:block;font-size:12px;font-weight:700;color:var(--acc)}
+.steps b{display:block;font-size:15px}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{border:1px solid var(--line);padding:10px 12px;vertical-align:top;text-align:left}
+th{background:var(--bg2);font-weight:700}
+td.cur{color:var(--muted);width:30%}
+.art{white-space:pre-line}
+.art b{color:var(--pri)}
+.law{font-size:12.5px;color:var(--pri);font-weight:500}
+.doc{border:1px solid var(--line);border-radius:8px;padding:20px 24px;white-space:pre-line;font-size:14.5px;background:#FCFCFD}
+.chk{margin:0;padding:0;list-style:none}
+.chk li{padding:6px 0 6px 30px;position:relative;border-bottom:1px solid var(--line2)}
+.chk li::before{content:"☐";position:absolute;left:4px;font-size:17px;color:var(--pri)}
+@media (max-width:760px){.steps{grid-template-columns:1fr 1fr}section{padding:18px}}
+@media print{body{background:#fff}.btns,.warn .btn,section h2 .btn{display:none}section{border:0;padding:0 0 12px;break-inside:avoid}.wrap{padding:0}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <div><h1>정관 개정 패키지</h1><p class="sub">전자적 방법 의결권 행사(전자의결) · 온라인총회 도입용</p></div>
+    <div class="btns"><button class="btn pri" onclick="window.print()">인쇄 · PDF</button></div>
+  </div>
+
+  <div class="warn"><b>초안 · 법률 검토 필요</b> — 도시정비법(2024.12.3. 개정)·시행령(2025.5.27. 개정) 조문을 기준으로 작성한 예시 문구입니다. 조항 번호(제○조)는 각 조합 정관 체계에 맞춰야 하며, 관할 시·도 표준정관과 변호사 검토 후 사용하세요.</div>
+
+  <section>
+    <h2>1. 왜 정관 개정이 필요한가</h2>
+    <table>
+      <tr><th style="width:28%">근거</th><th>내용</th></tr>
+      <tr><td>법 제45조 제11항</td><td>총회 의결방법, 서면 또는 전자적 방법에 따른 의결권 행사 및 본인확인방법 등은 <b>정관으로 정한다</b> → 정관에 규정이 없으면 전자의결 운영 근거가 약함</td></tr>
+      <tr><td>법 제45조 제6항</td><td>전자의결 요건: ① 서면 등 다른 방법도 함께 허용 ② 행사 방법별 결과 구분 확인·관리 ③ 대통령령 기준 충족. 이 경우 정족수 산정 시 <b>출석</b>한 것으로 봄</td></tr>
+      <tr><td>시행령 제42조 제2항</td><td>대통령령 기준: 소집통지 시 전자의결 방법·기간 통지 / 전자서명인증사업자 또는 본인확인기관의 본인확인 / <b>개표 전 집계 결과 비공개</b> / 결과를 사업 완료·폐지 시까지 보관</td></tr>
+      <tr><td>법 제44조의2</td><td>온라인총회는 <b>총회 의결</b>을 거쳐 현장 총회와 병행 개최. 본인확인·접속기록 보관 요건을 갖추면 정족수 산정 시 <b>직접 출석</b>으로 봄. 재난 등 사유로 시장·군수등이 인정하면 단독 개최 가능</td></tr>
+      <tr><td>법 제45조 제10항</td><td>직접 출석 요건: 일반 총회 조합원 10% 이상, 시공자 선정 총회 과반수, 창립총회·사업시행계획·관리처분계획 등 총회 20% 이상</td></tr>
+      <tr><td>법 제45조 제7항</td><td>조합은 조합원이 전자적 방법을 우선 이용하도록 노력하여야 함</td></tr>
+    </table>
+  </section>
+
+  <section>
+    <h2>2. 개정 절차</h2>
+    <ol class="steps">
+      <li><b>개정안 작성</b>본 패키지 문구를 조합 정관 체계에 맞춰 수정 · 법률 검토</li>
+      <li><b>이사회·대의원회</b>정관 내부 절차에 따라 총회 상정안 확정</li>
+      <li><b>총회 의결</b>조합원 <b>과반수 찬성</b> (법 제40조 제3항)</li>
+      <li><b>인가</b>시장·군수등 인가 후 시행 (법 제40조 제3항)</li>
+    </ol>
+    <p class="law" style="margin:10px 0 0">총회의 소집 절차·의결방법은 정관 필수 기재사항(법 제40조 제1항 제10호). 조합원 3분의 2 찬성이 필요한 항목(조합원 자격, 비용부담 등)에는 해당하지 않음.</p>
+  </section>
+
+  <section>
+    <h2>3. 정관 개정안 (신·구 조문 대비) <button class="btn" onclick="copyText('art')">문구 복사</button></h2>
+    <table id="art">
+      <tr><th>현행</th><th>개정안</th></tr>
+      <tr><td class="cur">제○조(총회의 의결방법)<br>① ~ ③ (현행과 같음)<br>④ 조합원은 서면으로 의결권을 행사하거나 …대리인을 통하여 의결권을 행사할 수 있다.</td>
+      <td class="art"><b>제○조(총회의 의결방법)</b>
+① ~ ④ (현행과 같음)
+<b>⑤ (신설)</b> 조합원은 제4항에도 불구하고 「전자문서 및 전자거래 기본법」 제2조제2호에 따른 정보처리시스템을 사용하거나 그 밖의 정보통신기술을 이용하는 방법(이하 "전자적 방법"이라 한다)으로 의결권을 행사할 수 있다. 이 경우 정족수를 산정할 때에 출석한 것으로 본다.
+<b>⑥ (신설)</b> 조합은 전자적 방법으로 의결권을 행사하게 하는 경우 조합원이 서면 또는 대리인을 통한 방법으로도 의결권을 행사할 수 있도록 하여야 하며, 의결권 행사 방법에 따른 결과를 각각 구분하여 확인·관리하여야 한다.
+<b>⑦ (신설)</b> 조합은 총회 소집통지를 할 때 전자적 방법을 통한 의결권 행사(이하 "전자의결"이라 한다)의 방법, 전자의결 기간, 그 밖에 전자의결의 실시에 필요한 사항을 함께 통지하여야 한다.
+<b>⑧ (신설)</b> 전자의결의 본인확인은 「전자서명법」에 따른 전자서명인증사업자 또는 「정보통신망 이용촉진 및 정보보호 등에 관한 법률」 제23조의3에 따른 본인확인기관이 제공하는 방법으로 한다.
+<b>⑨ (신설)</b> 조합은 총회에서 개표하기 전까지 전자의결의 집계 결과를 알 수 없도록 하여야 하며, 전자의결 결과를 정비사업의 완료 또는 폐지 시점까지 보관하여야 한다.
+<b>⑩ (신설)</b> 조합은 조합원의 참여를 확대하기 위하여 조합원이 전자적 방법을 우선적으로 이용하도록 노력하여야 한다.
+<span class="law">근거: 법 제45조 제6항·제7항·제9항·제11항, 시행령 제42조 제2항</span></td></tr>
+      <tr><td class="cur">(신설)</td>
+      <td class="art"><b>제○조(온라인총회)</b>
+① 조합은 총회의 의결을 거쳐 현장 총회와 병행하여 「정보통신망 이용촉진 및 정보보호 등에 관한 법률」 제2조제1항제1호에 따른 정보통신망을 이용한 총회(이하 "온라인총회"라 한다)를 개최하여 조합원이 참석하게 할 수 있다. 다만, 재난의 발생 등 법령으로 정하는 사유로 시장·군수등이 조합원의 직접 출석이 어렵다고 인정하는 경우에는 온라인총회를 단독으로 개최할 수 있다.
+② 온라인총회는 다음 각 호의 요건을 모두 갖추어 개최하며, 이 경우 온라인총회에 참석한 조합원은 정족수를 산정할 때 직접 출석한 것으로 본다.
+  1. 참석한 조합원이 본인인지 여부를 확인할 수 있을 것
+  2. 참석한 조합원의 접속 기록 등을 보관하여 실제 참석 여부를 확인·관리할 수 있을 것
+  3. 그 밖에 원활한 의견의 청취·제시 등을 위하여 법령으로 정하는 기준에 부합할 것
+③ 온라인총회의 개최 방법 및 절차는 법령 및 총회에서 정한 운영규정에 따른다.
+<span class="law">근거: 법 제44조의2</span></td></tr>
+      <tr><td class="cur">(신설)</td>
+      <td class="art"><b>제○조(전자적 업무처리 및 개인정보 처리 위탁)</b>
+① 조합은 전자의결, 온라인총회, 전자동의, 정보공개 등 조합 업무를 정보처리시스템을 이용하여 처리할 수 있으며, 그 운영을 전문업체에 위탁할 수 있다.
+② 조합은 제1항에 따라 개인정보 처리업무를 위탁하는 경우 「개인정보 보호법」 제26조에 따라 위탁계약을 문서로 체결하고, 위탁하는 업무의 내용과 수탁자를 공개하여야 한다.
+<span class="law">근거: 개인정보 보호법 제26조, 도시정비법 시행령 제97조</span></td></tr>
+    </table>
+  </section>
+
+  <section>
+    <h2>4. 총회 안건 서식 <button class="btn" onclick="copyText('agenda')">문구 복사</button></h2>
+    <div class="doc" id="agenda"><b>제○호 안건: 정관 일부 변경(전자의결 및 온라인총회 도입)의 건</b>
+
+1. 제안 사유
+  가. 도시정비법 개정(2024.12.3.)으로 전자적 방법에 의한 의결권 행사와 온라인총회 개최 근거가 마련되었고, 같은 법 제45조 제11항에 따라 그 방법을 정관으로 정하여야 함
+  나. 조합원의 총회 참여를 확대하고, 등기우편·서면결의서 징구 등에 드는 비용과 시간을 줄이기 위함
+
+2. 변경 내용 (요지)
+  가. 총회 의결방법에 전자의결 근거 신설 (서면 방법 병행, 결과 구분 관리, 본인확인, 개표 전 집계 비공개, 결과 보관)
+  나. 온라인총회 근거 신설 (현장 총회 병행, 본인확인·접속기록 보관 시 직접 출석 인정)
+  다. 전자적 업무처리 및 개인정보 처리 위탁 근거 신설
+  ※ 신·구 조문 대비표 별첨
+
+3. 의결 정족수
+  조합원 과반수 찬성 (도시정비법 제40조 제3항)
+
+4. 시행
+  시장·군수등의 인가를 받은 날부터 시행
+
+첨부: 정관 신·구 조문 대비표 1부</div>
+  </section>
+
+  <section>
+    <h2>5. 총회 소집통지문 문구 (전자의결 안내) <button class="btn" onclick="copyText('notice')">문구 복사</button></h2>
+    <div class="doc" id="notice"><b>[전자의결 안내]</b>
+이번 총회는 현장 참석, 서면결의서 제출, 전자의결(휴대폰) 중 편한 방법으로 의결권을 행사할 수 있습니다.
+
+■ 전자의결 방법: 조합ONE 앱 접속 → 휴대폰 본인인증 → 안건별 찬반 선택 → 제출
+■ 전자의결 기간: 20○○. ○. ○.(○) 09:00 ~ 20○○. ○. ○.(○) 18:00
+■ 본인확인: 휴대폰 본인확인기관 인증
+■ 집계: 전자의결 결과는 총회 개표 전까지 누구도 볼 수 없으며, 서면결의·현장 투표와 구분하여 집계합니다.
+■ 온라인총회: 총회 당일 앱에서 「입장하기」로 참석할 수 있으며, 본인확인 후 접속 기록이 보관됩니다.
+■ 문의: 조합 사무실 ○○○-○○○-○○○○
+<span class="law">근거: 시행령 제42조 제2항 제1호 (소집통지 시 전자의결 방법·기간 통지)</span></div>
+  </section>
+
+  <section>
+    <h2>6. 도입 전 확인 사항</h2>
+    <ul class="chk">
+      <li>현행 정관의 총회 의결방법 조항 번호와 문구 확인</li>
+      <li>관할 시·도 표준정관의 전자의결·온라인총회 규정 확인</li>
+      <li>변호사 검토 (조항 번호, 기존 조문과의 충돌 여부)</li>
+      <li>정관 변경 총회 소집 (조합원 과반수 찬성 필요)</li>
+      <li>시장·군수등 정관 변경 인가 신청</li>
+      <li>본인확인 서비스(본인확인기관 또는 전자서명인증사업자) 계약</li>
+      <li>개인정보 처리 위탁계약 체결 (조합 ↔ 시스템 운영사)</li>
+      <li>온라인총회 병행 개최에 대한 총회 의결 (법 제44조의2 제1항)</li>
+    </ul>
+  </section>
+</div>
+<script>
+  function copyText(id) {
+    var t = document.getElementById(id).innerText;
+    if (navigator.clipboard) navigator.clipboard.writeText(t).then(function () { alert('복사했습니다.'); }, function () { alert('복사하지 못했습니다. 직접 선택해 복사하세요.'); });
+  }
+</script>
+</body>
+</html>

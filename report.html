@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>조합ONE 맞춤 절감 리포트</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#0B5563">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<style>
+:root{--ink:#1E2124;--ink2:#464C53;--muted:#5F6B75;--line:#D6DCE0;--line2:#E6EAED;--bd:#B1B8BE;--pri:#0B5563;--pri-d:#08434E;--pri-s:#E6F1F3;--bg2:#F4F6F8;--acc:#C2410C;--acc-d:#8A2E07;--acc-s:#FDEEE6;--ok:#1F7A4D}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg2);color:var(--ink);font:15px/1.6 'Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic',sans-serif;word-break:keep-all;font-variant-numeric:tabular-nums}
+.wrap{max-width:1180px;margin:0 auto;padding:24px 16px 60px;display:grid;grid-template-columns:340px minmax(0,1fr);gap:20px;align-items:start}
+.panel{background:#fff;border:1px solid var(--line);border-radius:12px;padding:20px;position:sticky;top:16px;max-height:calc(100vh - 32px);overflow:auto}
+.panel h2{margin:0 0 4px;font-size:18px}
+.panel p{margin:0 0 14px;font-size:13px;color:var(--muted)}
+.panel h3{font-size:14px;margin:18px 0 8px;color:var(--pri);border-top:1px solid var(--line2);padding-top:14px}
+.f{display:grid;gap:8px}
+.f label{display:grid;grid-template-columns:1fr 120px;gap:8px;align-items:center;font-size:13.5px;color:var(--ink2)}
+.f label.full{grid-template-columns:1fr}
+.f input,.f select{height:36px;border:1px solid var(--bd);border-radius:6px;padding:0 8px;font:inherit;font-size:14px;text-align:right;min-width:0;width:100%}
+.f label.full input{text-align:left}
+.btn{display:inline-flex;align-items:center;justify-content:center;height:44px;padding:0 18px;border-radius:8px;border:1px solid var(--bd);background:#fff;font:inherit;font-weight:700;cursor:pointer;text-decoration:none;color:var(--ink)}
+.btn.acc{background:var(--acc);border-color:var(--acc);color:#fff}
+.acts{display:grid;gap:8px;margin-top:16px}
+/* 리포트 (A4) */
+.paper{background:#fff;border:1px solid var(--line);border-radius:12px;padding:40px 44px;min-width:0}
+.rh{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;border-bottom:2px solid var(--ink);padding-bottom:16px}
+.logo{display:flex;gap:8px;align-items:center;font-weight:700;font-size:18px}
+.logo em{font-style:normal;color:var(--acc)}
+.rh h1{margin:10px 0 2px;font-size:26px;letter-spacing:-.02em}
+.rh .meta{text-align:right;font-size:13px;color:var(--muted)}
+.big{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:22px 0}
+.big div{border-radius:10px;padding:16px 18px;background:var(--bg2)}
+.big div.hi{background:var(--acc);color:#fff}
+.big span{font-size:13px;opacity:.85}
+.big b{display:block;font-size:28px;line-height:1.3;letter-spacing:-.02em}
+.big small{font-size:12.5px;opacity:.85}
+h2.s{font-size:17px;margin:26px 0 10px}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{padding:9px 10px;border-bottom:1px solid var(--line2);text-align:left}
+th{background:var(--bg2);font-weight:700;font-size:13px}
+td.r,th.r{text-align:right}
+tr.sum td{font-weight:700;border-top:2px solid var(--ink);background:#FAFBFC}
+.bars{display:grid;gap:10px;margin-top:6px}
+.bars .row{display:grid;grid-template-columns:110px 1fr;gap:10px;align-items:center;font-size:14px;font-weight:500}
+.bars .tr{height:30px;background:var(--line2);border-radius:6px;position:relative;overflow:hidden}
+.bars .tr i{position:absolute;inset:0 auto 0 0;border-radius:6px}
+.bars .tr span{position:absolute;right:10px;top:0;line-height:30px;font-weight:700;font-size:13px}
+.why{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.why div{border:1px solid var(--line);border-radius:8px;padding:12px 14px;font-size:13.5px}
+.why b{display:block;font-size:14.5px;margin-bottom:2px}
+.why small{color:var(--pri);font-weight:700}
+.note{font-size:12px;color:var(--muted);margin-top:18px;line-height:1.7;border-top:1px solid var(--line2);padding-top:12px}
+.tag{display:inline-block;font-size:11.5px;font-weight:700;border-radius:4px;padding:0 6px;background:var(--acc-s);color:var(--acc-d)}
+@media (max-width:900px){.wrap{grid-template-columns:1fr}.panel{position:static;max-height:none}.paper{padding:24px 18px}.big{grid-template-columns:1fr}.why{grid-template-columns:1fr}}
+@media print{
+  @page{size:A4;margin:12mm}
+  body{background:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .panel{display:none}.wrap{display:block;padding:0;max-width:none}
+  .paper{border:0;border-radius:0;padding:0}
+  h2.s{break-after:avoid}table,.why,.big{break-inside:avoid}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <aside class="panel" aria-label="입력">
+    <h2>맞춤 절감 리포트</h2>
+    <p>조합 정보를 넣으면 오른쪽 리포트가 바로 바뀝니다. 단가는 예시값이며 상담 시 실제 견적으로 바꿔 입력하세요.</p>
+    <form class="f" id="F" onsubmit="return false">
+      <label class="full">조합명<input name="name" value="OO아파트 재건축정비사업조합"></label>
+      <label>조합원 수 (명)<input name="n" type="number" min="1" value="1000"></label>
+      <label>연간 총회 횟수<input name="agm" type="number" min="0" value="1"></label>
+      <label>연간 대의원회 등 서면의결<input name="minor" type="number" min="0" value="0"></label>
+      <label>동의서 징구 (연간 횟수)<input name="cons" type="number" min="0" value="1"></label>
+      <h3>오프라인 단가 (1인당, 원)</h3>
+      <label>등기우편 (1회)<input name="post" type="number" value="3000"></label>
+      <label>총회당 우편 발송 횟수<input name="postN" type="number" value="2"></label>
+      <label>책자·결의서 인쇄<input name="print" type="number" value="5000"></label>
+      <label>서면결의서 징구 인력<input name="os" type="number" value="30000"></label>
+      <label>동의서 방문 회수<input name="visit" type="number" value="15000"></label>
+      <label>명부 정리 (연간)<input name="roster" type="number" value="3000"></label>
+      <label>총회장 대관·설비 (1회, 원)<input name="hall" type="number" value="4000000"></label>
+      <h3>전자 전환 실비 (1인당, 원)</h3>
+      <label>알림톡 (1건)<input name="kakao" type="number" value="15"></label>
+      <label>본인인증 (1건)<input name="auth" type="number" value="40"></label>
+      <label>온라인 병행 시 대관 축소 비율 (%)<input name="hallCut" type="number" value="50"></label>
+      <h3>조합ONE 이용료 (원, 미정이면 0)</h3>
+      <label>총회·투표 (1회)<input name="feeAgm" type="number" value="0"></label>
+      <label>전자동의서 (1회)<input name="feeCons" type="number" value="0"></label>
+      <label>조합명부관리 (연간)<input name="feeRoster" type="number" value="0"></label>
+      <label class="full">작성자 (상담 담당)<input name="by" value=""></label>
+    </form>
+    <div class="acts">
+      <button class="btn acc" onclick="window.print()">PDF 저장 · 인쇄</button>
+      <a class="btn" href="platform.html">홈페이지로</a>
+    </div>
+  </aside>
+
+  <main class="paper" id="R"></main>
+</div>
+
+<script>
+  var F = document.getElementById('F'), R = document.getElementById('R');
+  function v(k) { return +F[k].value || 0; }
+  function won(x) { return Math.round(x).toLocaleString('ko-KR') + '원'; }
+  function man(x) { var a = Math.abs(x); var s = a >= 1e8 ? (Math.round(a / 1e6) / 100).toLocaleString('ko-KR') + '억원' : Math.round(a / 1e4).toLocaleString('ko-KR') + '만원'; return (x < 0 ? '-' : '') + s; }
+  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  function today() { var d = new Date(); return d.getFullYear() + '. ' + (d.getMonth() + 1) + '. ' + d.getDate() + '.'; }
+
+  function calc() {
+    var n = v('n'), agm = v('agm'), minor = v('minor'), cons = v('cons');
+    var rows = [
+      // [항목, 오프라인 연간, 전자 대체, 전자 연간]
+      ['총회 소집 등기우편', n * v('post') * v('postN') * agm, '알림톡', n * v('kakao') * v('postN') * agm],
+      ['총회 책자·서면결의서 인쇄', n * v('print') * agm, '전자문서 열람', 0],
+      ['서면결의서 징구 인력', n * v('os') * agm, '전자투표 (본인인증)', n * v('auth') * agm],
+      ['총회장 대관·설비', v('hall') * agm, '온라인총회 병행 (축소)', v('hall') * agm * (1 - v('hallCut') / 100)],
+      ['대의원회 등 서면의결 우편·회수', n * (v('post') + v('os') / 3) * minor, '알림톡 + 전자의결', n * (v('kakao') + v('auth')) * minor],
+      ['동의서 방문 회수', n * v('visit') * cons, '전자동의서 (본인인증)', n * (v('auth') + v('kakao')) * cons],
+      ['명부 정리 인건비', n * v('roster'), '조합명부관리 자동화', 0]
+    ];
+    var off = 0, on = 0; rows.forEach(function (r) { off += r[1]; on += r[3]; });
+    var fee = v('feeAgm') * agm + v('feeCons') * cons + v('feeRoster');
+    return { rows: rows, off: off, on: on, fee: fee, save: off - on - fee, per: agm ? (rows[0][1] + rows[1][1] + rows[2][1] + rows[3][1] - rows[0][3] - rows[2][3] - rows[3][3]) / agm : 0 };
+  }
+
+  function render() {
+    var c = calc(), n = v('n'), feeTxt = c.fee ? '조합ONE 이용료 ' + man(c.fee) + ' 반영' : '조합ONE 이용료 미반영 (협의)';
+    var pct = c.off ? Math.round(c.save / c.off * 1000) / 10 : 0;
+    R.innerHTML =
+      '<div class="rh"><div><div class="logo"><svg width="28" height="28" viewBox="0 0 40 40" aria-hidden="true"><rect x="1.5" y="1.5" width="37" height="37" rx="6" fill="none" stroke="#0B5563" stroke-width="3"/><line x1="20" y1="2" x2="20" y2="38" stroke="#0B5563" stroke-width="3"/><line x1="2" y1="20" x2="38" y2="20" stroke="#0B5563" stroke-width="3"/><path d="M21.5 3H32.5A5 5 0 0 1 37 8V18.5H21.5Z" fill="#C2410C"/></svg>조합<em>ONE</em></div>' +
+      '<h1>' + esc(F.name.value || '조합') + '</h1><div style="font-size:15px;color:var(--ink2)">맞춤 비용 절감 리포트</div></div>' +
+      '<div class="meta">작성일 ' + today() + (F.by.value ? '<br>상담 ' + esc(F.by.value) : '') + '<br>조합원 ' + n.toLocaleString('ko-KR') + '명 · 총회 연 ' + v('agm') + '회</div></div>' +
+      '<div class="big"><div><span>총회 1회 절감</span><b>' + man(c.per) + '</b><small>우편·인쇄·징구·대관 기준</small></div>' +
+      '<div class="hi"><span>연간 예상 절감</span><b>' + man(c.save) + '</b><small>절감률 ' + pct + '% · ' + feeTxt + '</small></div>' +
+      '<div><span>3년 누적 절감</span><b>' + man(c.save * 3) + '</b><small>같은 조건 유지 시</small></div></div>' +
+      '<h2 class="s">연간 비용 비교</h2><div class="bars">' +
+      '<div class="row"><span>오프라인</span><div class="tr"><i style="width:100%;background:#8A949C"></i><span style="color:#fff">' + man(c.off) + '</span></div></div>' +
+      '<div class="row"><span>조합ONE 전환</span><div class="tr"><i style="width:' + Math.max(2, (c.on + c.fee) / (c.off || 1) * 100) + '%;background:var(--acc)"></i><span style="color:var(--acc-d)">' + man(c.on + c.fee) + '</span></div></div></div>' +
+      '<h2 class="s">항목별 내역 (연간)</h2><table><thead><tr><th>오프라인 항목</th><th class="r">현재 비용</th><th>조합ONE 대체</th><th class="r">전환 후</th><th class="r">절감</th></tr></thead><tbody>' +
+      c.rows.filter(function (r) { return r[1] || r[3]; }).map(function (r) { return '<tr><td>' + r[0] + '</td><td class="r">' + won(r[1]) + '</td><td>' + r[2] + '</td><td class="r">' + won(r[3]) + '</td><td class="r"><b>' + won(r[1] - r[3]) + '</b></td></tr>'; }).join('') +
+      (c.fee ? '<tr><td>조합ONE 이용료</td><td class="r">-</td><td>총회·동의서·명부관리</td><td class="r">' + won(c.fee) + '</td><td class="r">-' + won(c.fee) + '</td></tr>' : '') +
+      '<tr class="sum"><td>합계</td><td class="r">' + won(c.off) + '</td><td></td><td class="r">' + won(c.on + c.fee) + '</td><td class="r">' + won(c.save) + '</td></tr></tbody></table>' +
+      '<h2 class="s">비용 외 효과</h2><div class="why">' +
+      '<div><b>법정 요건 대응</b>전자의결(정족수상 출석 인정)·서면 병행, 결과 구분 집계, 개표 전 비공개, 온라인총회 참석은 직접 출석 인정<br><small>도시정비법 제45조·제44조의2, 시행령 제42조</small></div>' +
+      '<div><b>정보공개 기한 관리</b>작성·변경 후 15일 이내 공개, 조합원 확인 현황 기록<br><small>도시정비법 제124조</small></div>' +
+      '<div><b>개인정보 보호</b>주민번호 암호화·화면 가림, 원본 열람 사유·접속기록 2년<br><small>시행령 제97조 · 안전성 확보조치 기준</small></div>' +
+      '<div><b>참여율·속도</b>휴대폰으로 동의·투표, 미제출자 알림톡, 실시간 집계<br><small>징구 기간 단축</small></div></div>' +
+      '<div class="note"><span class="tag">안내</span> 본 리포트의 단가는 상담용 예시값이며, 실제 비용은 조합의 지출 내역과 견적에 따라 달라집니다. 전자 전환 비용은 알림톡·본인인증 실비 기준이며 ' + (c.fee ? '조합ONE 이용료를 포함했습니다.' : '조합ONE 이용료는 포함하지 않았습니다.') + ' 전자투표는 조합 정관에 전자적 방법 규정이 있어야 하며(법 제45조 제11항), 서면 방법도 함께 운영해야 합니다(같은 조 제6항). · 조합ONE 재건축·재개발 통합정보시스템</div>';
+    try { localStorage.setItem('johapone-report', JSON.stringify([].slice.call(F.elements).reduce(function (o, e) { if (e.name) o[e.name] = e.value; return o; }, {}))); } catch (e) {}
+  }
+  try { var saved = JSON.parse(localStorage.getItem('johapone-report') || 'null'); if (saved) Object.keys(saved).forEach(function (k) { if (F[k]) F[k].value = saved[k]; }); } catch (e) {}
+  F.addEventListener('input', render);
+  render();
+</script>
+</body>
+</html>

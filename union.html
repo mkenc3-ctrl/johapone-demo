@@ -284,7 +284,7 @@ var NAV = {
     ['meeting', '🗳️ 총회·투표', [['assembly', '온라인총회'], ['vote', '전자투표']]],
     ['consent', '✍️ 전자동의서'],
     ['news', '📢 조합 소식', [['disclosure', '정보공개 등록'], ['calendar', '일정'], ['bids', '입찰공고'], ['notify', '알림톡 발송']]],
-    PRO, CHECK, LAW,
+    PRO, CHECK, ['bylaws', '📜 정관 개정'], LAW,
     ['community', '💬 모임방·문의', [['cafe', '조합 모임방'], ['qna', '1:1 문의 답변']]],
     EDU,
     ['admin', '⚙️ 서비스·권한']
@@ -457,7 +457,7 @@ var SC = [
 function saveCalc(n) {
   var off = 0, on = 0, rows = SC.map(function (s, i) { off += s[1] * n; on += s[2] * n; return '<tr><td>' + s[0] + '</td><td class="r"><input type="number" data-sc="' + i + '" data-k="1" value="' + s[1] + '"> 원</td><td>' + s[3] + '</td><td class="r"><input type="number" data-sc="' + i + '" data-k="2" value="' + s[2] + '"> 원</td></tr>'; }).join('');
   var hall = 4000000; off += hall;
-  return '<div class="card"><h2>오프라인 대비 비용 절감 <span class="tag acc">총회 1회 기준</span></h2>' +
+  return '<div class="card"><h2>오프라인 대비 비용 절감 <span style="display:flex;gap:6px;align-items:center"><span class="tag acc">총회 1회 기준</span><a href="report.html" target="_blank">연간 맞춤 리포트 ›</a></span></h2>' +
     '<div class="grid g3" style="margin-bottom:14px">' + kpi('오프라인 진행 시', won(off), '원') + kpi('조합ONE 이용 시', won(on), '원') + kpi('예상 절감액', won(off - on), '원 (' + pct(off - on, off) + '%)', 'acc') + '</div>' +
     '<details><summary style="cursor:pointer;font-size:14px;color:var(--pri)">항목별 단가 조정 (조합원 1인당, 예시 단가)</summary><div class="tw" style="margin-top:10px"><table class="t save-calc"><tr><th>오프라인 항목</th><th class="r">1인당</th><th>조합ONE 대체</th><th class="r">1인당</th></tr>' + rows +
     '<tr><td>총회장 대관·음향·경호</td><td class="r">' + won(hall) + ' 원</td><td>온라인총회 병행 (축소)</td><td class="r">-</td></tr></table></div></details></div>';
@@ -583,14 +583,20 @@ function voteStats() {
 }
 V.vote = function () {
   var r = role(), vs = voteStats(), n = roster().length + 350;
-  var head = ph('전자투표' + paidTag('vote'), '2026년 정기총회 · 투표기간 10.28 ~ 11.08 18:00 <span class="tag ' + (S.vote.open ? 'ok' : 'gray') + '">' + (S.vote.open ? '진행 중' : '마감') + '</span><br><span class="law">도시정비법 제45조 — 전자적 방법 의결권 행사, 서면·전자 결과 구분 관리, 본인확인 의무</span>',
-    r === 'admin' ? '<span style="display:flex;gap:8px"><button class="btn" data-act="vreset">[데모] 초기화</button><button class="btn acc" data-act="vclose">' + (S.vote.open ? '투표 마감' : '투표 재개') + '</button></span>' : '');
-  var results = '<div class="card"><h2>개표 현황 <span class="tag gray">' + (r === 'member' ? '마감 후 공개' : '관리자·지자체 실시간') + '</span></h2>' +
-    (r === 'member' && S.vote.open ? '<p class="empty" style="padding:20px">투표가 마감되면 결과가 공개됩니다.</p>' :
-      '<p style="margin:0 0 12px;font-size:14px">전자투표 <b>' + vs.e + '</b>명 · 서면결의 <b>' + vs.p + '</b>명 (결과 구분 집계)</p>' + AGENDAS.map(function (a, i) {
-        var c = vs.res[i], tot = c[0] + c[1] + c[2];
-        return '<div style="margin-bottom:14px"><b style="font-size:15px">' + a.t + ' ' + a.h + '</b>' + a.o.map(function (o, j) { return '<div style="display:grid;grid-template-columns:70px 1fr 90px;gap:10px;align-items:center;font-size:14px;margin-top:6px"><span>' + o + '</span><div class="bar' + (j ? ' acc' : '') + '"><i style="width:' + pct(c[j], tot) + '%"></i></div><span class="r">' + c[j] + '표 (' + pct(c[j], tot) + '%)</span></div>'; }).join('') + '</div>';
-      }).join('')) + '</div>';
+  var head = ph('전자투표' + paidTag('vote'), '2026년 정기총회 · 투표기간 10.28 ~ 11.08 18:00 <span class="tag ' + (S.vote.open ? 'ok' : 'gray') + '">' + (S.vote.open ? '진행 중' : '개표 완료') + '</span><br><span class="law">도시정비법 제45조 제6항·제9항, 시행령 제42조 제2항 — 서면 방법 병행, 서면·전자 결과 구분 관리, 본인확인, 개표 전 집계 비공개</span>',
+    r === 'admin' ? '<span style="display:flex;gap:8px"><button class="btn" data-act="vreset">[데모] 초기화</button><button class="btn acc" data-act="vclose">' + (S.vote.open ? '투표 마감·개표' : '투표 재개') + '</button></span>' : '');
+  // 시행령 제42조 제2항 제3호 가목: 총회에서 개표하기 전까지 전자의결 집계 결과를 알 수 없도록 함 → 진행 중에는 참여 인원만 공개
+  var results = '<div class="card"><h2>개표 현황 <span class="tag gray">' + (S.vote.open ? '개표 전 비공개' : '개표 완료') + '</span></h2>' +
+    '<p style="margin:0 0 12px;font-size:14px">참여: 전자투표 <b>' + vs.e + '</b>명 · 서면결의 <b>' + vs.p + '</b>명</p>' +
+    (S.vote.open ? '<p class="note" style="margin:0">찬반 집계는 <b>투표 마감·개표 후</b> 공개됩니다. 조합장·시구 담당자도 개표 전에는 결과를 볼 수 없습니다.<br><span class="law">시행령 제42조 제2항 제3호 가목</span></p>' :
+      AGENDAS.map(function (a, i) {
+        var c = vs.res[i], tot = c[0] + c[1] + c[2], pp = S.vote.paper[i];
+        return '<div style="margin-bottom:16px"><b style="font-size:15px">' + a.t + ' ' + a.h + '</b>' + a.o.map(function (o, j) {
+          var el = c[j] - pp[j];
+          return '<div style="display:grid;grid-template-columns:70px 1fr 90px;gap:10px;align-items:center;font-size:14px;margin-top:6px"><span>' + o + '</span><div class="bar' + (j ? ' acc' : '') + '"><i style="width:' + pct(c[j], tot) + '%"></i></div><span class="r">' + c[j] + '표 (' + pct(c[j], tot) + '%)</span></div>' +
+            '<div style="font-size:12px;color:var(--muted);margin:2px 0 0 80px">서면 ' + pp[j] + ' · 전자 ' + el + '</div>';
+        }).join('') + '</div>';
+      }).join('') + '<p class="law" style="margin:0">서면·전자 결과 구분 관리 (법 제45조 제6항 제2호) · 전자의결 결과는 사업 완료·폐지 시까지 보관 (시행령 제42조 제2항 제3호 나목)</p>') + '</div>';
   if (r !== 'member' && r !== 'admin') return head + results;
   var box;
   if (!S.vote.open) box = '<div class="card empty">투표가 마감되었습니다.</div>';
@@ -615,7 +621,7 @@ var ASM = [
 ];
 V.assembly = function () {
   var r = role();
-  if (!inRoom) return ph('온라인총회' + paidTag('assembly'),'집에서도 총회에 참석할 수 있습니다. 온라인 참석은 출석으로 인정되도록 본인확인 후 입장합니다.<br><span class="law">도시정비법 제45조제10항 — 전자적 방법으로 의결권을 행사하면 직접 출석으로 봄</span>') +
+  if (!inRoom) return ph('온라인총회' + paidTag('assembly'),'집에서도 총회에 참석할 수 있습니다. 본인확인 후 입장하며 접속 기록이 보관됩니다.<br><span class="law">도시정비법 제44조의2 — 총회 의결로 현장 총회와 병행 개최, 본인확인·접속기록 보관 요건을 갖추면 온라인 참석도 직접 출석으로 봄</span>') +
     '<div class="grid g2"><div class="card"><span class="tag acc" style="margin-bottom:8px">● 진행 중 · LIVE</span><h2 style="font-size:24px;display:block">2026년 정기총회</h2><dl class="doc" style="max-height:none;margin:0 0 16px"><table><tr><th>일시</th><td>2026.11.09(토) 14:00</td></tr><tr><th>장소</th><td>조합 사무실 대회의실 + 온라인</td></tr><tr><th>안건</th><td>결산 승인, 예산 승인, 정비업체 선정</td></tr><tr><th>참석 대상</th><td>조합원 ' + roster().length + '명</td></tr></table></dl>' +
     (r === 'gov' ? '<button class="btn pri lg" style="width:100%" data-act="enter">참관 모드로 입장</button>' :
       '<label style="display:flex;gap:8px;align-items:center;margin-bottom:12px;font-size:15px"><input type="checkbox" id="ack" style="width:20px;height:20px"> 본인(' + esc(U().name) + ')임을 확인하고 입장합니다.</label><button class="btn acc lg" style="width:100%" data-act="enter">입장하기</button>') + '</div>' +
@@ -915,6 +921,7 @@ V.pro = function () {
 /* --- 법령·판례 / 절차 체크리스트 (기존 도구를 앱 안에 그대로 띄움) --- */
 function embed(src, title, sub) { return ph(title, sub, '<a class="btn sm" href="' + src + '" target="_blank" rel="noopener">새 창으로 크게 보기 ↗</a>') + '<iframe class="embed" src="' + src + '" title="' + title + '"></iframe>'; }
 V.law = function () { return embed('index.html', '법령·판례 검색', '도시정비법·시행령·시행규칙 조문과 관련 판례를 검색합니다. 조문 사이 참조도 바로 따라갈 수 있습니다.'); };
+V.bylaws = function () { return embed('bylaws.html', '정관 개정 패키지', '전자의결·온라인총회 도입을 위한 정관 개정안, 총회 안건 서식, 소집통지 문구 (법 제45조·제44조의2, 시행령 제42조 기준)'); };
 V.check = function () { return embed('rebuild.html', '조합 절차 체크리스트·서식', '재건축 단계별로 해야 할 일과 필요한 서식을 확인하고 체크합니다.'); };
 
 /* --- 시·구 담당자 --- */
