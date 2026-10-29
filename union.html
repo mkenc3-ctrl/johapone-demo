@@ -351,7 +351,7 @@ function navItems() {
 var MENU_DESC = {
   meeting: '온라인총회 입장 · 전자투표', consent: '조합설립 찬반 · 휴대폰 전자서명', news: '정보공개 · 일정 · 입찰공고 · 알림톡',
   mine: '내 조합원 정보 · 분담금 계산', pro: '법률·설계·평가 등 18개 분야 업체', community: '조합원끼리 소식·자료를 나누는 카페',
-  law: '도시정비법·시행령·판례 검색', check: '사업 단계별 할 일과 서식', edu: '온라인 교육 · 수강 기록', guide: '메뉴별 쉬운 사용 방법',
+  law: '도시정비법·시행령·판례 검색', check: '사업 단계별 할 일과 서식', edu: '임원 법정 12시간 교육 · 이수 관리', guide: '메뉴별 쉬운 사용 방법',
   roster: '명부 작성 · 엑셀 · 연번 · 건축물대장', forms: '공식 서식 · 엑셀 양식 내려받기', bylaws: '전자의결 도입 정관 개정안',
   approve: '가입 신청 확인 · 승인', admin: '서비스 신청 · 글쓰기 권한', inspect: '정보공개·총회·교육·입찰 점검',
   view: '정보공개 · 동의 현황 · 명부 열람', server: '이용 계약 · 저장 용량'
@@ -1347,9 +1347,9 @@ var COURSE = {
 };
 var etab = null;
 V.edu = function () {
-  var r = role(); if (!etab) etab = '임원 교육';
-  var tabs = r === 'admin' ? ['임원 교육', '조합원 교육', '이수 현황', '참고 자료'] : ['임원 교육', '조합원 교육', '참고 자료'];
-  var head = ph('조합임원교육', '언제 어디서나 듣는 온라인 교육. 수강 기록이 자동으로 남습니다.<br><span class="law">도시정비법 제115조제2항·시행령 제90조 — 조합임원은 선임일부터 6개월 이내 운영·윤리교육 12시간 이상 이수 (실시: 국토부·지자체·한국부동산원)</span>') +
+  var r = role(); if (!etab || etab === '조합원 교육') etab = '임원 교육'; // 조합원 교육은 제외 (법정 임원 교육만)
+  var tabs = r === 'admin' ? ['임원 교육', '이수 현황', '참고 자료'] : ['임원 교육', '참고 자료'];
+  var head = ph('조합임원교육', '조합임원 운영·윤리교육(법정 12시간)을 온라인으로 미리 학습하고 이수 현황을 관리합니다.<br><span class="law">도시정비법 제115조제2항·시행령 제90조 — 조합임원은 선임일부터 6개월 이내 운영·윤리교육 12시간 이상 이수 (실시: 국토부·지자체·한국부동산원)</span>') +
     '<div class="tabs">' + tabs.map(function (t) { return '<button class="' + (t === etab ? 'on' : '') + '" data-act="etab" data-v="' + t + '">' + t + '</button>'; }).join('') + '</div>';
   if (etab === '참고 자료') return head + '<div class="card"><h2>공식 교육·자료 출처</h2><ul class="list">' +
     [['정비사업 정보몽땅 (서울시)', 'https://cleanup.seoul.go.kr', '교육 일정·이수기준, e-러닝, 표준정관'], ['한국부동산원', 'https://www.reb.or.kr', '조합임원 운영·윤리교육 위탁 기관'], ['국가법령정보센터', 'https://www.law.go.kr', '도시정비법·시행령 원문'], ['서울시 주택분야 누리집', 'https://news.seoul.go.kr/citybuild/archives/502410', '조합임원 교육 안내']].map(function (x) { return '<li><a class="tt" href="' + x[1] + '" target="_blank" rel="noopener">' + x[0] + ' ↗</a><span class="m">' + x[2] + '</span></li>'; }).join('') +
