@@ -3,7 +3,7 @@
   "short_name": "조합ONE(조합원)",
   "description": "조합원·조합·시청·구청이 한 시스템에서 만나는 재건축·재개발 원스톱 서비스 (내부 테스트용 시안)",
   "lang": "ko",
-  "start_url": "union.html",
+  "start_url": "public.html",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
