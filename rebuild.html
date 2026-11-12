@@ -47,6 +47,9 @@
   .warn { background: var(--warn-soft); border-radius: 8px; padding: 8px 12px; margin: 8px 0; font-size: 14px; }
   .warn b { color: var(--warn); }
   .warn ul { margin: 2px 0 0; padding-left: 1.2em; }
+  .owner { border: 2px solid #1d4e5f; border-radius: 8px; padding: 8px 12px; margin: 10px 0; font-size: 15px; background: #f3f8f9; }
+  .owner b { color: #1d4e5f; } .owner small { color: #555; font-weight: 400; }
+  .owner ul { margin: 4px 0 0; padding-left: 0; list-style: none; } .owner li { margin: 3px 0; padding-left: 1.6em; text-indent: -1.6em; }
   .checks { list-style: none; margin: 6px 0; padding: 0; }
   .checks li { display: flex; gap: 10px; padding: 5px 0; border-bottom: 1px dashed var(--line); }
   .checks li:last-child { border-bottom: 0; }
@@ -1174,6 +1177,24 @@
     }
     return h + '</details>';
   }
+  // 현장 실무 메모: owner-checklist.txt (이상호 대표가 직접 쓰는 파일). [단계표시] 아래 「- 할 일 / ! 현장 주의 / * 실무 요령」
+  var OWNER = {}, OWNER_MARK = { '-': '☐ 할 일', '!': '⚠ 현장 주의', '*': '💡 실무 요령' };
+  function ownerFor(s) { return OWNER[s.id] || OWNER[s.id.replace(/^[rgt](?=c?\d)/, 's').replace(/^sc/, 'c')] || null; }
+  function ownerHtml(s, print) {
+    var L = ownerFor(s); if (!L || !L.length) return '';
+    return '<div class="' + (print ? 'w' : 'owner') + '"><b>현장 실무 메모</b> <small>— 작성 이상호</small><ul>' + L.map(function (x) {
+      return '<li>' + (OWNER_MARK[x[0]] || '·') + ' · ' + esc(x[1]) + '</li>'; }).join('') + '</ul></div>';
+  }
+  fetch('owner-checklist.txt', { cache: 'no-cache' }).then(function (r) { return r.ok ? r.text() : ''; }).then(function (t) {
+    var cur = null, n = 0;
+    String(t || '').split(/\r?\n/).forEach(function (l) {
+      var m = l.match(/^\s*\[([a-z0-9]+)\]/); if (m) { cur = m[1]; return; }
+      if (!cur || /^\s*#/.test(l)) return;
+      var it = l.match(/^\s*([-!*])\s*(\S.*)$/) || (l.trim() ? [0, '-', l.trim()] : null);
+      if (it) { (OWNER[cur] = OWNER[cur] || []).push([it[1], it[2].trim()]); n++; }
+    });
+    if (n) render();
+  }).catch(function () {});
   function stepHtml(s) {
     var h = '<section class="step" id="' + s.id + '"><h3>' + esc(s.t) + '</h3>';
     if (s.easy) h += '<p class="easy">' + esc(s.easy) + '</p>';
@@ -1193,6 +1214,7 @@
     }
     if (s.dl) h += '<div class="req"><b>기한 계산 (말일이 토요일·공휴일이면 그 다음 날까지. 실제 기한은 반드시 다시 확인)</b><ul class="dl" id="dl-' + s.id + '">' + deadlines(s) + '</ul></div>';
     if (s.warn) h += '<div class="warn"><b>법적 주의사항</b><ul>' + s.warn.map(function (w) { return '<li>' + esc(w) + '</li>'; }).join('') + '</ul></div>';
+    h += ownerHtml(s);
     h += moreHtml(s);
     h += '<div class="refs"><span>근거 조문</span>' + s.refs.map(function (r) {
       var a = lookup(r);
@@ -1307,6 +1329,7 @@
         if (s.dates) h += '<p>' + s.dates.map(function (d) { return esc(d.label) + ': ' + (S.dates[d.k] ? esc(fmt(parse(S.dates[d.k]))) : '________'); }).join(' / ') + '</p>';
         if (s.dl) h += '<ul>' + deadlineList(s).map(function (x) { return '<li>' + esc(x.label) + ': <b>' + esc(x.text.indexOf('입력') < 0 ? x.text : '________') + '</b></li>'; }).join('') + '</ul>';
         if (s.warn) h += '<div class="w"><b>법적 주의사항</b><ul>' + s.warn.map(function (w) { return '<li>' + esc(w) + '</li>'; }).join('') + '</ul></div>';
+        h += ownerHtml(s, true);
         if (s.out) h += '<p class="m">남겨야 할 서류: ' + esc(s.out) + '</p>';
         h += '<p class="m">근거 조문: ' + s.refs.map(function (r) { var a = lookup(r); return a ? SHORT[a.law.id] + ' ' + esc(a.it.title) : refLabel(r); }).join(', ') + '</p>';
         h += '<p>메모: ' + (S.notes[s.id] ? esc(S.notes[s.id]).replace(/\n/g, '<br>') : '') + '</p></section>';
