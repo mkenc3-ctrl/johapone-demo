@@ -1,2 +1,2 @@
 // 조합ONE(조합원) © 2026 이상호. 모든 권리 보유. 저작권자의 서면 허락 없이 복제·배포·수정·재사용할 수 없습니다.
-window.JOHAPONE_CONFIG={supabaseUrl:"https://dpytffriiodsvpwxfbiv.supabase.co",supabaseAnonKey:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRweXRmZnJpaW9kc3Zwd3hmYml2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMxODE5OTMsImV4cCI6MjEwODc1Nzk5M30.HIAQvaBN3jgdHanSaFv-BoZerFcJRYKRPwj4Xbnw3o0",tenant:"demo-oo1"};
+window.JOHAPONE_CONFIG={supabaseUrl:"https://dpytffriiodsvpwxfbiv.supabase.co",supabaseAnonKey:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRweXRmZnJpaW9kc3Zwd3hmYml2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMxODE5OTMsImV4cCI6MjEwODc1Nzk5M30.HIAQvaBN3jgdHanSaFv-BoZerFcJRYKRPwj4Xbnw3o0",tenant:"demo-oo1",pushKey:""};
