@@ -4,7 +4,8 @@
 // 저장: 기본은 이 기기(IndexedDB). 조합ONE 서버(정비업체 칸)는 db/schema-pm.sql 적용 후 PM_SERVER = true.
 (function () {
   'use strict';
-  var PM_SERVER = false; // ← db/schema-pm.sql 적용 뒤 true 로 바꾸고 배포
+  var DEMO = /[?&]demo=1(&|$)/.test(location.search); // 체험판: 예시 자료, 이 기기의 체험 칸(pmw_demo)에만 저장
+  var PM_SERVER = !DEMO && !!(window.JOHAPONE_CONFIG && window.JOHAPONE_CONFIG.pmServer); // config.js 의 pmServer (db/schema-pm.sql 적용 뒤 true)
   var SUBS = ['01_계약서', '02_공문·인허가', '03_총회·회의', '04_도면·설계', '05_사업수지·분담금', '06_명부·동의서', '07_사진·기타', '08_보고서'];
   var BOX = '문서함/';
   var SORT = [
@@ -23,7 +24,7 @@
   var ymd6 = function () { var d = new Date(); return String(d.getFullYear()).slice(2) + p2(d.getMonth() + 1) + p2(d.getDate()); };
   var safe = function (s) { return String(s || '').replace(/[\\/:*?"<>|\x00-\x1f]/g, '_').replace(/^[\s.]+/, '').trim(); };
   var uuid = function () { return crypto.randomUUID ? crypto.randomUUID() : 'x' + Date.now().toString(36) + Math.random().toString(36).slice(2); };
-  var VENDOR = (function () { try { return localStorage.getItem('pmw_vendor') || 'local'; } catch (e) { return 'local'; } })();
+  var VENDOR = DEMO ? 'demo' : (function () { try { return localStorage.getItem('pmw_vendor') || 'local'; } catch (e) { return 'local'; } })();
 
   /* ───────── 저장소: 이 기기 (IndexedDB) ───────── */
   var dbP = null;
@@ -82,7 +83,7 @@
         var p = code.trim() ? C.rpc('pm_join', { p_code: code.trim() }) : (function () {
           var nm = window.prompt('업체 이름을 넣어 주세요 (예: OO정비)', '');
           if (!nm || !nm.trim()) throw new Error('업체 이름이 없어 만들지 않았습니다');
-          return C.rpc('pm_create_vendor', { p_name: nm.trim() });
+          return C.rpc('pm_create_vendor', { p_name: nm.trim() }).then(function (x) { if (x.error) throw new Error(x.error.message); throw new Error('업체 칸 신청을 받았습니다. 운영자 확인 뒤 열립니다 — 승인되면 다시 열어 주세요.'); });
         })();
         return p.then(function (x) { if (x.error) throw new Error(x.error.message); V = x.data; return V; });
       });
@@ -90,6 +91,7 @@
     function q(fn) { return vendor().then(function (v) { return fn(C, v); }); }
     function chk(r) { if (r.error) throw new Error(r.error.message); return r.data; }
     return {
+      pilog: function (who, what) { return q(function (c, v) { return c.from('pm_pilog').insert({ vendor_id: v, who: who, what: what }).then(chk); }); },
       get: function (k) { return q(function (c, v) { return c.from('pm_kv').select('v').eq('vendor_id', v).eq('k', k).maybeSingle().then(chk).then(function (d) { return d ? d.v : undefined; }); }); },
       set: function (k, val) { return q(function (c, v) { return c.from('pm_kv').upsert({ vendor_id: v, k: k, v: val, updated_at: new Date().toISOString() }).then(chk); }); },
       del: function (k) { return q(function (c, v) { return c.from('pm_kv').delete().eq('vendor_id', v).eq('k', k).then(chk); }); },
@@ -607,5 +609,5 @@
   };
   if (PM_SERVER) document.addEventListener('DOMContentLoaded', function () { var e = document.getElementById('pmInvBtn'); if (e) e.style.display = ''; });
   function invite() { if (!PM_SERVER) return alert('직원 초대는 서버 연결 뒤에 됩니다'); Server.invite().then(function (c) { window.prompt('직원에게 이 코드를 알려 주세요 (7일 동안 한 번 쓸 수 있음)', c); }).catch(function (e) { alert(e.message); }); }
-  window.PMB = { XL: XL, handle: handle, invite: invite, rpc: rpc, store: function () { return S; }, server: PM_SERVER, vendor: VENDOR, tally: tally, mtgBody: mtgBody, rtBody: rtBody, hwpx: hwpx };
+  window.PMB = { pilog: function (who, what) { if (PM_SERVER && S.pilog) S.pilog(who, what).catch(function () {}); }, demo: DEMO, XL: XL, handle: handle, invite: invite, rpc: rpc, store: function () { return S; }, server: PM_SERVER, vendor: VENDOR, tally: tally, mtgBody: mtgBody, rtBody: rtBody, hwpx: hwpx };
 })();

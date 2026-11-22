@@ -769,7 +769,8 @@ body{font-family:"Pretendard Variable",Pretendard,"Noto Sans KR","Malgun Gothic"
 .biz:not([open]) .bzS{display:inline}
 .biz:not([open]) .bzT{display:none}
 .biz:not([open])>summary{margin-bottom:0}
-</style></head><body>
+</style><style>/* 머리 이름 「정비업체 PM업무관리」 — 좁은 화면에서 넘치지 않게 */.logo{min-width:0}.logo span{overflow:hidden;text-overflow:ellipsis}@media(max-width:430px){.logo{font-size:17px}}@media(max-width:350px){.logo{font-size:15px}}</style>
+</head><body>
 <script>/* 선 아이콘: 화면의 그림 글자를 선 아이콘으로 바꿔 보여 줌 (저장 내용은 그대로) */
 (function(){
 var P={cal:'<rect x="3.5" y="5" width="17" height="15.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/>',
@@ -870,7 +871,7 @@ new MutationObserver(function(rs){rs.forEach(function(r){if(r.type==="characterD
  <div class="bar">
   <button class="ib nb" title="현장 목록" onclick="toggleNav()">☰</button>
   <button class="backb" id="backB" onclick="back()" title="뒤로 (Alt+←)">← 뒤로</button>
-  <div class="logo" onclick="go('전체')" style="cursor:pointer"><i>PM</i><span>업무관리</span></div>
+  <div class="logo" onclick="go('전체')" style="cursor:pointer"><i>PM</i><span>정비업체 PM업무관리</span></div>
   <span id="catTag" class="cat"></span>
   <b class="curName" id="curName"></b><select class="site" id="siteSel" aria-label="현장 선택" hidden></select>
   <button class="ib phoneOnly" title="처음으로" aria-label="처음으로" onclick="toggleNav(0);go('전체')">🏠</button><button class="ib phoneOnly" title="새로 고침" aria-label="새로 고침" onclick="location.replace(location.pathname+'?v='+Date.now())">↻</button>
@@ -882,6 +883,7 @@ new MutationObserver(function(rs){rs.forEach(function(r){if(r.type==="characterD
 </div>
 <nav class="side" id="side"></nav><div class="shade" id="shade" onclick="toggleNav(0)"></div>
 <div class="menu" id="menu" hidden>
+ <button onclick="toggleMenu();go('열람기록')">🔒 개인정보 열람 기록</button>
  <button onclick="toggleMenu();calcOpen()">🔢 계산기</button>
  <button onclick="newSiteDlg.showModal();toggleMenu()">＋ 새 현장 시작</button>
  <button onclick="backup()">⬇ 백업 파일 받기</button>
@@ -2627,13 +2629,13 @@ function evCsv(){var q=function(v){v=String(v==null?"":v);return/[",\n]/.test(v)
 function render(){
  $("siteSel").innerHTML=CATS.map(function(c){var opts=SITES.map(function(x,i){return catOf(x)===c?'<option value="'+i+'"'+(i===cur?" selected":"")+'>'+esc(nm(x))+'</option>':''}).join("");return opts?'<optgroup label="'+c+'">'+opts+'</optgroup>':''}).join("");
  $("catTag").textContent=catOf(S());$("catTag").className="cat c"+CATS.indexOf(catOf(S()));
- var BV=/^(전체|일정|올리기|연락처|보고서|사진|사용법|찾기|경비|비례율|주변 비례율|전국 정비사업|PM업무)$/.test(view);$("tabs").hidden=BV;$("catTag").hidden=BV;$("tabs").innerHTML=TABS.filter(function(t){return t[0]!=="전체"}).map(function(t){return'<button class="'+(t[0]===view?"on":"")+'" onclick="go(\''+t[0]+'\')"><b>'+(window.icSvg&&TABI[t[0]]?icSvg(TABI[t[0]]):t[1])+'</b>'+t[0]+'</button>'}).join("");
+ var BV=/^(전체|일정|올리기|연락처|보고서|사진|사용법|찾기|경비|비례율|주변 비례율|전국 정비사업|PM업무|열람기록)$/.test(view);$("tabs").hidden=BV;$("catTag").hidden=BV;$("tabs").innerHTML=TABS.filter(function(t){return t[0]!=="전체"}).map(function(t){return'<button class="'+(t[0]===view?"on":"")+'" onclick="go(\''+t[0]+'\')"><b>'+(window.icSvg&&TABI[t[0]]?icSvg(TABI[t[0]]):t[1])+'</b>'+t[0]+'</button>'}).join("");
  $("side").innerHTML=side();$("curName").textContent=view==="전체"?"":BV?view:nm(S());
- $("main").innerHTML={전체:overview,홈:home,단계:stages,서류:docs,결과:results,기록:logs,일정:bdSched,올리기:bdPost,연락처:contacts,보고서:report,사진:album,사용법:help,찾기:findAll,경비:expView,비례율:rtView,"주변 비례율":rtNearView,"전국 정비사업":nzView,PM업무:pmView,집계:cntView,동의율:ccView,지도:mapView,최근문서:rcView,비교표:cmpView}[view]();bdThumbs();
+ $("main").innerHTML={전체:overview,홈:home,단계:stages,서류:docs,결과:results,기록:logs,일정:bdSched,올리기:bdPost,연락처:contacts,보고서:report,사진:album,사용법:help,찾기:findAll,경비:expView,비례율:rtView,"주변 비례율":rtNearView,"전국 정비사업":nzView,PM업무:pmView,집계:cntView,동의율:ccView,열람기록:piView,지도:mapView,최근문서:rcView,비교표:cmpView}[view]();bdThumbs();
  if(BD.pre){var ps=$(view==="일정"?"evS":"poS");if(ps){ps.value=BD.pre;BD.pre=""}}
  else if(view==="올리기"||view==="경비"){var pz=$(view==="경비"?"exS":"poS"),ls=lastSite();if(pz&&!pz.value&&ls&&[].some.call(pz.options,function(x){return x.value===ls}))pz.value=ls}
  $("backB").hidden=(depth===0&&view==="전체");
- $("mode").textContent=window.__AT?"📱 폰 보기 · "+window.__AT+" 올린 내용 · 파일 열기·체크는 사무실 PC에서":SERVER?(window.PMB&&PMB.server?"● 조합ONE 웹판 — 저장한 내용은 조합ONE 서버의 우리 업체 칸에 보관됩니다":"● 조합ONE 웹판 — 저장한 내용은 이 기기(브라우저)에 보관됩니다. 다른 기기와 함께 쓰기는 서버 연결 후에 됩니다"):"○ 미리보기 모드";
+ $("mode").textContent=window.__AT?"📱 폰 보기 · "+window.__AT+" 올린 내용 · 파일 열기·체크는 사무실 PC에서":SERVER?(window.PMB&&PMB.demo?"● 체험판 — 예시 자료(가짜 업체·가짜 명부)입니다. 바꾼 내용은 이 기기의 체험 칸에만 남습니다":window.PMB&&PMB.server?"● 조합ONE 웹판 — 저장한 내용은 조합ONE 서버의 우리 업체 칸에 보관됩니다":"● 조합ONE 웹판 — 저장한 내용은 이 기기(브라우저)에 보관됩니다. 다른 기기와 함께 쓰기는 서버 연결 후에 됩니다"):"○ 미리보기 모드";
 }
 function taskRow(no,i,full){var id=no+":"+i,v=SS().chk[id]||{},t=stage(no).tasks[i];
  return'<div class="task'+(v.ok?" done":"")+'"><input type="checkbox" aria-label="'+esc(t)+'"'+(v.ok?" checked":"")+' onchange="setChk(\''+id+'\',\'ok\',this.checked)"><div class="t"><span class="tt">'+esc(t)+'</span>'+
@@ -2801,10 +2803,11 @@ function rcView(){if(!SERVER)return'<div class="card"><div class="empty">사무�
  return h+Object.keys(g).sort().reverse().map(function(d){return'<div class="bxs"><div class="bxh">'+esc(d)+' <span>'+g[d].length+'건</span></div>'+g[d].map(function(f){var e=ext(f.name);
   return'<div class="doc"><span class="ext '+e+'">'+e.toUpperCase()+'</span><div class="n"><b>'+esc(f.name)+'</b><small>'+esc(f.site+" · "+f.sub.replace(/^\d+_/,""))+'</small></div><div class="acts"><button class="btn p" onclick="openDoc(this,0)" data-f="'+esc(f.file)+'" data-r="0">열기</button> <button class="btn s" title="폴더에서 보기" onclick="openDoc(this,1)" data-f="'+esc(f.file)+'" data-r="0">📁</button></div></div>'}).join("")+'</div>'}).join("")+'</div>'}
 // ── 명부 집계 더하기 (2026-11-15 고도화 10) ──
-function cntH(){try{return JSON.parse(localStorage.getItem("pm_cnth")||"{}")}catch(e){return{}}}
+var CNTK="pm_cnth"+(window.PMB&&PMB.demo?"_demo":"");
+function cntH(){try{return JSON.parse(localStorage.getItem(CNTK)||"{}")}catch(e){return{}}}
 function cntKeep(site,f,r){var h=cntH(),L=h[site]=h[site]||[],d=today(),fn=f.split("/").pop();
  L=L.filter(function(x){return!(x.d===d&&x.fn===fn)});L.push({d:d,fn:fn,f:f,t:r.total,a:r.agree,r:r.rate,lt:r.areaT||0,la:r.areaA||0});h[site]=L.slice(-30);
- try{localStorage.setItem("pm_cnth",JSON.stringify(h))}catch(e){}}
+ try{localStorage.setItem(CNTK,JSON.stringify(h))}catch(e){}}
 function cntLast(site){var L=cntH()[site]||[];return L[L.length-1]||null}
 function cntHistBox(){var L=(cntH()[CNT.site]||[]).slice().reverse();if(!L.length)return"";
  return'<div class="card"><h3>📈 집계 기록 (이 PC)</h3>'+cntChart(L.slice(0,12).reverse())+L.slice(0,10).map(function(x,i){var p=L[i+1],dd=p?x.a-p.a:0;
@@ -3201,9 +3204,9 @@ function boxSort(){var n=S().name;api("/api/sort?site="+encodeURIComponent(n),{m
  if(r.moved.length)SORTED[n]=1;BOXC={};render();uiAlert(r.moved.length?"정리했습니다 (잘못 옮겨졌으면 「↩ 방금 정리 되돌리기」)\n\n"+r.moved.map(function(m){return"· "+m[0]+"  →  "+m[1].replace(/^\d+_/,"")}).join("\n"):"옮길 파일이 없습니다")}).catch(function(){toast("잠시 뒤 다시 눌러 주세요")})}
 // ── 명부 집계 (연습구역 2026-11-15 확정 기준) ──
 var CNT=null;
-function cntGo(b){var f=b.getAttribute("data-f");CNT={file:f,res:null,site:S().name,cmp:null,all:0};go("집계");api("/api/count?f="+encodeURIComponent(f)).then(function(r){CNT.res=r;if(!r.error)cntKeep(CNT.site,f,r);render()}).catch(function(){CNT.res={error:"잠시 뒤 다시 눌러 주세요"};render()})}
+function cntGo(b){if(!b._pi){return piAsk("명부 집계 — "+String(b.getAttribute("data-f")).split("/").pop()).then(function(){b._pi=1;try{cntGo(b)}finally{b._pi=0}})}var f=b.getAttribute("data-f");CNT={file:f,res:null,site:S().name,cmp:null,all:0};go("집계");api("/api/count?f="+encodeURIComponent(f)).then(function(r){CNT.res=r;if(!r.error)cntKeep(CNT.site,f,r);render()}).catch(function(){CNT.res={error:"잠시 뒤 다시 눌러 주세요"};render()})}
 function cntText(r,nm1){return nm1+" 명부 집계 ("+today()+")\n· 토지등소유자 "+r.total+"명\n· 동의 "+r.agree+"명 · 동의율 "+r.rate.toFixed(2)+"%\n· 미동의 "+(r.total-r.agree)+"명"}
-function cntView(){if(!CNT)return'<div class="card"><div class="empty">문서함의 명부 엑셀 옆 「📊 집계」를 눌러 주세요</div></div>';
+function cntView(){if(!CNT)return'<div class="card"><div class="empty">문서함의 명부 엑셀 옆 「📊 집계」를 눌러 주세요</div></div>';if(!piFresh())return'<div class="card"><div class="empty">🔒 명부 집계에는 개인정보(이름·연락처)가 있습니다.<br>10분이 지나 다시 확인이 필요합니다.<br><br><button class="btn p" onclick="piAsk(\'명부 집계 다시 보기\').then(render)">열람 비밀번호 넣기</button></div></div>';
  var fn=CNT.file.split("/").pop(),r=CNT.res,h='<div class="card"><h3>📊 명부 집계</h3><p class="sm">'+esc(fn)+'</p>';
  if(!r)return h+'<div class="empty">세는 중… (명부가 크면 10초쯤 걸립니다)</div></div>';
  if(r.error)return h+'<div class="empty">'+esc(r.error)+'</div></div>';
@@ -3221,6 +3224,42 @@ function cntView(){if(!CNT)return'<div class="card"><div class="empty">문서함
   '<button class="btn p" onclick="go(\'동의율\')">⚖ 절차별 동의율 보기</button> <button class="btn p" onclick="cntCopy()">📋 결과 복사</button> <button class="btn" onclick="cntPrint()">🖨 인쇄</button> <button class="btn" onclick="cntRep()">📑 보고서 엑셀</button> <button class="btn" onclick="openDoc(this,0)" data-f="'+esc(CNT.file)+'" data-r="0">명부 열기</button></div>'+cntGoal(r)+cntNa(r)+cntAddr(r)+cntKind(r)+cntCmpBox()+cntHistBox();
  h+='<div class="card"><h3>'+(warn.length?'⚠ 확인할 곳 '+warn.length+'가지':'✅ 확인할 곳 없음')+'</h3>'+warn.map(function(w){return'<div class="bxs"><div class="bxh">'+esc(w[0])+'</div><p class="sm" style="margin:4px 0">'+esc(w[1])+'</p>'+(w[2]?'<p style="margin:2px 0 8px;font-size:15px;line-height:1.6">'+esc(w[2])+'</p>':'')+'</div>'}).join("")+'</div>';
  return h}
+// ── 🔒 개인정보 열람: 열람 비밀번호 확인 + 누가 언제 열었는지 기록 (2026-11-22) ──
+// 명부·동의서·신분증처럼 개인정보가 담긴 파일과 명부 집계는 비밀번호를 넣어야 열림. 확인 후 10분 동안 다시 묻지 않음. 기록은 ST.pilog (서버 모드면 서버 pm_pilog 에도 — 고치거나 지울 수 없음)
+var PI={ok:0,keep:10*60*1000,bad:0,lock:0};
+function piFresh(){return Date.now()-PI.ok<PI.keep}
+function piIs(f){return/06_명부|명부|동의서|신분증|서면결의|위임장|주민|연락처|등기부|인감/.test(String(f||""))}
+async function piHash(p,salt){var b=await crypto.subtle.digest("SHA-256",new TextEncoder().encode("pmpi|"+salt+"|"+p));return Array.from(new Uint8Array(b)).map(function(x){return x.toString(16).padStart(2,"0")}).join("")}
+function piWho(){var n=(typeof BD!=="undefined"&&BD.me)||"";if(!n)try{n=localStorage.getItem("pm_name")||""}catch(e){}return n||"(이름 없음)"}
+function piLog(what){ST.pilog=ST.pilog||[];ST.pilog.unshift({at:new Date().toISOString(),who:piWho(),what:what});ST.pilog=ST.pilog.slice(0,2000);try{save()}catch(e){}try{if(window.PMB&&PMB.pilog)PMB.pilog(piWho(),what)}catch(e){}}
+function piAsk(what){return new Promise(function(ok){if(piFresh()){piLog(what);ok();return}piDlgOpen(what,ok)})}
+function piDlgOpen(what,ok){var d=$("piDlg");if(!d){d=document.createElement("dialog");d.id="piDlg";document.body.appendChild(d)}
+ var set=!(ST.pi&&ST.pi.h),me=piWho()==="(이름 없음)"?"":piWho();
+ d.innerHTML='<h2 style="font-size:21px;margin:0 0 6px">🔒 '+(set?"개인정보 열람 비밀번호 정하기":"개인정보 열람 확인")+'</h2>'+
+  '<p style="color:var(--sub);font-size:15px;margin:0 0 12px;line-height:1.6">'+(set?"명부·동의서·신분증처럼 개인정보가 담긴 자료는 이 비밀번호를 넣어야 열립니다. 처음 한 번 정해 주세요.":"<b>"+esc(what)+"</b><br>누가 언제 열었는지 기록이 남습니다. 확인 후 10분 동안은 다시 묻지 않습니다.")+'</p>'+
+  '<label style="display:block;margin-bottom:8px">기록에 남을 이름 <b style="color:var(--warn)">*</b><input id="piWhoIn" value="'+esc(me)+'" placeholder="예) 김대리" autocomplete="off"></label>'+
+  '<label style="display:block;margin-bottom:8px">열람 비밀번호 (숫자 4~8자리) <b style="color:var(--warn)">*</b><input id="piPw" type="password" inputmode="numeric" autocomplete="off" maxlength="8"></label>'+
+  (set?'<label style="display:block;margin-bottom:8px">한 번 더 <b style="color:var(--warn)">*</b><input id="piPw2" type="password" inputmode="numeric" autocomplete="off" maxlength="8"></label>':'')+
+  '<p id="piMsg" style="color:var(--warn);font-weight:700;min-height:1.3em;margin:6px 0"></p>'+
+  '<button class="btn p" id="piGo">'+(set?"정하고 열기":"확인")+'</button> <button class="btn" id="piNo">닫기</button>'+(set?'':' <button class="btn s" id="piReset" style="float:right">비밀번호를 잊었어요</button>');
+ var m=function(t){$("piMsg").textContent=t};
+ $("piNo").onclick=function(){d.close()};
+ $("piPw").onkeydown=function(e){if(e.key==="Enter")$("piGo").click()};
+ if($("piReset"))$("piReset").onclick=function(){if(!confirm("열람 비밀번호를 새로 정할까요?\n새로 정한 사실도 열람 기록에 남습니다."))return;ST.pi=null;piLog("열람 비밀번호를 지우고 새로 정함");piDlgOpen(what,ok)};
+ $("piGo").onclick=async function(){var who=$("piWhoIn").value.trim(),pw=$("piPw").value;
+  if(!who)return m("기록에 남을 이름을 넣어 주세요");if(!/^\d{4,8}$/.test(pw))return m("숫자 4~8자리로 넣어 주세요");
+  if(who!==me&&typeof setMe==="function")try{setMe(who)}catch(e){}
+  if(set){if(pw!==$("piPw2").value)return m("두 번 넣은 비밀번호가 다릅니다");var salt=Array.from(crypto.getRandomValues(new Uint8Array(8))).map(function(x){return x.toString(16).padStart(2,"0")}).join("");
+   ST.pi={s:salt,h:await piHash(pw,salt),at:new Date().toISOString()};piLog("열람 비밀번호를 정함")}
+  else{if(Date.now()<PI.lock)return m("여러 번 틀려 잠시 잠겼습니다 — "+Math.ceil((PI.lock-Date.now())/60000)+"분 뒤 다시 해 주세요");
+   if(await piHash(pw,ST.pi.s)!==ST.pi.h){PI.bad++;if(PI.bad>=5){PI.bad=0;PI.lock=Date.now()+5*60000;piLog("열람 비밀번호 5번 틀림 — 5분 잠김 ("+what+")")}return m("비밀번호가 맞지 않습니다")}}
+  PI.bad=0;PI.ok=Date.now();d.close();piLog(what);ok()};
+ d.showModal();setTimeout(function(){var x=me?$("piPw"):$("piWhoIn");if(x)x.focus()},60)}
+function piView(){var L=ST.pilog||[];
+ return'<div class="card"><h3>🔒 개인정보 열람 기록</h3><p class="sm">명부·동의서·신분증 파일을 열거나 명부 집계를 본 기록입니다. 가장 최근 것이 위에 있습니다. '+(window.PMB&&PMB.server?"서버에도 같은 기록이 남아 고치거나 지울 수 없습니다.":"지금은 이 기기에 남는 기록입니다 — 서버 연결 뒤에는 서버에도 남아 고치거나 지울 수 없게 됩니다.")+'</p>'+
+  '<p><button class="btn" onclick="window.print()">🖨 인쇄</button> '+(ST.pi&&ST.pi.h?'<span class="sm">열람 비밀번호: 정해 둠 ('+esc(String(ST.pi.at||"").slice(0,10))+')</span>':'<span class="sm">열람 비밀번호: 아직 안 정함 — 처음 개인정보 자료를 열 때 정합니다</span>')+'</p>'+
+  (L.length?'<div style="overflow-x:auto"><table class="tb" style="width:100%;border-collapse:collapse"><thead><tr><th style="text-align:left;padding:6px">일시</th><th style="text-align:left;padding:6px">누가</th><th style="text-align:left;padding:6px">무엇을</th></tr></thead><tbody>'+
+   L.slice(0,300).map(function(x){var t=new Date(x.at);return'<tr style="border-top:1px solid var(--line,#ddd)"><td style="padding:6px;white-space:nowrap">'+esc(t.toLocaleDateString("ko-KR")+" "+t.toTimeString().slice(0,5))+'</td><td style="padding:6px">'+esc(x.who)+'</td><td style="padding:6px">'+esc(x.what)+'</td></tr>'}).join("")+'</tbody></table></div>':'<div class="empty">아직 기록이 없습니다</div>')+'</div>'}
 // ── ⚖ 절차별 동의율 (2026-11-22) — 조합ONE과 같은 계산(../consent.js), 구역마다 SS().cc 에 저장 ──
 function ccKind(s){return/재건축/.test((s.role||"")+" "+(s.kind||"")+" "+(s.name||""))?"재건축":"재개발"}
 function ccView(){var s=S(),c=cntLast(s.name);setTimeout(ccMountPm,0);
@@ -3284,7 +3323,7 @@ function logs(){var s=S();
 function addLog(){var t=$("lt").value.trim();if(!t)return toast("내용을 적어 주세요");SS().mylog.push({date:today(),stage:+$("ls").value,text:t});save();render();toast("기록했습니다")}
 async function delLog(i){if(!await uiConfirm("이 기록을 지울까요?"))return;SS().mylog.splice(i,1);save();render()}
 
-function openDoc(b,folder){var f=b.dataset.f,rel=b.dataset.r==="1";
+function openDoc(b,folder){if(piIs(b.dataset.f)&&!b._pi){return piAsk((folder?"폴더 열기 — ":"파일 열기 — ")+String(b.dataset.f).split("/").pop()).then(function(){b._pi=1;try{openDoc(b,folder)}finally{b._pi=0}})}var f=b.dataset.f,rel=b.dataset.r==="1";
  if(!SERVER){var full=rel?"PM업무관리\\"+f.replace(/\//g,"\\"):f.replace(/\//g,"\\");
   if(navigator.clipboard)navigator.clipboard.writeText(full);return toast("미리보기 모드라 경로를 복사했습니다")}
  api("/api/open?mode="+(folder?"folder":"open")+"&f="+encodeURIComponent(f)).then(function(r){toast(r.ok?(folder?"폴더를 열었습니다":"여는 중입니다…"):(r.msg||"열 수 없습니다"))}).catch(function(){toast("처리하지 못했습니다 — 잠시 뒤 다시 해 주세요")})}
@@ -3322,14 +3361,21 @@ window.addEventListener("beforeunload",function(){try{localStorage.setItem("pm_s
 if(location.protocol.indexOf("http")===0){
  api("/api/state").then(function(st){SERVER=true;boot(st)}).catch(function(){boot(lsGet())});
 }else boot(lsGet());
-</script><script>/* 시험용 가짜 자료 (2026-11-22) — 이 기기에 자료가 하나도 없을 때 한 번만 연습구역에 채움. 실제 사람·업체 아님. 서버 모드에서는 넣지 않음 */
+</script><script>/* 체험판 띠·돌아가기 (2026-11-22) */
+(function(){try{
+ if(window.PMB&&PMB.demo){var d=document.createElement("div");d.id="demoStrip";d.innerHTML='체험판 — 예시 자료(가짜 업체·가짜 명부)입니다. 바꾼 내용은 이 기기에만 남습니다. <a href="업무관리.html" target="_top" style="color:#fff;font-weight:700;text-decoration:underline">우리 업체로 시작하기 ›</a>';
+  d.style.cssText="background:linear-gradient(90deg,#57221f,#1d3a3e);color:#fff;font-size:13px;padding:7px 14px;text-align:center;line-height:1.5;word-break:keep-all";document.body.insertBefore(d,document.body.firstChild);document.title="체험판 · 정비업체 PM업무관리"}
+ if(window.top===window){var a=document.querySelector('a[href="../union.html"]');if(a){a.href="../vendor.html";a.textContent="← 정비업체 첫 화면"}}
+}catch(e){}})();
+</script>
+<script>/* 시험용 가짜 자료 (2026-11-22) — 이 기기에 자료가 하나도 없을 때 한 번만 연습구역에 채움. 실제 사람·업체 아님. 서버 모드에서는 넣지 않음 */
 (async function(){
- try{if(!window.PMB||PMB.server||localStorage.getItem("pmw_seed1"))return}catch(e){return}
+ try{if(!window.PMB||PMB.server||!PMB.demo||localStorage.getItem("pmw_seed1d"))return}catch(e){return}
  var w=function(ms){return new Promise(function(r){setTimeout(r,ms)})};
  for(var i=0;i<100&&!(typeof BD!=="undefined"&&BD.ready);i++){try{if(typeof SERVER!=="undefined"&&SERVER&&!BD.busy){BD.err="";bdInit()}}catch(e){}await w(200)}
  if(!(typeof BD!=="undefined"&&BD.ready))return;
  var rows=[];try{rows=await rpc("pm_list")}catch(e){return}
- if(rows&&rows.length){try{localStorage.setItem("pmw_seed1","1")}catch(e){}return}
+ if(rows&&rows.length){try{localStorage.setItem("pmw_seed1d","1")}catch(e){}return}
  var S0="연습구역",ME="예시 담당",now=new Date().toISOString();
  var dd=function(n){var d=new Date();d.setDate(d.getDate()+n);return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")};
  var ym=function(n){var d=new Date();d.setDate(1);d.setMonth(d.getMonth()+n);return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")};
@@ -3374,15 +3420,15 @@ if(location.protocol.indexOf("http")===0){
  await put("01_계약서","(예시)정비업체_용역계약서_요약.txt","정비사업 전문관리 용역계약 (예시)\n계약금액 480,000,000원\n지급: 계약금 20% · 중도금 40% · 잔금 40%\n※ 시험용 가짜 자료");
  await put("02_공문·인허가","(예시)구청_회신_공문.txt","예시구청 회신 (예시)\n제목: 정비계획 입안 제안 관련 회신\n※ 시험용 가짜 자료");
  await put("03_총회·회의","(예시)제3차_이사회_회의록.txt","제3차 이사회 회의록 (예시)\n1. 설계안 1차 검토 — 동간 거리 보완\n2. 주민설명회 일정 — 다음 달 둘째 주 토요일\n※ 시험용 가짜 자료");
- try{localStorage.setItem("pmw_seed1","1")}catch(e){}
+ try{localStorage.setItem("pmw_seed1d","1")}catch(e){}
  try{await bdLoad();render();toast("시험용 예시 자료를 넣었습니다 (연습구역)")}catch(e){}
 })();
 </script>
 <script>/* 시험용 가짜 명부 (2026-11-22) — 예시 자료를 넣은 기기의 연습구역에만 명부 엑셀(가짜 60명)을 넣고 집계·절차별 동의율까지 채움. 실제 사람 아님 */
 (async function(){
- try{if(!window.PMB||PMB.server||localStorage.getItem("pmw_seed2"))return}catch(e){return}
+ try{if(!window.PMB||PMB.server||!PMB.demo||localStorage.getItem("pmw_seed2d"))return}catch(e){return}
  var w=function(ms){return new Promise(function(r){setTimeout(r,ms)})},S0="연습구역";
- for(var i=0;i<150;i++){try{if(localStorage.getItem("pmw_seed1")&&typeof BD!=="undefined"&&BD.ready)break}catch(e){}await w(200)}
+ for(var i=0;i<150;i++){try{if(localStorage.getItem("pmw_seed1d")&&typeof BD!=="undefined"&&BD.ready)break}catch(e){}await w(200)}
  var X=(typeof ST!=="undefined"&&ST.sites)?ST.sites[S0]:null;
  if(!X||!(X.mylog||[]).some(function(m){return/^\(예시\)/.test(m.text||"")}))return; // 직접 쓰는 기기에는 넣지 않음
  try{
@@ -3409,7 +3455,7 @@ if(location.protocol.indexOf("http")===0){
   if(r&&!r.error){cntKeep(S0,put.file,r);
    if(!X.cc)X.cc={kind:"재개발",n:r.total,a:r.agree,landT:r.areaT||"",landA:r.areaA||"",src:"명부 집계 "+today()+" ((예시)토지등소유자_명부.xlsx)",mtg:{present:"48",direct:"13",yes:"40"},dongs:[],ord:{},nonApt:{}};
    try{save()}catch(e){}}
-  try{localStorage.setItem("pmw_seed2","1")}catch(e){}
+  try{localStorage.setItem("pmw_seed2d","1")}catch(e){}
   try{if(typeof bdLoad==="function")await bdLoad();render()}catch(e){}
  }catch(e){}
 })();
