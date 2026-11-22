@@ -3,7 +3,7 @@
 <title>정비업체 PM업무관리</title>
 <link rel="icon" href="앱/icon.svg">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet"><link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" rel="stylesheet">
-<script src="../gate.js"></script><script src="../config.js"></script><script src="pm-bridge.js"></script><script src="공통과정.js"></script><script src="현장/목록.js"></script>
+<script src="../gate.js"></script><script src="../config.js"></script><script src="pm-bridge.js"></script><script src="../consent.js"></script><script src="공통과정.js"></script><script src="현장/목록.js"></script>
 <script>(window.SITE_FILES||[]).forEach(function(n){document.write('<script src="현장/'+encodeURIComponent(n)+'.js?v='+Date.now()+'"><\/script>')})</script>
 <style>
 :root{--paper:#fff;--card:#fff;--ink:#151719;--sub:#5f6368;--line:#e1e3e6;--line2:#c6c9cd;--acc:#151719;--acc2:#eef0f2;--gold:#97763a;--now:#edf1f4;--ok:#2f6b45;--warn:#b3261e;--red:#b3261e}
@@ -917,7 +917,7 @@ var view="전체", cur=0, open=null, q="", filt="전체", saveT;
 // 카테고리: 정비사업 현장 · 총회대행 · 프로그램
 var CATS=["정비사업 현장","총회대행","프로그램","기타","보관 현장"];
 function catOf(x){return x.category||(/프로그램/.test(x.kind||"")?"프로그램":x.kind==="총회대행"?"총회대행":x.kind==="기타"?"기타":"정비사업 현장")}
-var TABS=[["전체","▦"],["홈","⌂"],["단계","☰"],["서류","▤"],["결과","◎"],["기록","✎"]], toF="전체";
+var TABS=[["전체","▦"],["홈","⌂"],["단계","☰"],["동의율","%"],["서류","▤"],["결과","◎"],["기록","✎"]], toF="전체";
 function $(i){return document.getElementById(i)}
 function esc(s){return String(s==null?"":s).replace(/[&<>"']/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]})}
 function today(){var d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")}
@@ -954,7 +954,7 @@ var BD={ready:false,busy:0,err:"",key:null,tok:"",url:"",anon:"",items:[],seen:n
 try{BD.me=localStorage.getItem("pm_name")||"";BD.bell=!!localStorage.getItem("pm_bell")}catch(e){BD.me=""}
 function b64(u){var s="";for(var i=0;i<u.length;i+=8192)s+=String.fromCharCode.apply(null,u.subarray(i,i+8192));return btoa(s)}
 function ub64(s){return Uint8Array.from(atob(s),function(c){return c.charCodeAt(0)})}
-async function bdInit(){if(BD.ready||BD.busy)return;BD.busy=1;
+async function bdInit(){if(BD.ready||BD.busy)return;if(!window.__AT&&!SERVER){BD.err="아직 함께 쓰기 서버를 연결하기 전입니다.";return}BD.busy=1;
  try{var raw=null,cfg={};
   if(window.__AT){raw=window.__KEY;cfg=window.__SUPA||{}}else if(SERVER){cfg=await api("/api/key");raw=cfg.key?ub64(cfg.key):null}
   if(!cfg.url)BD.err="아직 함께 쓰기 서버를 연결하기 전입니다.";else if(!raw)BD.err="열쇠를 만들지 못했습니다. 화면을 새로 고쳐 주세요.";
@@ -2629,7 +2629,7 @@ function render(){
  $("catTag").textContent=catOf(S());$("catTag").className="cat c"+CATS.indexOf(catOf(S()));
  var BV=/^(전체|일정|올리기|연락처|보고서|사진|사용법|찾기|경비|비례율|주변 비례율|전국 정비사업|PM업무)$/.test(view);$("tabs").hidden=BV;$("catTag").hidden=BV;$("tabs").innerHTML=TABS.filter(function(t){return t[0]!=="전체"}).map(function(t){return'<button class="'+(t[0]===view?"on":"")+'" onclick="go(\''+t[0]+'\')"><b>'+(window.icSvg&&TABI[t[0]]?icSvg(TABI[t[0]]):t[1])+'</b>'+t[0]+'</button>'}).join("");
  $("side").innerHTML=side();$("curName").textContent=view==="전체"?"":BV?view:nm(S());
- $("main").innerHTML={전체:overview,홈:home,단계:stages,서류:docs,결과:results,기록:logs,일정:bdSched,올리기:bdPost,연락처:contacts,보고서:report,사진:album,사용법:help,찾기:findAll,경비:expView,비례율:rtView,"주변 비례율":rtNearView,"전국 정비사업":nzView,PM업무:pmView,집계:cntView,지도:mapView,최근문서:rcView,비교표:cmpView}[view]();bdThumbs();
+ $("main").innerHTML={전체:overview,홈:home,단계:stages,서류:docs,결과:results,기록:logs,일정:bdSched,올리기:bdPost,연락처:contacts,보고서:report,사진:album,사용법:help,찾기:findAll,경비:expView,비례율:rtView,"주변 비례율":rtNearView,"전국 정비사업":nzView,PM업무:pmView,집계:cntView,동의율:ccView,지도:mapView,최근문서:rcView,비교표:cmpView}[view]();bdThumbs();
  if(BD.pre){var ps=$(view==="일정"?"evS":"poS");if(ps){ps.value=BD.pre;BD.pre=""}}
  else if(view==="올리기"||view==="경비"){var pz=$(view==="경비"?"exS":"poS"),ls=lastSite();if(pz&&!pz.value&&ls&&[].some.call(pz.options,function(x){return x.value===ls}))pz.value=ls}
  $("backB").hidden=(depth===0&&view==="전체");
@@ -2803,7 +2803,7 @@ function rcView(){if(!SERVER)return'<div class="card"><div class="empty">사무�
 // ── 명부 집계 더하기 (2026-11-15 고도화 10) ──
 function cntH(){try{return JSON.parse(localStorage.getItem("pm_cnth")||"{}")}catch(e){return{}}}
 function cntKeep(site,f,r){var h=cntH(),L=h[site]=h[site]||[],d=today(),fn=f.split("/").pop();
- L=L.filter(function(x){return!(x.d===d&&x.fn===fn)});L.push({d:d,fn:fn,f:f,t:r.total,a:r.agree,r:r.rate});h[site]=L.slice(-30);
+ L=L.filter(function(x){return!(x.d===d&&x.fn===fn)});L.push({d:d,fn:fn,f:f,t:r.total,a:r.agree,r:r.rate,lt:r.areaT||0,la:r.areaA||0});h[site]=L.slice(-30);
  try{localStorage.setItem("pm_cnth",JSON.stringify(h))}catch(e){}}
 function cntLast(site){var L=cntH()[site]||[];return L[L.length-1]||null}
 function cntHistBox(){var L=(cntH()[CNT.site]||[]).slice().reverse();if(!L.length)return"";
@@ -2818,7 +2818,7 @@ function cntGoal(r){var G=[["과반 (1/2 초과)",1,2,1],["2/3 이상",2,3,0],["
  if(my>0&&my<=100)h+=row("직접 정한 "+my+"%",cntNeed(r.total,my,100));
  return'<div class="card"><h3>🎯 목표 동의율까지</h3><div class="bzk">'+h+'</div>'+
   '<p class="sm">직접 정하기: <input id="goalIn" type="number" min="1" max="100" step="0.1" value="'+(my||"")+'" style="width:90px;font-size:16px;padding:4px"> % <button class="btn" onclick="cntGoalSet()">적용</button></p>'+
-  '<p class="sm">참고용 — 필요한 동의율은 사업 종류·단계(입안 제안·추진위·조합설립 등)마다 다르고 토지면적 요건이 따로 있을 수 있으니 법령·조례로 확인하세요.</p></div>'}
+  '<p class="sm">필요한 동의율은 사업 종류·절차(입안 제안·추진위·조합설립·총회 등)마다 다르고 토지면적·동별 요건이 따로 있습니다 → <button class="btn" onclick="go(\'동의율\')">⚖ 절차별 동의율</button></p></div>'}
 function cntGoalSet(){var v=$("goalIn").value;try{localStorage.setItem("pm_goal",v)}catch(e){}render()}
 // 1. 미동의자 명단
 function cntNa(r){var L=r.notAgree||[];if(!L.length)return'<div class="card"><h3>✅ 미동의자 없음</h3></div>';
@@ -3216,11 +3216,21 @@ function cntView(){if(!CNT)return'<div class="card"><div class="empty">문서함
  if((r.oddMark||[]).length)warn.push(["동의서 칸에 「미동의·철회」 같은 글자 "+r.oddMark.length+"줄","글자가 있으면 동의로 셉니다 — 동의가 아니면 그 칸을 비우세요",r.oddMark.map(function(x){return x.row+"행 "+x.no+"번 "+x.name+" 「"+x.v+"」"}).join(", ")]);
  if((r.noBirth||[]).length)warn.push(["이름·생년월일 빈 칸 "+r.noBirth.length+"줄","같은 사람 찾기와 공유자 구분이 틀릴 수 있습니다",r.noBirth.slice(0,40).map(function(x){return x.row+"행 "+x.no+"번 "+x.name}).join(", ")+(r.noBirth.length>40?" …":"")]);
  if(r.dupPerson.length)warn.push(["같은 이름·생년월일이 다른 번호에 "+r.dupPerson.length+"건","한 사람이 토지·건물을 따로 가진 경우가 많아 그대로 둡니다. 같은 물건인데 번호만 나뉘었으면 합치세요",r.dupPerson.slice(0,30).map(function(x){return x.name+"("+x.nos.join("·")+"번)"}).join(", ")+(r.dupPerson.length>30?" …":"")]);
- h+='<div class="bzk"><div><small>토지등소유자</small><b>'+r.total+'명</b></div><div><small>동의</small><b>'+r.agree+'명</b></div><div><small>동의율</small><b>'+r.rate.toFixed(2)+'%</b></div><div><small>미동의</small><b>'+(r.total-r.agree)+'명</b></div></div>'+
+ h+='<div class="bzk"><div><small>토지등소유자</small><b>'+r.total+'명</b></div><div><small>동의</small><b>'+r.agree+'명</b></div><div><small>동의율</small><b>'+r.rate.toFixed(2)+'%</b></div><div><small>미동의</small><b>'+(r.total-r.agree)+'명</b></div></div>'+(r.areaT?'<div class="bzk"><div><small>토지면적 (명부 합계)</small><b>'+r.areaT.toLocaleString()+'㎡</b></div><div><small>동의자 토지면적</small><b>'+r.areaA.toLocaleString()+'㎡</b></div><div><small>면적 동의율</small><b>'+(r.areaT?(r.areaA*100/r.areaT).toFixed(2):"0")+'%</b></div></div>':'<p class="sm">명부에 「토지면적」 칸(머리글)이 있으면 토지면적 동의율도 같이 셉니다.</p>')+
   '<p class="sm">기준: 같은 조합원번호 = 1명 · 공유자는 전원 동의해야 동의 · 한 사람이 여러 필지면 한 줄만 표시돼도 동의 · 「소유권대지권」 줄은 뺌</p>'+
-  '<button class="btn p" onclick="cntCopy()">📋 결과 복사</button> <button class="btn" onclick="cntPrint()">🖨 인쇄</button> <button class="btn" onclick="cntRep()">📑 보고서 엑셀</button> <button class="btn" onclick="openDoc(this,0)" data-f="'+esc(CNT.file)+'" data-r="0">명부 열기</button></div>'+cntGoal(r)+cntNa(r)+cntAddr(r)+cntKind(r)+cntCmpBox()+cntHistBox();
+  '<button class="btn p" onclick="go(\'동의율\')">⚖ 절차별 동의율 보기</button> <button class="btn p" onclick="cntCopy()">📋 결과 복사</button> <button class="btn" onclick="cntPrint()">🖨 인쇄</button> <button class="btn" onclick="cntRep()">📑 보고서 엑셀</button> <button class="btn" onclick="openDoc(this,0)" data-f="'+esc(CNT.file)+'" data-r="0">명부 열기</button></div>'+cntGoal(r)+cntNa(r)+cntAddr(r)+cntKind(r)+cntCmpBox()+cntHistBox();
  h+='<div class="card"><h3>'+(warn.length?'⚠ 확인할 곳 '+warn.length+'가지':'✅ 확인할 곳 없음')+'</h3>'+warn.map(function(w){return'<div class="bxs"><div class="bxh">'+esc(w[0])+'</div><p class="sm" style="margin:4px 0">'+esc(w[1])+'</p>'+(w[2]?'<p style="margin:2px 0 8px;font-size:15px;line-height:1.6">'+esc(w[2])+'</p>':'')+'</div>'}).join("")+'</div>';
  return h}
+// ── ⚖ 절차별 동의율 (2026-11-22) — 조합ONE과 같은 계산(../consent.js), 구역마다 SS().cc 에 저장 ──
+function ccKind(s){return/재건축/.test((s.role||"")+" "+(s.kind||"")+" "+(s.name||""))?"재건축":"재개발"}
+function ccView(){var s=S(),c=cntLast(s.name);setTimeout(ccMountPm,0);
+ return'<div class="card"><h3>⚖ 절차별 동의율 — '+esc(nm(s))+'</h3><p class="sm">사업 초기(재건축진단·정비계획 입안 제안)부터 추진위원회·조합설립·총회까지, 절차마다 필요한 요건과 지금 동의율·부족 인원·부족 면적을 한눈에 봅니다.</p>'+
+  (c?'<p class="sm">마지막 명부 집계: '+esc(c.d)+' · '+esc(c.fn)+' · 동의 '+c.a+' / '+c.t+'명</p>':'<p class="sm">아직 집계한 명부가 없습니다 — 문서함 「06_명부·동의서」의 명부 엑셀 옆 「📊 집계」를 누르면 숫자가 들어옵니다. 아래 칸에 직접 넣어도 됩니다.</p>')+
+  '<div id="ccPm">불러오는 중…</div></div>'}
+function ccMountPm(extra){var el=$("ccPm");if(!el||!window.CONSENT)return;var s=S(),D=SS();
+ var d=Object.assign({kind:ccKind(s)},D.cc||{});if(extra)Object.keys(extra).forEach(function(k){if(extra[k]!=null&&extra[k]!=="")d[k]=extra[k]});
+ CONSENT.mount(el,{data:d,fillLabel:"마지막 명부 집계 불러오기",fill:function(){var c=cntLast(S().name);if(!c){toast("아직 집계한 명부가 없습니다 — 문서함 명부 엑셀 옆 「📊 집계」");return null}return{n:c.t,a:c.a,landT:c.lt||"",landA:c.la||"",src:"명부 집계 "+c.d+" ("+c.fn+")"}},
+  onSave:function(x){SS().cc=x;save();toast("저장했습니다")}})}
 function cntCopy(){var p=copyText(cntText(CNT.res,nm(S())));if(p&&p.then)p.then(function(){toast("복사했습니다 — 카톡에 붙여 넣기")});else toast("복사했습니다")}
 function openBox(){var d=BOXD[S().name];if(!d)return toast("잠시 뒤 다시 눌러 주세요");api("/api/open?mode=open&f="+encodeURIComponent(d)).then(function(r){toast(r.ok?"문서함 폴더를 열었습니다":"열 수 없습니다")})}
 function boxSum(s){var b=boxOf(s);if(!b)return"";var o=b.filter(function(f){return f.sub==="_지난판"}).length,t=today(),nx=BD.ready?mtgOf(s).filter(function(x){return(x.pm.date||"")>=t}).pop():null;
@@ -3364,9 +3374,44 @@ if(location.protocol.indexOf("http")===0){
  await put("01_계약서","(예시)정비업체_용역계약서_요약.txt","정비사업 전문관리 용역계약 (예시)\n계약금액 480,000,000원\n지급: 계약금 20% · 중도금 40% · 잔금 40%\n※ 시험용 가짜 자료");
  await put("02_공문·인허가","(예시)구청_회신_공문.txt","예시구청 회신 (예시)\n제목: 정비계획 입안 제안 관련 회신\n※ 시험용 가짜 자료");
  await put("03_총회·회의","(예시)제3차_이사회_회의록.txt","제3차 이사회 회의록 (예시)\n1. 설계안 1차 검토 — 동간 거리 보완\n2. 주민설명회 일정 — 다음 달 둘째 주 토요일\n※ 시험용 가짜 자료");
- await put("06_명부·동의서","(예시)토지등소유자_명부.csv","연번,성명,주소,동의서\n1,홍길동,예시동 1-1,O\n2,김예시,예시동 1-2,O\n3,이연습,예시동 2-5,\n4,박가상,예시동 3-7,O\n5,최시험,예시동 4-1,","text/csv");
  try{localStorage.setItem("pmw_seed1","1")}catch(e){}
  try{await bdLoad();render();toast("시험용 예시 자료를 넣었습니다 (연습구역)")}catch(e){}
+})();
+</script>
+<script>/* 시험용 가짜 명부 (2026-11-22) — 예시 자료를 넣은 기기의 연습구역에만 명부 엑셀(가짜 60명)을 넣고 집계·절차별 동의율까지 채움. 실제 사람 아님 */
+(async function(){
+ try{if(!window.PMB||PMB.server||localStorage.getItem("pmw_seed2"))return}catch(e){return}
+ var w=function(ms){return new Promise(function(r){setTimeout(r,ms)})},S0="연습구역";
+ for(var i=0;i<150;i++){try{if(localStorage.getItem("pmw_seed1")&&typeof BD!=="undefined"&&BD.ready)break}catch(e){}await w(200)}
+ var X=(typeof ST!=="undefined"&&ST.sites)?ST.sites[S0]:null;
+ if(!X||!(X.mylog||[]).some(function(m){return/^\(예시\)/.test(m.text||"")}))return; // 직접 쓰는 기기에는 넣지 않음
+ try{
+  var XX=await PMB.XL();
+  var fam="김이박최정강조윤장임".split(""),giv=["예시","가상","연습","시험","보기","샘플"];
+  var NA={3:1,9:1,12:1,19:1,22:1,26:1,31:1,35:1,38:1,41:1,44:1,48:1,51:1,54:1,57:1,60:1}; // 미동의 (15번은 공유자 1명만 미동의 → 미동의로 셈)
+  var bd=function(i){return String(40+(i*7)%40)+String(1+(i*5)%12).padStart(2,"0")+String(1+(i*11)%28).padStart(2,"0")};
+  var R=[["(예시) 연습구역 토지등소유자 명부 — 시험용 가짜 자료 (실제 사람 아님)"],["연번","조합원번호","행정동","지번","건물명","성명","생년월일","토지면적(㎡)","연락처1","동의서"]];
+  var co={7:[["서공유","O"]],15:[["한공유",""]],30:[["문공유","O"],["남공유","O"]]};
+  for(var i=1;i<=60;i++){
+   var ar=40+(i*53)%220,jb=(1+Math.floor((i-1)/6))+"-"+(1+(i-1)%6),bn=i%5===0?"예시빌라":"",nm=fam[(i-1)%10]+giv[Math.floor((i-1)/10)],b=bd(i),mk=NA[i]?"":"O";
+   if(i===15)mk="O";
+   if(i===60){nm="예시구청 (국공유지 관리청)";b="";ar=310;jb="9-1";bn=""}
+   var parts=co[i]?co[i].length+1:1,a1=Math.round(ar/parts*10)/10;
+   R.push([String(i),String(i),"예시동",jb,bn,nm,b,a1,"",mk]);
+   (co[i]||[]).forEach(function(c,j){R.push(["","","예시동",jb,bn,c[0],bd(i+70+j),j===co[i].length-1?Math.round((ar-a1*(parts-1))*10)/10:a1,"",c[1]])});
+  }
+  var wb=XX.utils.book_new(),ws=XX.utils.aoa_to_sheet(R);ws["!cols"]=[{wch:5},{wch:9},{wch:8},{wch:6},{wch:9},{wch:22},{wch:9},{wch:11},{wch:12},{wch:7}];
+  XX.utils.book_append_sheet(wb,ws,"명부");
+  var blob=new Blob([XX.write(wb,{bookType:"xlsx",type:"array"})],{type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"});
+  var put=await fetch("/api/boxput?site="+encodeURIComponent(S0)+"&sub="+encodeURIComponent("06_명부·동의서")+"&name="+encodeURIComponent("(예시)토지등소유자_명부.xlsx"),{method:"POST",body:blob}).then(function(r){return r.json()});
+  if(!put||!put.ok)return;
+  var r=await api("/api/count?f="+encodeURIComponent(put.file));
+  if(r&&!r.error){cntKeep(S0,put.file,r);
+   if(!X.cc)X.cc={kind:"재개발",n:r.total,a:r.agree,landT:r.areaT||"",landA:r.areaA||"",src:"명부 집계 "+today()+" ((예시)토지등소유자_명부.xlsx)",mtg:{present:"48",direct:"13",yes:"40"},dongs:[],ord:{},nonApt:{}};
+   try{save()}catch(e){}}
+  try{localStorage.setItem("pmw_seed2","1")}catch(e){}
+  try{if(typeof bdLoad==="function")await bdLoad();render()}catch(e){}
+ }catch(e){}
 })();
 </script>
 </body></html>

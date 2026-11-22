@@ -174,7 +174,7 @@
     rows.slice(0, 6).forEach(function (r) { (r || []).forEach(function (v, i) {
       var t = s_(v).replace(/\s/g, '');
       if (t === '조합원번호') c.no = i; else if (t === '성명' || t === '소유자') c.name = i; else if (t === '주민번호' || t === '생년월일') c.birth = i;
-      else if (t === '동의서') c.agree = i; else if (t === '행정동') c.dong = i; else if (t === '지번') c.jibun = i; else if (t === '건물명') c.bname = i; else if (t === '연락처1') c.tel = i;
+      else if (t === '동의서') c.agree = i; else if (/^(토지면적|편입면적|소유면적|지분면적|대지권면적|소유토지면적)(\(㎡\))?$/.test(t)) c.area = i; else if (t === '행정동') c.dong = i; else if (t === '지번') c.jibun = i; else if (t === '건물명') c.bname = i; else if (t === '연락처1') c.tel = i;
     }); });
     return c;
   }
@@ -194,14 +194,15 @@
       if (!nm0) noBirth.push({ row: i + 1, no: cur, name: '(이름 없음)' });
       if (mk0 && /미|철회|반대|불|[xX×]|취소|보류/.test(mk0)) oddMark.push({ row: i + 1, no: cur, name: nm0, v: mk0.slice(0, 20) });
       var dong = s_(r[C.dong]), jb = s_(r[C.jibun]), bn = s_(r[C.bname]);
-      groups[cur].push({ row: i + 1, name: nm0, birth: bt0.slice(0, 6), land: !!s_(r[C.land]) || !!s_(r[C.unit]), bld: !!s_(r[C.bld]), ok: !!mk0,
+      groups[cur].push({ row: i + 1, ar: C.area != null ? (+String(s_(r[C.area])).replace(/[^\d.]/g, '') || 0) : 0, name: nm0, birth: bt0.slice(0, 6), land: !!s_(r[C.land]) || !!s_(r[C.unit]), bld: !!s_(r[C.bld]), ok: !!mk0,
         addr: [dong, jb, bn].filter(Boolean).join(' '), tel: s_(r[C.tel]), place: bn || [dong, jb].filter(Boolean).join(' ') });
     }
-    var tot = 0, agree = 0, kind = { '토지+건물': [0, 0], '토지만': [0, 0], '건물만': [0, 0] }, mixed = [], who = {}, nag = [], pplAll = {}, by = {};
+    var tot = 0, agree = 0, arT = 0, arA = 0, kind = { '토지+건물': [0, 0], '토지만': [0, 0], '건물만': [0, 0] }, mixed = [], who = {}, nag = [], pplAll = {}, by = {};
     order.forEach(function (no) {
       var g = groups[no]; if (!g.length) return; tot++;
       var ppl = {}; g.forEach(function (x) { var k = x.name + '|' + x.birth; ppl[k] = (ppl[k] || false) || x.ok; });
       var pk = Object.keys(ppl), ok = pk.every(function (k) { return ppl[k]; }); if (ok) agree++;
+      var ga = 0; g.forEach(function (x) { ga += x.ar || 0; }); arT += ga; if (ok) arA += ga;
       var pl = (g.filter(function (x) { return x.place; })[0] || {}).place || '(소재지 없음)'; by[pl] = by[pl] || { t: 0, a: 0, na: [] }; by[pl].t++; if (ok) by[pl].a++; else by[pl].na.push(no);
       pk.forEach(function (k) { pplAll[k] = { no: no, ok: ppl[k] }; });
       if (!ok) nag.push({ no: no, names: uniqSort(pk.filter(function (k) { return !ppl[k]; }).map(function (k) { return k.split('|')[0]; })), all: pk.length,
@@ -217,7 +218,7 @@
     var nums = order.filter(function (n) { return /^\d+$/.test(n); }).map(Number).sort(function (a, b) { return a - b; }), set = {}; nums.forEach(function (n) { set[n] = 1; });
     var gaps = []; if (nums.length) for (var n = 1; n <= nums[nums.length - 1]; n++) if (!set[n]) gaps.push(n);
     var byA = Object.keys(by).map(function (k) { return { k: k, t: by[k].t, a: by[k].a, na: by[k].na }; }).sort(function (a, b) { return (b.na.length - a.na.length) || (b.t - a.t); }).slice(0, 300);
-    return { file: path, total: tot, agree: agree, rate: tot ? Math.round(agree * 10000 / tot) / 100 : 0, kind: kind, lastNo: nums.length ? nums[nums.length - 1] : 0, gaps: gaps.slice(0, 50), gapCount: gaps.length,
+    return { file: path, total: tot, agree: agree, areaT: C.area != null ? Math.round(arT * 10) / 10 : null, areaA: C.area != null ? Math.round(arA * 10) / 10 : null, rate: tot ? Math.round(agree * 10000 / tot) / 100 : 0, kind: kind, lastNo: nums.length ? nums[nums.length - 1] : 0, gaps: gaps.slice(0, 50), gapCount: gaps.length,
       skipped: skipped, mixed: mixed.slice(0, 80), dupPerson: dup.slice(0, 80), sameSet: sameSet.slice(0, 80), notAgree: nag, people: pplAll, noBirth: noBirth.slice(0, 100), oddMark: oddMark.slice(0, 100), byAddr: byA };
   }
   function uniqSort(a) { return a.filter(function (x, i) { return a.indexOf(x) === i; }).sort(); }
@@ -606,5 +607,5 @@
   };
   if (PM_SERVER) document.addEventListener('DOMContentLoaded', function () { var e = document.getElementById('pmInvBtn'); if (e) e.style.display = ''; });
   function invite() { if (!PM_SERVER) return alert('직원 초대는 서버 연결 뒤에 됩니다'); Server.invite().then(function (c) { window.prompt('직원에게 이 코드를 알려 주세요 (7일 동안 한 번 쓸 수 있음)', c); }).catch(function (e) { alert(e.message); }); }
-  window.PMB = { handle: handle, invite: invite, rpc: rpc, store: function () { return S; }, server: PM_SERVER, vendor: VENDOR, tally: tally, mtgBody: mtgBody, rtBody: rtBody, hwpx: hwpx };
+  window.PMB = { XL: XL, handle: handle, invite: invite, rpc: rpc, store: function () { return S; }, server: PM_SERVER, vendor: VENDOR, tally: tally, mtgBody: mtgBody, rtBody: rtBody, hwpx: hwpx };
 })();
