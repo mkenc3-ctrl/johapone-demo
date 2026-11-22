@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>정비업체/PM업무관리</title>
+<title>정비업체 PM업무관리</title>
 <link rel="icon" href="앱/icon.svg">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet"><link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" rel="stylesheet">
 <script src="../gate.js"></script><script src="../config.js"></script><script src="pm-bridge.js"></script><script src="공통과정.js"></script><script src="현장/목록.js"></script>
@@ -3312,4 +3312,61 @@ window.addEventListener("beforeunload",function(){try{localStorage.setItem("pm_s
 if(location.protocol.indexOf("http")===0){
  api("/api/state").then(function(st){SERVER=true;boot(st)}).catch(function(){boot(lsGet())});
 }else boot(lsGet());
-</script></body></html>
+</script><script>/* 시험용 가짜 자료 (2026-11-22) — 이 기기에 자료가 하나도 없을 때 한 번만 연습구역에 채움. 실제 사람·업체 아님. 서버 모드에서는 넣지 않음 */
+(async function(){
+ try{if(!window.PMB||PMB.server||localStorage.getItem("pmw_seed1"))return}catch(e){return}
+ var w=function(ms){return new Promise(function(r){setTimeout(r,ms)})};
+ for(var i=0;i<100&&!(typeof BD!=="undefined"&&BD.ready);i++){try{if(typeof SERVER!=="undefined"&&SERVER&&!BD.busy){BD.err="";bdInit()}}catch(e){}await w(200)}
+ if(!(typeof BD!=="undefined"&&BD.ready))return;
+ var rows=[];try{rows=await rpc("pm_list")}catch(e){return}
+ if(rows&&rows.length){try{localStorage.setItem("pmw_seed1","1")}catch(e){}return}
+ var S0="연습구역",ME="예시 담당",now=new Date().toISOString();
+ var dd=function(n){var d=new Date();d.setDate(d.getDate()+n);return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")};
+ var ym=function(n){var d=new Date();d.setDate(1);d.setMonth(d.getMonth()+n);return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")};
+ var add=async function(kind,o){await rpc("pm_add",{kind_:kind,box_:await encJ(o)})};
+ var pm=async function(v,text,note){await add("post",{pm:v,site:S0,text:text,by:ME,at:now,status:"반영",note:note})};
+ // 계약·용역
+ await pm({t:"ctr",vendor:"(예시)한빛정비",what:"정비사업 전문관리 용역",amt:"480000000",paid:"96000000",sd:dd(-200),ed:dd(25),pay:"계약금 20% 계약 시 / 중도금 40% 구역지정 고시 후 / 잔금 40% 인가 후",memo:"만기 전 연장 여부 이사회 안건"},"📑 계약·용역 — (예시)한빛정비","📑 계약·용역");
+ await pm({t:"ctr",vendor:"(예시)푸른설계",what:"정비계획 도면·건축계획",amt:"220000000",paid:"44000000",sd:dd(-150),ed:dd(210),pay:"계약금 20% / 심의 통과 후 50% / 잔금 30%",memo:""},"📑 계약·용역 — (예시)푸른설계","📑 계약·용역");
+ await pm({t:"ctr",vendor:"(예시)바른감정평가",what:"종전자산 추정 감정",amt:"35000000",paid:"0",sd:dd(-20),ed:dd(120),pay:"보고서 제출 후 일괄",memo:""},"📑 계약·용역 — (예시)바른감정평가","📑 계약·용역");
+ // 총회·회의
+ await pm({t:"mtg",kind:"이사회",no:"3",date:dd(-10),time:"14:00~15:30",place:"추진위 사무실",who:"(예시)한빛정비 (정비업체)\n(예시)푸른설계 (설계)",agenda:"설계안 1차 검토\n주민설명회 일정",talk:"■ 1. 설계안 1차 검토\n동간 거리 보완 필요\n■ 2. 주민설명회 일정\n다음 달 둘째 주 토요일로 잠정",decide:"설계안 보완 후 재보고",todo:"도면 보완 / (예시)푸른설계 / "+dd(7).slice(5).replace("-",".")+"\n설명회 장소 예약 / 예시 담당 / "+dd(5).slice(5).replace("-","."),next:"다음 달 첫째 주",total:"9",back:"",memo:""},"🏛 총회·이사회 — 제3차 이사회","🏛 총회·이사회");
+ await pm({t:"mtg",kind:"주민설명회",no:"1",date:dd(18),time:"10:00~12:00",place:"예시동 주민센터 3층",who:"",agenda:"정비계획(안) 설명\n추정분담금 안내",talk:"",decide:"",todo:"",next:"",total:"500",back:"",memo:"안내문 우편 발송 · 자료집 600부"},"🏛 총회·이사회 — 제1차 주민설명회","🏛 총회·이사회");
+ // 민원·문의
+ await pm({t:"cmp",d:dd(-3),who:"(예시) 101동 소유자",tel:"",how:"전화",q:"분담금이 얼마쯤 나오는지 궁금합니다",a:"주민설명회에서 추정분담금 안내 예정이라고 답함",st:"답변함"},"🙋 민원·문의 — 분담금이 얼마쯤 나오는지","🙋 민원·문의");
+ await pm({t:"cmp",d:dd(-1),who:"(예시) 상가 소유자",tel:"",how:"방문",q:"상가 보상 방식 문의",a:"",st:"답변 전"},"🙋 민원·문의 — 상가 보상 방식 문의","🙋 민원·문의");
+ // 인허가 기한
+ await pm({t:"due",step:"입안 제안 동의서 제출",due:dd(12),docs:"동의서 원본 · 동의율 집계표 · 신분증 사본",who:"예시 담당",st:"준비 중",basis:"도시정비법 제14조 (참고)"},"⏰ 인허가 기한 — 입안 제안 동의서 제출","⏰ 인허가 기한");
+ await pm({t:"due",step:"국공유지 관리청 협의 회신",due:dd(40),docs:"협의 요청 공문 · 토지조서",who:"(예시)한빛정비",st:"제출함",basis:""},"⏰ 인허가 기한 — 국공유지 관리청 협의 회신","⏰ 인허가 기한");
+ // 자금 계획
+ await pm({t:"fund",ym:ym(0),io:"나갈 돈",item:"정비업체 용역비 (중도금 일부)",amt:"48000000",rate:"",memo:""},"🏦 자금 계획 — 정비업체 용역비","🏦 자금 계획");
+ await pm({t:"fund",ym:ym(0),io:"들어올 돈",item:"시공 예정사 대여금 (예시)",amt:"100000000",rate:"4.5",memo:""},"🏦 자금 계획 — 대여금","🏦 자금 계획");
+ await pm({t:"fund",ym:ym(1),io:"나갈 돈",item:"설명회 비용·인쇄",amt:"6000000",rate:"",memo:""},"🏦 자금 계획 — 설명회 비용","🏦 자금 계획");
+ // 일정
+ var ev=function(n,time,title,place,urg){return add("event",{date:dd(n),time:time,site:S0,title:title,place:place,who:ME,by:ME,at:now,done:false,urg:!!urg,rem:"",rep:"",rs:""})};
+ await ev(0,"10:00","(예시) 구청 정비팀 방문 협의","예시구청 4층",true);
+ await ev(2,"14:00","(예시) 동의서 접수 마감 점검","추진위 사무실");
+ await ev(5,"11:00","(예시) 설명회 장소 예약 확인","예시동 주민센터");
+ await ev(18,"10:00","(예시) 제1차 주민설명회","예시동 주민센터 3층",true);
+ await add("event",{date:dd(-4),time:"15:00",site:S0,title:"(예시) 감정평가사 현장 조사 동행",place:"구역 일원",who:ME,by:ME,at:now,done:true,urg:false,rem:"",rep:"",rs:""});
+ // 경비·입금
+ await add("post",{exp:{d:dd(-6),cat:"식대",amt:48000,memo:"이사회 다과",pw:"p"},site:S0,text:"💳 식대 48,000원 — 이사회 다과",photos:[],by:ME,at:now,status:"반영",note:"💳 경비"});
+ await add("post",{exp:{d:dd(-2),cat:"교통",amt:23500,memo:"구청 방문",pw:"p"},site:S0,text:"💳 교통 23,500원 — 구청 방문",photos:[],by:ME,at:now,status:"반영",note:"💳 경비"});
+ // 글
+ await add("post",{site:S0,text:"(예시) 동의서 이번 주 18장 추가 접수 — 누계 312장",photos:[],by:ME,at:now,status:"반영",note:""});
+ // 단계 체크·업무 기록 (연습구역)
+ ST.sites[S0]=ST.sites[S0]||{chk:{},mylog:[]};var X=ST.sites[S0];
+ ["1:0","1:1","1:2","2:0"].forEach(function(k){X.chk[k]=X.chk[k]||{ok:true,date:dd(-30)}});
+ X.mylog=(X.mylog||[]).concat([{date:dd(-12),stage:1,text:"(예시) 소유자 명부 1차 정리 끝 — 공유자 따로 표시"},{date:dd(-5),stage:2,text:"(예시) 입안 제안 동의서 배포 시작"},{date:dd(-1),stage:2,text:"(예시) 국공유지 관리청에 협의 공문 보냄"}]);
+ try{save()}catch(e){}
+ // 문서함 예시 파일
+ var put=function(sub,name,text,type){return fetch("/api/boxput?site="+encodeURIComponent(S0)+"&sub="+encodeURIComponent(sub)+"&name="+encodeURIComponent(name),{method:"POST",body:new Blob(["﻿"+text],{type:type||"text/plain"})})};
+ await put("01_계약서","(예시)정비업체_용역계약서_요약.txt","정비사업 전문관리 용역계약 (예시)\n계약금액 480,000,000원\n지급: 계약금 20% · 중도금 40% · 잔금 40%\n※ 시험용 가짜 자료");
+ await put("02_공문·인허가","(예시)구청_회신_공문.txt","예시구청 회신 (예시)\n제목: 정비계획 입안 제안 관련 회신\n※ 시험용 가짜 자료");
+ await put("03_총회·회의","(예시)제3차_이사회_회의록.txt","제3차 이사회 회의록 (예시)\n1. 설계안 1차 검토 — 동간 거리 보완\n2. 주민설명회 일정 — 다음 달 둘째 주 토요일\n※ 시험용 가짜 자료");
+ await put("06_명부·동의서","(예시)토지등소유자_명부.csv","연번,성명,주소,동의서\n1,홍길동,예시동 1-1,O\n2,김예시,예시동 1-2,O\n3,이연습,예시동 2-5,\n4,박가상,예시동 3-7,O\n5,최시험,예시동 4-1,","text/csv");
+ try{localStorage.setItem("pmw_seed1","1")}catch(e){}
+ try{await bdLoad();render();toast("시험용 예시 자료를 넣었습니다 (연습구역)")}catch(e){}
+})();
+</script>
+</body></html>
