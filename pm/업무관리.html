@@ -982,6 +982,31 @@ function bdDraw(){var ae=document.activeElement;if(MIC)return;if(ae&&(ae.id==="r
 // 소리 알림 (화면을 열어 둔 동안)
 function bdBeep(){try{BD.ac=BD.ac||new(window.AudioContext||window.webkitAudioContext)();[0,.18].forEach(function(t,i){var o=BD.ac.createOscillator(),g=BD.ac.createGain();o.frequency.value=i?1046:784;o.connect(g);g.connect(BD.ac.destination);g.gain.setValueAtTime(.2,BD.ac.currentTime+t);g.gain.exponentialRampToValueAtTime(.001,BD.ac.currentTime+t+.16);o.start(BD.ac.currentTime+t);o.stop(BD.ac.currentTime+t+.17)})}catch(e){}}
 function bdSay(t){try{var u=new SpeechSynthesisUtterance(t);u.lang="ko-KR";speechSynthesis.cancel();speechSynthesis.speak(u)}catch(e){}}
+/* 음성 안내 숫자는 「일·이·삼·사」로 읽음 (2026-11-27): 말하기 전에 숫자를 한자어 수 글자로 바꿈. 시각(9시·3시간)만 그대로 둠 */
+function koNum(t) {
+  var D = '영일이삼사오육칠팔구'.split(''), U = ['', '십', '백', '천'], B = ['', '만', '억', '조'];
+  function n4(n) { var d = String(n).split('').reverse(), s = ''; for (var i = d.length - 1; i >= 0; i--) { var k = +d[i]; if (k) s += (k === 1 && i > 0 ? '' : D[k]) + U[i]; } return s; }
+  function rd(x) {
+    x = String(x).replace(/^0+(?=\d)/, ''); if (/^0+$/.test(x)) return '영';
+    if (x.length > 16) return x.split('').map(function (c) { return D[+c]; }).join(' ');
+    var o = [], g = 0; while (x.length) { var p = +x.slice(-4); x = x.slice(0, -4); if (p) o.unshift((g === 1 && p === 1 ? '' : n4(p)) + B[g]); g++; }
+    return o.join(' ');
+  }
+  function dg(x) { return x.replace(/\d/g, function (c) { return c === '0' ? '공' : D[+c]; }).replace(/-/g, ' '); }
+  function mo(m) { m = +m; return m === 6 ? '유' : m === 10 ? '시' : rd(m); }
+  return String(t == null ? '' : t)
+    .replace(/[①-⑳]/g, function (c) { return (c.charCodeAt(0) - 0x245F) + ' '; })
+    .replace(/\b0\d{1,3}-\d{3,4}-\d{4}\b/g, dg)
+    .replace(/(\d),(?=\d{3}(?!\d))/g, '$1')
+    .replace(/(\d{4})\s?\.\s?(\d{1,2})\s?\.\s?(\d{1,2})\.?/g, function (a, y, m, d) { return rd(y) + '년 ' + mo(m) + '월 ' + rd(d) + '일'; })
+    .replace(/'(\d{2})\s?\.\s?(\d{1,2})\.?/g, function (a, y, m) { return rd(y) + '년 ' + mo(m) + '월'; })
+    .replace(/(\d{1,2})\s?월/g, function (a, m) { return mo(m) + '월'; })
+    .replace(/(\d+)\.(\d+)/g, function (a, x, y) { return rd(x) + ' 점 ' + y.split('').map(function (c) { return D[+c]; }).join(''); })
+    .replace(/(\d+)\s?\/\s?(\d+)/g, function (a, x, y) { return rd(y) + '분의 ' + rd(x); })
+    .replace(/\d+(?!\d|\s?시)/g, function (a) { return rd(a); })
+    .replace(/%/g, ' 퍼센트');
+}
+(function () { try { if (!window.speechSynthesis || speechSynthesis.__ko) return; var sp = speechSynthesis.speak.bind(speechSynthesis); speechSynthesis.speak = function (u) { try { if (u && u.text) u.text = koNum(u.text); } catch (e) {} return sp(u); }; speechSynthesis.__ko = 1; } catch (e) {} })();
 function bdDing(t){if(!BD.bell)return;bdBeep();setTimeout(function(){bdSay(t)},450)}
 function bdBell(){BD.bell=!BD.bell;try{localStorage.setItem("pm_bell",BD.bell?"1":"")}catch(e){}if(BD.bell){bdBeep();bdSay("소리 알림을 켰습니다")}render()}
 function bellBtn(){return'<button class="btn'+(BD.bell?" p":"")+'" onclick="bdBell()">🔔 소리 알림 '+(BD.bell?"켜짐":"꺼짐")+'</button>'}
